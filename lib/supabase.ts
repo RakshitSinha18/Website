@@ -12,7 +12,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js"
  *   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
  */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Supabase renamed the browser key "anon" -> "publishable"; accept either name.
+const anonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 export const supabase: SupabaseClient | null =
   url && anonKey ? createClient(url, anonKey) : null
