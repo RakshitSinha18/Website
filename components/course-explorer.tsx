@@ -144,7 +144,7 @@ function CourseSlide({
               Deep dive <ArrowRight className="h-4 w-4" />
             </button>
             <Link
-              href="/login"
+              href="/login/"
               className="font-sans text-sm font-medium text-foreground/80 underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               Enroll
@@ -236,7 +236,7 @@ function DeepDive({ course, onClose }: { course: Course; onClose: () => void }) 
 
         <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-foreground/10 pt-5">
           <Link
-            href="/login"
+            href="/login/"
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-black transition-all hover:scale-[1.03]"
             style={{ background: `linear-gradient(135deg, ${course.accent[0]}, ${course.accent[1]})` }}
           >

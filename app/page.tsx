@@ -199,12 +199,12 @@ export default function Home() {
 
         <div className="hidden items-center gap-4 md:flex">
           <Link
-            href="/login"
+            href="/login/"
             className="font-sans text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
           >
             Login
           </Link>
-          <MagneticButton variant="secondary" onClick={() => scrollToSection(4)}>
+          <MagneticButton variant="primary" onClick={() => scrollToSection(4)}>
             Book a Session
           </MagneticButton>
         </div>
@@ -234,7 +234,7 @@ export default function Home() {
             </button>
           ))}
           <Link
-            href="/login"
+            href="/login/"
             className="font-sans text-2xl font-light text-foreground/60 transition-colors hover:text-foreground"
           >
             Login
