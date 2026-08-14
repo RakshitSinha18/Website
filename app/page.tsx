@@ -306,6 +306,35 @@ export default function Home() {
         <ContactSection />
       </div>
 
+      {/* Section progress indicator — always shows where you are & how many
+          sections remain (Visibility of system status + Goal-gradient). */}
+      <div
+        className={`fixed z-40 flex gap-2 transition-opacity duration-700 ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        } bottom-4 left-1/2 -translate-x-1/2 flex-row md:bottom-auto md:left-auto md:right-6 md:top-1/2 md:-translate-x-0 md:-translate-y-1/2 md:flex-col`}
+      >
+        {NAV_ITEMS.map((item, index) => (
+          <button
+            key={item}
+            onClick={() => scrollToSection(index)}
+            aria-label={`Go to ${item}`}
+            aria-current={currentSection === index}
+            className="group relative flex items-center justify-center p-1.5"
+          >
+            <span
+              className={`block rounded-full transition-all duration-300 ${
+                currentSection === index
+                  ? "h-2.5 w-2.5 bg-foreground md:h-3 md:w-3"
+                  : "h-2 w-2 bg-foreground/40 group-hover:bg-foreground/70"
+              }`}
+            />
+            <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded-md bg-background/80 px-2 py-1 font-mono text-[10px] text-foreground opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 md:block">
+              {item}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <style jsx global>{`
         [data-scroll-container]::-webkit-scrollbar {
           display: none;

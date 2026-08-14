@@ -151,16 +151,20 @@ export default function PortalPage() {
 
   if (loading || !user) {
     return (
-      <main className="animated-gradient flex min-h-[100dvh] items-center justify-center">
-        <div className="absolute inset-0 bg-black/40" />
+      <main className="relative flex min-h-[100dvh] items-center justify-center">
+        <div className="animated-gradient fixed inset-0 z-0">
+          <div className="absolute inset-0 bg-black/35" />
+        </div>
         <p className="relative z-10 font-mono text-sm text-foreground/70">Loading…</p>
       </main>
     )
   }
 
   return (
-    <main className="animated-gradient relative min-h-[100dvh]">
-      <div className="fixed inset-0 bg-black/45" />
+    <main className="relative min-h-[100dvh]">
+      <div className="animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
 
       <div className="relative z-10 mx-auto max-w-5xl px-5 py-8 md:py-12">
         {/* Header */}

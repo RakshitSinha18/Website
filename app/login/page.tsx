@@ -67,18 +67,21 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="animated-gradient relative flex min-h-[100dvh] items-center justify-center px-5 py-16">
-      <div className="absolute inset-0 bg-black/40" />
+    <main className="relative flex min-h-[100dvh] items-center justify-center px-5 py-16">
+      {/* Full-bleed fixed background so it always covers the viewport */}
+      <div className="animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
 
       <div className="relative z-10 w-full max-w-md">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-2 font-mono text-xs text-foreground/70 transition-colors hover:text-foreground"
+          className="mb-6 inline-flex items-center gap-2 font-mono text-xs text-foreground/80 transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to site
         </Link>
 
-        <div className="rounded-2xl border border-foreground/15 bg-background/70 p-6 backdrop-blur-xl md:p-8">
+        <div className="rounded-2xl border border-foreground/20 bg-background/85 p-6 shadow-2xl backdrop-blur-2xl md:p-8">
           <h1 className="mb-1 font-sans text-3xl font-light tracking-tight text-foreground">
             {mode === "signin" ? "Student login" : "Create your account"}
           </h1>
@@ -91,7 +94,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <div>
-                <label className="mb-1 block font-mono text-xs text-foreground/60">Full name</label>
+                <label className="mb-1 block font-mono text-xs text-foreground/80">Full name</label>
                 <input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
