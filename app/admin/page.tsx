@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -15,6 +15,7 @@ interface ClassBooking {
   scheduled_at: string
   notes: string
   status: string
+  payment_status: string
 }
 interface SessionRequest {
   id: string
@@ -55,6 +56,11 @@ export default function AdminPage() {
   const [newClass, setNewClass] = useState({ title: "", description: "", duration: "1–2 hours" })
   const [newTask, setNewTask] = useState({ track: "Data Analytics", day: "", title: "", description: "" })
 
+  // Payment settings (UPI)
+  const [upiId, setUpiId] = useState("")
+  const [upiQrUrl, setUpiQrUrl] = useState("")
+  const [savingUpi, setSavingUpi] = useState(false)
+
   const allowed = !loading && user && isAdminEmail(user.email)
 
   useEffect(() => {
@@ -84,6 +90,40 @@ export default function AdminPage() {
     if (sr) setRequests(sr as SessionRequest[])
     if (cl) setClasses(cl as ClassRow[])
     if (rm) setRoadmap(rm as RoadmapRow[])
+
+    const { data: st } = await supabase.from("settings").select("upi_id,upi_qr_url").eq("id", 1).single()
+    if (st) {
+      setUpiId(st.upi_id || "")
+      setUpiQrUrl(st.upi_qr_url || "")
+    }
+  }
+
+  const saveUpi = async () => {
+    if (!supabase) return
+    setSavingUpi(true)
+    const { error } = await supabase.from("settings").update({ upi_id: upiId, updated_at: new Date().toISOString() }).eq("id", 1)
+    setSavingUpi(false)
+    setMsg(error ? error.message : "UPI ID saved.")
+  }
+
+  const uploadQr = async (file: File) => {
+    if (!supabase) return
+    setMsg("Uploading QR…")
+    const path = `qr-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`
+    const { error: upErr } = await supabase.storage.from("payment").upload(path, file, { upsert: true })
+    if (upErr) {
+      setMsg(upErr.message)
+      return
+    }
+    const { data: pub } = supabase.storage.from("payment").getPublicUrl(path)
+    const url = pub.publicUrl
+    const { error } = await supabase.from("settings").update({ upi_qr_url: url, updated_at: new Date().toISOString() }).eq("id", 1)
+    if (error) {
+      setMsg(error.message)
+      return
+    }
+    setUpiQrUrl(url)
+    setMsg("QR code uploaded.")
   }
 
   // --- Class catalog editing ---
@@ -125,18 +165,24 @@ export default function AdminPage() {
     if (!error) load()
   }
 
-  const approve = async (b: ClassBooking) => {
+  // Rakshit marks the student as paid and confirms the session in one step.
+  const confirmPaid = async (b: ClassBooking) => {
     if (!supabase) return
     setBusyId(b.id)
     setMsg("")
-    const { error } = await supabase.from("class_bookings").update({ status: "confirmed" }).eq("id", b.id)
+    const { error } = await supabase
+      .from("class_bookings")
+      .update({ status: "confirmed", payment_status: "paid" })
+      .eq("id", b.id)
     setBusyId(null)
     if (error) {
       setMsg(error.message)
       return
     }
-    setClassBookings((prev) => prev.map((x) => (x.id === b.id ? { ...x, status: "confirmed" } : x)))
-    setMsg(`Approved ${b.class_title}. (Session-link email fires via the Supabase function.)`)
+    setClassBookings((prev) =>
+      prev.map((x) => (x.id === b.id ? { ...x, status: "confirmed", payment_status: "paid" } : x)),
+    )
+    setMsg(`Confirmed ${b.class_title} as paid. Student is notified with the session link.`)
   }
 
   const handleLogout = async () => {
@@ -186,6 +232,52 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Payment settings (UPI) */}
+        <section className="mb-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <IndianRupee className="h-4 w-4 text-foreground/70" />
+            <h2 className="font-sans text-lg font-light text-foreground">Payment (UPI)</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
+            <div>
+              <label className="mb-1 block font-mono text-xs text-foreground/60">Your UPI ID</label>
+              <div className="flex gap-2">
+                <input
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  placeholder="rakshit@upi"
+                  className="flex-1 rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+                />
+                <button
+                  onClick={saveUpi}
+                  disabled={savingUpi}
+                  className="rounded-lg bg-foreground/95 px-4 py-2 font-mono text-xs text-background transition-colors hover:bg-foreground disabled:opacity-50"
+                >
+                  {savingUpi ? "Saving…" : "Save"}
+                </button>
+              </div>
+              <label className="mt-4 mb-1 block font-mono text-xs text-foreground/60">Or upload a UPI QR code</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files?.[0] && uploadQr(e.target.files[0])}
+                className="block w-full text-xs text-foreground/70 file:mr-3 file:rounded-full file:border-0 file:bg-foreground/15 file:px-4 file:py-1.5 file:font-mono file:text-xs file:text-foreground hover:file:bg-foreground/25"
+              />
+              <p className="mt-2 font-mono text-[11px] text-foreground/50">
+                Students see this when booking. They pay you, then you confirm below.
+              </p>
+            </div>
+            {upiQrUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={upiQrUrl}
+                alt="UPI QR"
+                className="h-28 w-28 rounded-xl border border-foreground/15 bg-white object-contain p-1"
+              />
+            )}
+          </div>
+        </section>
+
         {/* Class bookings */}
         <section className="mb-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
           <div className="mb-4 flex items-center gap-2">
@@ -219,16 +311,21 @@ export default function AdminPage() {
                   </div>
                   {b.status === "confirmed" ? (
                     <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 font-mono text-[10px] text-emerald-200">
-                      <Check className="h-3 w-3" /> confirmed
+                      <Check className="h-3 w-3" /> paid &amp; confirmed
                     </span>
                   ) : (
-                    <button
-                      onClick={() => approve(b)}
-                      disabled={busyId === b.id}
-                      className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-amber-400 px-4 py-1.5 font-mono text-[11px] font-medium text-black transition-all hover:scale-105 disabled:opacity-50"
-                    >
-                      {busyId === b.id ? "Approving…" : "Approve & send link"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-amber-500/20 px-2.5 py-1 font-mono text-[10px] text-amber-200">
+                        awaiting UPI payment
+                      </span>
+                      <button
+                        onClick={() => confirmPaid(b)}
+                        disabled={busyId === b.id}
+                        className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-amber-400 px-4 py-1.5 font-mono text-[11px] font-medium text-black transition-all hover:scale-105 disabled:opacity-50"
+                      >
+                        {busyId === b.id ? "Confirming…" : "Mark paid & confirm"}
+                      </button>
+                    </div>
                   )}
                 </li>
               ))}

@@ -91,7 +91,7 @@ export default function LoginPage() {
           </h1>
           <p className="mb-6 font-mono text-xs text-foreground/60">
             {mode === "signin"
-              ? "Sign in to book evening mentoring classes."
+              ? "Students book evening classes here. Rakshit signs in here too — he's taken to the mentor dashboard automatically."
               : "Join to book 1-on-1 evening classes with Rakshit."}
           </p>
 

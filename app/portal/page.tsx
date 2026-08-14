@@ -20,6 +20,7 @@ interface Booking {
   scheduled_at: string
   status: string
   notes: string
+  payment_status?: string
 }
 interface RoadmapTask {
   id: string
@@ -41,6 +42,7 @@ export default function PortalPage() {
   const [profile, setProfile] = useState({ full_name: "", experience: "", goals: "" })
   const [roadmap, setRoadmap] = useState<RoadmapTask[]>([])
   const [done, setDone] = useState<Set<string>>(new Set())
+  const [upi, setUpi] = useState<{ id: string; qr: string }>({ id: "", qr: "" })
 
   const [selectedClass, setSelectedClass] = useState("")
   const [date, setDate] = useState("")
@@ -59,14 +61,16 @@ export default function PortalPage() {
   useEffect(() => {
     if (!user || !supabase) return
     const load = async () => {
-      const [{ data: cls }, { data: bks }, { data: prof }, { data: tasks }, { data: prog }] =
+      const [{ data: cls }, { data: bks }, { data: prof }, { data: tasks }, { data: prog }, { data: st }] =
         await Promise.all([
           supabase.from("classes").select("id,title,description,duration").eq("active", true),
-          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes").order("scheduled_at", { ascending: true }),
+          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status").order("scheduled_at", { ascending: true }),
           supabase.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
           supabase.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
           supabase.from("task_progress").select("task_id,completed").eq("user_id", user.id),
+          supabase.from("settings").select("upi_id,upi_qr_url").eq("id", 1).single(),
         ])
+      if (st) setUpi({ id: st.upi_id || "", qr: st.upi_qr_url || "" })
       if (cls) {
         setClasses(cls)
         if (cls[0]) setSelectedClass((s) => s || cls[0].id)
@@ -269,6 +273,31 @@ export default function PortalPage() {
             >
               {booking ? "Requesting…" : "Request class"}
             </button>
+
+            {/* UPI payment info */}
+            {(upi.id || upi.qr) && (
+              <div className="mt-4 rounded-xl border border-foreground/15 bg-foreground/5 p-3">
+                <p className="mb-2 font-mono text-[11px] text-foreground/70">
+                  To confirm, pay via UPI — Rakshit confirms once received.
+                </p>
+                <div className="flex items-center gap-3">
+                  {upi.qr && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={upi.qr}
+                      alt="Rakshit's UPI QR code"
+                      className="h-20 w-20 rounded-lg border border-foreground/15 bg-white object-contain p-1"
+                    />
+                  )}
+                  {upi.id && (
+                    <div>
+                      <p className="font-mono text-[10px] text-foreground/50">UPI ID</p>
+                      <p className="select-all font-sans text-sm text-foreground">{upi.id}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* My bookings */}
