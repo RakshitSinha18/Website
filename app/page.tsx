@@ -272,13 +272,18 @@ export default function Home() {
                 </span>
               ))}
             </div>
-            <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-3 duration-1000 delay-300 sm:flex-row sm:items-center">
+            <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center">
+              {/* One dominant primary action; the secondary recedes to a quiet link. */}
               <MagneticButton size="lg" variant="primary" onClick={() => scrollToSection(4)}>
                 Book a Session
               </MagneticButton>
-              <MagneticButton size="lg" variant="secondary" onClick={() => scrollToSection(1)}>
-                View Experience
-              </MagneticButton>
+              <button
+                onClick={() => scrollToSection(1)}
+                className="group inline-flex items-center gap-1.5 font-sans text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+              >
+                View experience
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </button>
             </div>
           </div>
 

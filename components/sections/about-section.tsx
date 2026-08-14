@@ -2,6 +2,45 @@
 
 import { MagneticButton } from "@/components/magnetic-button"
 import { useReveal } from "@/hooks/use-reveal"
+import { useCountUp } from "@/hooks/use-count-up"
+
+const STATS = [
+  { value: 9, suffix: "+", label: "Years", sublabel: "In business intelligence" },
+  { value: 7, suffix: "", label: "Companies", sublabel: "Banking, media & pharma" },
+  { value: 100, suffix: "+", label: "Dashboards", sublabel: "Shipped & maintained" },
+]
+
+function StatCard({
+  stat,
+  active,
+  delay,
+}: {
+  stat: (typeof STATS)[number]
+  active: boolean
+  delay: number
+}) {
+  const n = useCountUp(stat.value, active)
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-2xl border border-foreground/15 bg-background/30 p-4 backdrop-blur-md transition-all duration-700 hover:border-foreground/30 md:p-6 ${
+        active ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+      }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-sky-500/20 to-amber-500/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="relative flex items-baseline gap-3 md:gap-5">
+        <div className="bg-gradient-to-br from-white to-white/60 bg-clip-text text-4xl font-light tabular-nums text-transparent md:text-6xl lg:text-7xl">
+          {n}
+          {stat.suffix}
+        </div>
+        <div>
+          <div className="font-sans text-base font-light text-foreground md:text-xl">{stat.label}</div>
+          <div className="font-mono text-xs text-foreground/70">{stat.sublabel}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function AboutSection({ scrollToSection }: { scrollToSection?: (index: number) => void }) {
   const { ref, isVisible } = useReveal(0.3)
@@ -46,38 +85,11 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
             </div>
           </div>
 
-          {/* Right side - Stats */}
-          <div className="flex flex-col justify-center space-y-6 md:space-y-10">
-            {[
-              { value: "9+", label: "Years", sublabel: "In business intelligence", direction: "right" },
-              { value: "7", label: "Companies", sublabel: "Banking, media & pharma", direction: "left" },
-              { value: "100+", label: "Dashboards", sublabel: "Shipped & maintained", direction: "right" },
-            ].map((stat, i) => {
-              const getRevealClass = () => {
-                if (!isVisible) {
-                  return stat.direction === "left" ? "-translate-x-16 opacity-0" : "translate-x-16 opacity-0"
-                }
-                return "translate-x-0 opacity-100"
-              }
-
-              return (
-                <div
-                  key={i}
-                  className={`flex items-baseline gap-4 border-l border-foreground/30 pl-4 transition-all duration-700 md:gap-8 md:pl-8 ${getRevealClass()}`}
-                  style={{
-                    transitionDelay: `${300 + i * 150}ms`,
-                    marginLeft: i % 2 === 0 ? "0" : "auto",
-                    maxWidth: i % 2 === 0 ? "100%" : "85%",
-                  }}
-                >
-                  <div className="text-3xl font-light text-foreground md:text-6xl lg:text-7xl">{stat.value}</div>
-                  <div>
-                    <div className="font-sans text-base font-light text-foreground md:text-xl">{stat.label}</div>
-                    <div className="font-mono text-xs text-foreground/60">{stat.sublabel}</div>
-                  </div>
-                </div>
-              )
-            })}
+          {/* Right side - animated stats */}
+          <div className="flex flex-col justify-center gap-4 md:gap-5">
+            {STATS.map((stat, i) => (
+              <StatCard key={stat.label} stat={stat} active={isVisible} delay={200 + i * 150} />
+            ))}
           </div>
         </div>
 

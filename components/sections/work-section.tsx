@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import { useReveal } from "@/hooks/use-reveal"
 
 const EXPERIENCE = [
@@ -47,6 +49,8 @@ const EXPERIENCE = [
 
 export function WorkSection() {
   const { ref, isVisible } = useReveal(0.3)
+  // Current role (IBM) expanded by default; others collapse (progressive disclosure).
+  const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
     <section
@@ -55,19 +59,28 @@ export function WorkSection() {
     >
       <div className="mx-auto w-full max-w-7xl">
         <div
-          className={`mb-8 transition-all duration-700 md:mb-12 ${
+          className={`mb-8 transition-all duration-700 md:mb-10 ${
             isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
           }`}
         >
           <h2 className="mb-2 font-sans text-5xl font-light tracking-tight text-foreground md:text-6xl lg:text-7xl">
             Experience
           </h2>
-          <p className="font-mono text-sm text-foreground/60 md:text-base">/ 9+ years across banking, media & analytics</p>
+          <p className="font-mono text-sm text-foreground/60 md:text-base">
+            / 9+ years across banking, media &amp; analytics · tap a role to expand
+          </p>
         </div>
 
-        <div className="space-y-3 md:space-y-5">
+        <div className="space-y-2 md:space-y-3">
           {EXPERIENCE.map((role, i) => (
-            <RoleCard key={i} role={role} index={i} isVisible={isVisible} />
+            <RoleCard
+              key={i}
+              role={role}
+              index={i}
+              isVisible={isVisible}
+              open={openIndex === i}
+              onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+            />
           ))}
         </div>
       </div>
@@ -79,38 +92,65 @@ function RoleCard({
   role,
   index,
   isVisible,
+  open,
+  onToggle,
 }: {
   role: { number: string; role: string; company: string; detail: string; year: string; direction: string }
   index: number
   isVisible: boolean
+  open: boolean
+  onToggle: () => void
 }) {
-  const getRevealClass = () => {
-    if (!isVisible) {
-      return role.direction === "left" ? "-translate-x-16 opacity-0" : "translate-x-16 opacity-0"
-    }
-    return "translate-x-0 opacity-100"
-  }
+  const revealClass = !isVisible
+    ? role.direction === "left"
+      ? "-translate-x-16 opacity-0"
+      : "translate-x-16 opacity-0"
+    : "translate-x-0 opacity-100"
 
   return (
     <div
-      className={`group flex items-start justify-between gap-4 border-b border-foreground/10 py-4 transition-all duration-700 hover:border-foreground/25 md:py-5 ${getRevealClass()}`}
-      style={{
-        transitionDelay: `${index * 120}ms`,
-      }}
+      className={`overflow-hidden rounded-xl border transition-all duration-700 ${
+        open ? "border-foreground/25 bg-background/30" : "border-foreground/10 bg-background/10 hover:border-foreground/20"
+      } ${revealClass}`}
+      style={{ transitionDelay: `${index * 100}ms` }}
     >
-      <div className="flex items-baseline gap-4 md:gap-8">
-        <span className="font-mono text-sm text-foreground/30 transition-colors group-hover:text-foreground/50 md:text-base">
-          {role.number}
-        </span>
-        <div>
-          <h3 className="mb-1 font-sans text-xl font-light text-foreground transition-transform duration-300 group-hover:translate-x-1 md:text-2xl lg:text-3xl">
-            {role.role}
-          </h3>
-          <p className="mb-1.5 font-mono text-xs text-foreground/60 md:text-sm">{role.company}</p>
-          <p className="max-w-xl text-xs leading-relaxed text-foreground/70 md:text-sm">{role.detail}</p>
+      <button
+        onClick={onToggle}
+        aria-expanded={open}
+        className="group flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left md:px-5 md:py-4"
+      >
+        <div className="flex items-center gap-4 md:gap-6">
+          <span
+            className={`font-mono text-sm transition-colors md:text-base ${
+              open ? "text-sky-300/80" : "text-foreground/30 group-hover:text-foreground/50"
+            }`}
+          >
+            {role.number}
+          </span>
+          <div>
+            <h3 className="font-sans text-lg font-light text-foreground md:text-2xl lg:text-3xl">{role.role}</h3>
+            <p className="font-mono text-xs text-foreground/60 md:text-sm">{role.company}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="whitespace-nowrap font-mono text-xs text-foreground/40 md:text-sm">{role.year}</span>
+          <ChevronDown
+            className={`h-4 w-4 text-foreground/50 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          />
+        </div>
+      </button>
+
+      {/* Expandable detail */}
+      <div
+        className="grid transition-all duration-500 ease-out"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          <p className="max-w-2xl px-4 pb-4 pl-11 text-sm leading-relaxed text-foreground/75 md:px-5 md:pb-5 md:pl-16 md:text-base">
+            {role.detail}
+          </p>
         </div>
       </div>
-      <span className="shrink-0 whitespace-nowrap font-mono text-xs text-foreground/40 md:text-sm">{role.year}</span>
     </div>
   )
 }
