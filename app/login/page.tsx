@@ -6,10 +6,14 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
+import { isAdminEmail } from "@/lib/config"
 
 export default function LoginPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+
+  // Rakshit → admin dashboard; students → their portal.
+  const destFor = (email?: string | null) => (isAdminEmail(email) ? "/admin" : "/portal")
   const [mode, setMode] = useState<"signin" | "signup">("signin")
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
@@ -18,9 +22,9 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
 
-  // Already logged in → go straight to the portal.
+  // Already logged in → go to the right place (admin vs student).
   useEffect(() => {
-    if (!loading && user) router.replace("/portal")
+    if (!loading && user) router.replace(destFor(user.email))
   }, [loading, user, router])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -49,7 +53,7 @@ export default function LoginPage() {
         // If email confirmation is on, there's no session yet.
         const { data } = await supabase.auth.getSession()
         if (data.session) {
-          router.replace("/portal")
+          router.replace(destFor(email))
         } else {
           setNotice("Check your email to confirm your account, then sign in.")
           setMode("signin")
@@ -57,7 +61,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.replace("/portal")
+        router.replace(destFor(email))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.")

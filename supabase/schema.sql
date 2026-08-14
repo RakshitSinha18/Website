@@ -132,6 +132,35 @@ create policy "students update own class bookings"
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
+-- 4b. Mentor (admin) access — Rakshit can read & manage everything.
+--     Identified by the email on the JWT. Change to match your owner email.
+-- ---------------------------------------------------------------------------
+create or replace function public.is_mentor()
+returns boolean language sql stable as $$
+  select coalesce(lower(auth.jwt() ->> 'email') = 'rsinha1369@gmail.com', false);
+$$;
+
+drop policy if exists "mentor reads all class bookings" on public.class_bookings;
+create policy "mentor reads all class bookings"
+  on public.class_bookings for select to authenticated
+  using (public.is_mentor());
+
+drop policy if exists "mentor updates all class bookings" on public.class_bookings;
+create policy "mentor updates all class bookings"
+  on public.class_bookings for update to authenticated
+  using (public.is_mentor()) with check (public.is_mentor());
+
+drop policy if exists "mentor reads session requests" on public.session_bookings;
+create policy "mentor reads session requests"
+  on public.session_bookings for select to authenticated
+  using (public.is_mentor());
+
+drop policy if exists "mentor reads all profiles" on public.profiles;
+create policy "mentor reads all profiles"
+  on public.profiles for select to authenticated
+  using (public.is_mentor());
+
+-- ---------------------------------------------------------------------------
 -- 5. Learning roadmap — day-to-day tasks/activities students work through
 --    to become professionals. Read by everyone; Rakshit curates the content.
 -- ---------------------------------------------------------------------------
