@@ -70,6 +70,25 @@ export default function LoginPage() {
     }
   }
 
+  // Send a password-reset email (works for students AND Rakshit's owner account).
+  const handleReset = async () => {
+    setError("")
+    setNotice("")
+    if (!supabase) {
+      setError("Login isn't configured yet.")
+      return
+    }
+    if (!email) {
+      setError("Enter your email above first, then tap “Forgot password”.")
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset/`,
+    })
+    if (error) setError(error.message)
+    else setNotice("Password reset link sent — check your email.")
+  }
+
   return (
     <main className="relative flex min-h-[100dvh] items-center justify-center px-5 py-16">
       {/* Full-bleed fixed background so it always covers the viewport */}
@@ -145,7 +164,18 @@ export default function LoginPage() {
             {notice && <p className="text-center font-mono text-xs text-emerald-300/90">{notice}</p>}
           </form>
 
-          <div className="mt-6 text-center font-mono text-xs text-foreground/60">
+          {mode === "signin" && (
+            <div className="mt-3 text-center">
+              <button
+                onClick={handleReset}
+                className="font-mono text-xs text-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
+          <div className="mt-4 text-center font-mono text-xs text-foreground/60">
             {mode === "signin" ? (
               <>
                 New here?{" "}
