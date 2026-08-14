@@ -270,7 +270,7 @@ export default function AdminPage() {
 
 
         {/* Payment settings — UPI (India) + PayPal + link + bank (international) */}
-        <section className="mb-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+        <section className="mb-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
           <div className="mb-1 flex items-center gap-2">
             <IndianRupee className="h-4 w-4 text-foreground/70" />
             <h2 className="font-sans text-lg font-light text-foreground">Payment methods</h2>
@@ -389,7 +389,7 @@ export default function AdminPage() {
         </section>
 
         {/* Class bookings */}
-        <section className="mb-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+        <section className="mb-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
           <div className="mb-4 flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-foreground/70" />
             <h2 className="font-sans text-lg font-light text-foreground">Class bookings</h2>
@@ -444,7 +444,7 @@ export default function AdminPage() {
         </section>
 
         {/* Session requests (from public form) */}
-        <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+        <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
           <div className="mb-4 flex items-center gap-2">
             <Inbox className="h-4 w-4 text-foreground/70" />
             <h2 className="font-sans text-lg font-light text-foreground">Session requests</h2>
@@ -477,7 +477,7 @@ export default function AdminPage() {
         </section>
 
         {/* Manage courses */}
-        <section className="mt-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+        <section className="mt-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
           <div className="mb-4 flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-foreground/70" />
             <h2 className="font-sans text-lg font-light text-foreground">Manage courses</h2>
@@ -526,7 +526,7 @@ export default function AdminPage() {
         </section>
 
         {/* Manage roadmap */}
-        <section className="mt-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+        <section className="mt-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
           <div className="mb-4 flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-foreground/70" />
             <h2 className="font-sans text-lg font-light text-foreground">Manage learning roadmap</h2>

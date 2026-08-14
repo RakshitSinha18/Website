@@ -218,7 +218,7 @@ export default function PortalPage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Book a class */}
-          <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
             <div className="mb-4 flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-foreground/70" />
               <h2 className="font-sans text-lg font-light text-foreground">Book an evening class</h2>
@@ -273,7 +273,7 @@ export default function PortalPage() {
           </section>
 
           {/* My bookings */}
-          <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
             <div className="mb-4 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-foreground/70" />
               <h2 className="font-sans text-lg font-light text-foreground">My classes</h2>
@@ -304,7 +304,7 @@ export default function PortalPage() {
           </section>
 
           {/* Available classes */}
-          <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
+          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
             <h2 className="mb-4 font-sans text-lg font-light text-foreground">Available classes</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {classes.map((c) => (
@@ -318,7 +318,7 @@ export default function PortalPage() {
           </section>
 
           {/* Learning roadmap */}
-          <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
+          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
             <div className="mb-1 flex items-center gap-2">
               <Map className="h-4 w-4 text-foreground/70" />
               <h2 className="font-sans text-lg font-light text-foreground">My learning roadmap</h2>
@@ -380,7 +380,7 @@ export default function PortalPage() {
           </section>
 
           {/* Profile */}
-          <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
+          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
             <div className="mb-4 flex items-center gap-2">
               <UserIcon className="h-4 w-4 text-foreground/70" />
               <h2 className="font-sans text-lg font-light text-foreground">My profile</h2>

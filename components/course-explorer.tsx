@@ -92,7 +92,7 @@ function CourseSlide({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-3xl border border-foreground/15 bg-background/40 p-6 backdrop-blur-xl transition-all duration-500 md:p-8 ${
+      className={`relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1526]/80 p-6 backdrop-blur-xl transition-all duration-500 md:p-8 ${
         active ? "scale-100 opacity-100" : "scale-95 opacity-60"
       }`}
     >
@@ -172,11 +172,11 @@ function CourseSlide({
 function DeepDive({ course, onClose }: { course: Course; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm md:items-center md:p-6"
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 p-0 backdrop-blur-md md:items-center md:p-6"
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-foreground/20 bg-background/95 p-6 shadow-2xl backdrop-blur-2xl md:rounded-3xl md:p-8"
+        className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-white/15 bg-[#0d1526] p-6 shadow-2xl md:rounded-3xl md:p-8"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">

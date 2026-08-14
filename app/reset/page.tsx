@@ -67,7 +67,7 @@ export default function ResetPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Back to login
         </Link>
 
-        <div className="rounded-2xl border border-foreground/20 bg-background/85 p-6 shadow-2xl backdrop-blur-2xl md:p-8">
+        <div className="rounded-2xl border border-foreground/20 bg-[#0d1526]/95 p-6 shadow-2xl backdrop-blur-2xl md:p-8">
           <h1 className="mb-1 font-sans text-3xl font-light tracking-tight text-foreground">Set a new password</h1>
           <p className="mb-6 font-mono text-xs text-foreground/60">
             Choose a new password for your account.

@@ -111,7 +111,7 @@ export default function LoginPage() {
         </Link>
 
         <div
-          className={`rounded-2xl border bg-background/85 p-6 shadow-2xl backdrop-blur-2xl md:p-8 ${
+          className={`rounded-2xl border bg-[#0d1526]/95 p-6 shadow-2xl backdrop-blur-2xl md:p-8 ${
             isMentor ? "border-sky-400/40" : "border-foreground/20"
           }`}
         >
