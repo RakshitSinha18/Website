@@ -7,11 +7,13 @@ import { ServicesSection } from "@/components/sections/services-section"
 import { AboutSection } from "@/components/sections/about-section"
 import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
+import { ProfilePhoto } from "@/components/profile-photo"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Menu, X } from "lucide-react"
+import Link from "next/link"
 import { useRef, useEffect, useState } from "react"
 
-const NAV_ITEMS = ["Home", "Experience", "Skills", "About", "Contact"]
+const NAV_ITEMS = ["Home", "Experience", "Courses", "About", "Contact"]
 
 export default function Home() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -137,12 +139,12 @@ export default function Home() {
 
       {/* Animated gradient background (CSS-based) */}
       <div
-        className={`animated-gradient fixed inset-0 z-0 transition-opacity duration-700 ${
+        className={`animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden transition-opacity duration-700 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
-        style={{ contain: "strict" }}
       >
-        <div className="absolute inset-0 bg-black/25" />
+        {/* Lighter vignette so the colour stays vivid but text stays readable. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35" />
       </div>
 
       <nav
@@ -177,7 +179,13 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-3 md:flex">
+          <Link
+            href="/login"
+            className="font-sans text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+          >
+            Student Login
+          </Link>
           <MagneticButton variant="secondary" onClick={() => scrollToSection(4)}>
             Book a Session
           </MagneticButton>
@@ -207,6 +215,12 @@ export default function Home() {
               {item}
             </button>
           ))}
+          <Link
+            href="/login"
+            className="font-sans text-2xl font-light text-foreground/60 transition-colors hover:text-foreground"
+          >
+            Student Login
+          </Link>
           <div className="mt-4">
             <MagneticButton variant="primary" onClick={() => scrollToSection(4)}>
               Book a Session
@@ -225,8 +239,15 @@ export default function Home() {
       >
         {/* Hero Section */}
         <section className="flex min-h-[100dvh] w-full shrink-0 flex-col justify-end px-5 pb-16 pt-24 md:w-screen md:px-12 md:pb-24">
+          <div className="flex flex-col items-start gap-8 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:px-4">
+            <div className="mb-4 flex items-center gap-4 md:hidden">
+              <ProfilePhoto className="h-16 w-16" />
+              <div className="inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700">
+                <p className="font-mono text-[10px] text-foreground/90">Senior BI Consultant · Mentor</p>
+              </div>
+            </div>
+            <div className="mb-4 hidden animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:inline-block md:px-4">
               <p className="font-mono text-[10px] text-foreground/90 md:text-xs">
                 Senior BI Consultant · Mentor · Mumbai, India
               </p>
@@ -259,6 +280,12 @@ export default function Home() {
                 View Experience
               </MagneticButton>
             </div>
+          </div>
+
+          {/* Desktop photo */}
+          <div className="hidden shrink-0 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 md:block">
+            <ProfilePhoto className="h-56 w-56 lg:h-72 lg:w-72" />
+          </div>
           </div>
 
           <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 animate-in fade-in duration-1000 delay-500 md:block">

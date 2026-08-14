@@ -20,9 +20,11 @@ Sections: **Home → Experience → Skills → About → Contact (Book a Session
 | Area | Choice |
 | --- | --- |
 | Framework | Next.js 14 (static export, `output: "export"`) |
-| Styling | Tailwind CSS, animated CSS gradient background |
+| Styling | Tailwind CSS, animated CSS gradient + floating orbs |
 | Hosting | GitHub Pages (via GitHub Actions) |
-| Sign-up storage | Supabase (Postgres, browser client + RLS) |
+| Auth & database | Supabase (Postgres, Auth, browser client + RLS) |
+| Student portal | Login, class booking, learning roadmap, profile |
+| Email notifications | Resend (via Supabase Edge Function) |
 | Fonts | Inter (sans) + JetBrains Mono (mono) |
 
 ---
