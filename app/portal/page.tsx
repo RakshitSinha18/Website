@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { BookingCalendar } from "@/components/booking-calendar"
 import { useToast } from "@/components/toast"
+import { QuoteOfDay } from "@/components/quote-of-day"
 
 interface ClassItem {
   id: string
@@ -215,6 +216,8 @@ export default function PortalPage() {
             <LogOut className="h-3.5 w-3.5" /> Sign out
           </button>
         </div>
+
+        <QuoteOfDay className="mb-6" />
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Book a class */}

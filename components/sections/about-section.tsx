@@ -3,6 +3,7 @@
 import { MagneticButton } from "@/components/magnetic-button"
 import { useReveal } from "@/hooks/use-reveal"
 import { useCountUp } from "@/hooks/use-count-up"
+import { QuoteOfDay } from "@/components/quote-of-day"
 
 const STATS = [
   { value: 9, suffix: "+", label: "Years", sublabel: "In business intelligence" },
@@ -82,6 +83,7 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
                 Outside office hours, I mentor and coach aspiring professionals — helping them strengthen their skills,
                 navigate career challenges, and reach their personal and professional goals.
               </p>
+              <QuoteOfDay className="mt-5 max-w-md" />
             </div>
           </div>
 
