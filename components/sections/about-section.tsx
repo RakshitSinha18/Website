@@ -22,7 +22,7 @@ function StatCard({
   const n = useCountUp(stat.value, active)
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-foreground/15 bg-background/30 p-4 backdrop-blur-md transition-all duration-700 hover:border-foreground/30 md:p-6 ${
+      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0d1526]/60 p-4 backdrop-blur-md transition-all duration-700 hover:border-foreground/30 md:p-6 ${
         active ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
       style={{ transitionDelay: `${delay}ms` }}

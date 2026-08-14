@@ -110,7 +110,7 @@ function RoleCard({
   return (
     <div
       className={`overflow-hidden rounded-xl border transition-all duration-700 ${
-        open ? "border-foreground/25 bg-background/30" : "border-foreground/10 bg-background/10 hover:border-foreground/20"
+        open ? "border-sky-400/25 bg-[#0d1526]/70" : "border-white/10 bg-[#0d1526]/40 hover:border-foreground/25"
       } ${revealClass}`}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
