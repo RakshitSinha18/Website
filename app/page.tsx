@@ -250,6 +250,7 @@ export default function Home() {
       )}
 
       <div
+        id="main"
         ref={scrollContainerRef}
         data-scroll-container
         className={`relative z-10 h-[100dvh] transition-opacity duration-700 ${
