@@ -106,13 +106,24 @@ export default function LoginPage() {
 
         <div className="rounded-2xl border border-foreground/20 bg-background/85 p-6 shadow-2xl backdrop-blur-2xl md:p-8">
           <h1 className="mb-1 font-sans text-3xl font-light tracking-tight text-foreground">
-            {mode === "signin" ? "Student login" : "Create your account"}
+            {mode === "signin" ? "Sign in" : "Create your account"}
           </h1>
-          <p className="mb-6 font-mono text-xs text-foreground/60">
+          <p className="mb-5 font-mono text-xs text-foreground/60">
             {mode === "signin"
-              ? "Students book evening classes here. Rakshit signs in here too — he's taken to the mentor dashboard automatically."
+              ? "One login for everyone — students reach their portal, Rakshit reaches the mentor dashboard."
               : "Join to book 1-on-1 evening classes with Rakshit."}
           </p>
+
+          {mode === "signin" && (
+            <div className="mb-5 flex gap-2">
+              <span className="flex-1 rounded-lg border border-foreground/15 bg-foreground/5 px-3 py-2 text-center font-mono text-[11px] text-foreground/70">
+                🎓 Student → Portal
+              </span>
+              <span className="flex-1 rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 py-2 text-center font-mono text-[11px] text-sky-200/90">
+                🛡 Rakshit → Admin
+              </span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
