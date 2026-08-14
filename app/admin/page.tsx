@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -63,10 +64,23 @@ export default function AdminPage() {
   const [newClass, setNewClass] = useState({ title: "", description: "", duration: "1–2 hours" })
   const [newTask, setNewTask] = useState({ track: "Data Analytics", day: "", title: "", description: "" })
 
-  // Payment settings (UPI)
-  const [upiId, setUpiId] = useState("")
-  const [upiQrUrl, setUpiQrUrl] = useState("")
-  const [savingUpi, setSavingUpi] = useState(false)
+  // Payment settings (UPI + PayPal + link + bank)
+  const [pay, setPay] = useState({
+    upi_id: "",
+    upi_qr_url: "",
+    upi_enabled: true,
+    paypal_email: "",
+    paypal_me_link: "",
+    paypal_enabled: false,
+    payment_link: "",
+    payment_link_label: "Pay online",
+    link_enabled: false,
+    bank_details: "",
+    bank_enabled: false,
+    pay_instructions: "",
+    currency_note: "",
+  })
+  const [savingPay, setSavingPay] = useState(false)
 
   const allowed = !loading && user && isAdminEmail(user.email)
 
@@ -98,19 +112,36 @@ export default function AdminPage() {
     if (cl) setClasses(cl as ClassRow[])
     if (rm) setRoadmap(rm as RoadmapRow[])
 
-    const { data: st } = await supabase.from("settings").select("upi_id,upi_qr_url").eq("id", 1).single()
+    const { data: st } = await supabase.from("settings").select("*").eq("id", 1).single()
     if (st) {
-      setUpiId(st.upi_id || "")
-      setUpiQrUrl(st.upi_qr_url || "")
+      setPay((p) => ({
+        ...p,
+        upi_id: st.upi_id || "",
+        upi_qr_url: st.upi_qr_url || "",
+        upi_enabled: st.upi_enabled ?? true,
+        paypal_email: st.paypal_email || "",
+        paypal_me_link: st.paypal_me_link || "",
+        paypal_enabled: st.paypal_enabled ?? false,
+        payment_link: st.payment_link || "",
+        payment_link_label: st.payment_link_label || "Pay online",
+        link_enabled: st.link_enabled ?? false,
+        bank_details: st.bank_details || "",
+        bank_enabled: st.bank_enabled ?? false,
+        pay_instructions: st.pay_instructions || "",
+        currency_note: st.currency_note || "",
+      }))
     }
   }
 
-  const saveUpi = async () => {
+  const savePayments = async () => {
     if (!supabase) return
-    setSavingUpi(true)
-    const { error } = await supabase.from("settings").update({ upi_id: upiId, updated_at: new Date().toISOString() }).eq("id", 1)
-    setSavingUpi(false)
-    setMsg(error ? error.message : "UPI ID saved.")
+    setSavingPay(true)
+    const { error } = await supabase
+      .from("settings")
+      .update({ ...pay, updated_at: new Date().toISOString() })
+      .eq("id", 1)
+    setSavingPay(false)
+    setMsg(error ? error.message : "Payment settings saved.")
   }
 
   const uploadQr = async (file: File) => {
@@ -119,7 +150,11 @@ export default function AdminPage() {
     const path = `qr-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`
     const { error: upErr } = await supabase.storage.from("payment").upload(path, file, { upsert: true })
     if (upErr) {
-      setMsg(upErr.message)
+      setMsg(
+        /bucket/i.test(upErr.message)
+          ? "Create a public Storage bucket named 'payment' first (Storage → New bucket)."
+          : upErr.message,
+      )
       return
     }
     const { data: pub } = supabase.storage.from("payment").getPublicUrl(path)
@@ -129,7 +164,7 @@ export default function AdminPage() {
       setMsg(error.message)
       return
     }
-    setUpiQrUrl(url)
+    setPay((p) => ({ ...p, upi_qr_url: url }))
     setMsg("QR code uploaded.")
   }
 
@@ -234,49 +269,122 @@ export default function AdminPage() {
         </div>
 
 
-        {/* Payment settings (UPI) */}
+        {/* Payment settings — UPI (India) + PayPal + link + bank (international) */}
         <section className="mb-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-1 flex items-center gap-2">
             <IndianRupee className="h-4 w-4 text-foreground/70" />
-            <h2 className="font-sans text-lg font-light text-foreground">Payment (UPI)</h2>
+            <h2 className="font-sans text-lg font-light text-foreground">Payment methods</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
-            <div>
-              <label className="mb-1 block font-mono text-xs text-foreground/60">Your UPI ID</label>
-              <div className="flex gap-2">
-                <input
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  placeholder="rakshit@upi"
-                  className="flex-1 rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
-                />
-                <button
-                  onClick={saveUpi}
-                  disabled={savingUpi}
-                  className="rounded-lg bg-foreground/95 px-4 py-2 font-mono text-xs text-background transition-colors hover:bg-foreground disabled:opacity-50"
-                >
-                  {savingUpi ? "Saving…" : "Save"}
-                </button>
-              </div>
-              <label className="mt-4 mb-1 block font-mono text-xs text-foreground/60">Or upload a UPI QR code</label>
+          <p className="mb-5 font-mono text-[11px] text-foreground/50">
+            Enable the ways students can pay. They pay you directly, then you confirm below. No gateway fees.
+          </p>
+
+          <div className="space-y-4">
+            {/* UPI */}
+            <PayBlock
+              label="UPI (India)"
+              enabled={pay.upi_enabled}
+              onToggle={(v) => setPay({ ...pay, upi_enabled: v })}
+            >
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => e.target.files?.[0] && uploadQr(e.target.files[0])}
-                className="block w-full text-xs text-foreground/70 file:mr-3 file:rounded-full file:border-0 file:bg-foreground/15 file:px-4 file:py-1.5 file:font-mono file:text-xs file:text-foreground hover:file:bg-foreground/25"
+                value={pay.upi_id}
+                onChange={(e) => setPay({ ...pay, upi_id: e.target.value })}
+                placeholder="rakshit@upi"
+                className={inputCls}
               />
-              <p className="mt-2 font-mono text-[11px] text-foreground/50">
-                Students see this when booking. They pay you, then you confirm below.
-              </p>
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && uploadQr(e.target.files[0])}
+                  className="block w-full text-xs text-foreground/70 file:mr-3 file:rounded-full file:border-0 file:bg-foreground/15 file:px-4 file:py-1.5 file:font-mono file:text-xs file:text-foreground hover:file:bg-foreground/25"
+                />
+                {pay.upi_qr_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={pay.upi_qr_url} alt="UPI QR" className="h-16 w-16 rounded-lg border border-foreground/15 bg-white object-contain p-1" />
+                )}
+              </div>
+            </PayBlock>
+
+            {/* PayPal */}
+            <PayBlock
+              label="PayPal (international)"
+              enabled={pay.paypal_enabled}
+              onToggle={(v) => setPay({ ...pay, paypal_enabled: v })}
+            >
+              <input
+                value={pay.paypal_email}
+                onChange={(e) => setPay({ ...pay, paypal_email: e.target.value })}
+                placeholder="PayPal email"
+                className={inputCls}
+              />
+              <input
+                value={pay.paypal_me_link}
+                onChange={(e) => setPay({ ...pay, paypal_me_link: e.target.value })}
+                placeholder="paypal.me/yourname (optional)"
+                className={`${inputCls} mt-2`}
+              />
+            </PayBlock>
+
+            {/* Payment link (Stripe / Razorpay / Wise) */}
+            <PayBlock
+              label="Payment link (Stripe / Razorpay / Wise)"
+              enabled={pay.link_enabled}
+              onToggle={(v) => setPay({ ...pay, link_enabled: v })}
+            >
+              <input
+                value={pay.payment_link}
+                onChange={(e) => setPay({ ...pay, payment_link: e.target.value })}
+                placeholder="https://buy.stripe.com/…"
+                className={inputCls}
+              />
+              <input
+                value={pay.payment_link_label}
+                onChange={(e) => setPay({ ...pay, payment_link_label: e.target.value })}
+                placeholder="Button label (e.g. Pay with card)"
+                className={`${inputCls} mt-2`}
+              />
+            </PayBlock>
+
+            {/* Bank / wire */}
+            <PayBlock
+              label="Bank transfer / wire (international)"
+              enabled={pay.bank_enabled}
+              onToggle={(v) => setPay({ ...pay, bank_enabled: v })}
+            >
+              <textarea
+                rows={3}
+                value={pay.bank_details}
+                onChange={(e) => setPay({ ...pay, bank_details: e.target.value })}
+                placeholder="Account name, number, IFSC/SWIFT, bank…"
+                className={inputCls}
+              />
+            </PayBlock>
+
+            {/* Shared notes */}
+            <div>
+              <label className="mb-1 block font-mono text-xs text-foreground/60">Notes for students (optional)</label>
+              <input
+                value={pay.pay_instructions}
+                onChange={(e) => setPay({ ...pay, pay_instructions: e.target.value })}
+                placeholder="e.g. Add your name in the payment note"
+                className={inputCls}
+              />
+              <input
+                value={pay.currency_note}
+                onChange={(e) => setPay({ ...pay, currency_note: e.target.value })}
+                placeholder="Currency note (e.g. INR via UPI, USD via PayPal)"
+                className={`${inputCls} mt-2`}
+              />
             </div>
-            {upiQrUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={upiQrUrl}
-                alt="UPI QR"
-                className="h-28 w-28 rounded-xl border border-foreground/15 bg-white object-contain p-1"
-              />
-            )}
+
+            <button
+              onClick={savePayments}
+              disabled={savingPay}
+              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.01] disabled:opacity-50"
+            >
+              {savingPay ? "Saving…" : "Save payment methods"}
+            </button>
           </div>
         </section>
 
@@ -484,6 +592,39 @@ function EmptyRow({ label }: { label: string }) {
   return (
     <div className="rounded-xl border border-dashed border-foreground/15 px-4 py-6 text-center font-mono text-xs text-foreground/50">
       {label}
+    </div>
+  )
+}
+
+const inputCls =
+  "w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+
+function PayBlock({
+  label,
+  enabled,
+  onToggle,
+  children,
+}: {
+  label: string
+  enabled: boolean
+  onToggle: (v: boolean) => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className={`rounded-xl border p-3 transition-colors ${enabled ? "border-sky-400/25 bg-sky-400/5" : "border-foreground/10 bg-foreground/5"}`}>
+      <label className="mb-2 flex cursor-pointer items-center justify-between">
+        <span className="font-sans text-sm text-foreground">{label}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-mono text-[10px] text-foreground/50">{enabled ? "on" : "off"}</span>
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => onToggle(e.target.checked)}
+            className="h-4 w-4 accent-sky-500"
+          />
+        </span>
+      </label>
+      {enabled && <div className="space-y-0">{children}</div>}
     </div>
   )
 }

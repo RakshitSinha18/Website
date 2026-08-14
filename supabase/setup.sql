@@ -268,6 +268,19 @@ create table if not exists public.settings (
 );
 insert into public.settings (id) values (1) on conflict (id) do nothing;
 
+-- International payment options (UPI + PayPal + payment link + bank/wire).
+alter table public.settings add column if not exists paypal_email       text not null default '';
+alter table public.settings add column if not exists paypal_me_link     text not null default '';
+alter table public.settings add column if not exists payment_link       text not null default '';
+alter table public.settings add column if not exists payment_link_label text not null default 'Pay online';
+alter table public.settings add column if not exists bank_details       text not null default '';
+alter table public.settings add column if not exists pay_instructions   text not null default '';
+alter table public.settings add column if not exists currency_note      text not null default '';
+alter table public.settings add column if not exists upi_enabled        boolean not null default true;
+alter table public.settings add column if not exists paypal_enabled     boolean not null default false;
+alter table public.settings add column if not exists link_enabled       boolean not null default false;
+alter table public.settings add column if not exists bank_enabled       boolean not null default false;
+
 alter table public.settings enable row level security;
 
 drop policy if exists "anyone reads settings" on public.settings;

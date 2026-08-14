@@ -43,7 +43,7 @@ export default function PortalPage() {
   const [profile, setProfile] = useState({ full_name: "", experience: "", goals: "" })
   const [roadmap, setRoadmap] = useState<RoadmapTask[]>([])
   const [done, setDone] = useState<Set<string>>(new Set())
-  const [upi, setUpi] = useState<{ id: string; qr: string }>({ id: "", qr: "" })
+  const [payInfo, setPayInfo] = useState<Record<string, any> | null>(null)
 
   const [selectedClass, setSelectedClass] = useState("")
   const [date, setDate] = useState("")
@@ -69,9 +69,9 @@ export default function PortalPage() {
           supabase.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
           supabase.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
           supabase.from("task_progress").select("task_id,completed").eq("user_id", user.id),
-          supabase.from("settings").select("upi_id,upi_qr_url").eq("id", 1).single(),
+          supabase.from("settings").select("*").eq("id", 1).single(),
         ])
-      if (st) setUpi({ id: st.upi_id || "", qr: st.upi_qr_url || "" })
+      if (st) setPayInfo(st)
       if (cls) {
         setClasses(cls)
         if (cls[0]) setSelectedClass((s) => s || cls[0].id)
@@ -268,30 +268,8 @@ export default function PortalPage() {
               {booking ? "Requesting…" : "Request class"}
             </button>
 
-            {/* UPI payment info */}
-            {(upi.id || upi.qr) && (
-              <div className="mt-4 rounded-xl border border-foreground/15 bg-foreground/5 p-3">
-                <p className="mb-2 font-mono text-[11px] text-foreground/70">
-                  To confirm, pay via UPI — Rakshit confirms once received.
-                </p>
-                <div className="flex items-center gap-3">
-                  {upi.qr && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={upi.qr}
-                      alt="Rakshit's UPI QR code"
-                      className="h-20 w-20 rounded-lg border border-foreground/15 bg-white object-contain p-1"
-                    />
-                  )}
-                  {upi.id && (
-                    <div>
-                      <p className="font-mono text-[10px] text-foreground/50">UPI ID</p>
-                      <p className="select-all font-sans text-sm text-foreground">{upi.id}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Payment methods */}
+            {payInfo && <PaymentMethods p={payInfo} />}
           </section>
 
           {/* My bookings */}
@@ -450,6 +428,76 @@ function formatSlot(s: string) {
   const end = h + 1
   const to12 = (n: number) => `${((n + 11) % 12) + 1}:00 ${n >= 12 ? "PM" : "AM"}`
   return `${to12(h)} – ${to12(end)}`
+}
+
+// Shows every payment method the mentor has enabled (UPI, PayPal, link, bank).
+function PaymentMethods({ p }: { p: Record<string, any> }) {
+  const upi = p.upi_enabled && (p.upi_id || p.upi_qr_url)
+  const paypal = p.paypal_enabled && (p.paypal_email || p.paypal_me_link)
+  const link = p.link_enabled && p.payment_link
+  const bank = p.bank_enabled && p.bank_details
+  const any = upi || paypal || link || bank
+  if (!any) return null
+
+  return (
+    <div className="mt-4 rounded-xl border border-foreground/15 bg-foreground/5 p-3">
+      <p className="mb-3 font-mono text-[11px] text-foreground/70">
+        Pay to confirm — Rakshit confirms once received.
+        {p.currency_note ? ` (${p.currency_note})` : ""}
+      </p>
+      <div className="space-y-3">
+        {upi && (
+          <div className="flex items-center gap-3">
+            {p.upi_qr_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.upi_qr_url} alt="UPI QR" className="h-16 w-16 rounded-lg border border-foreground/15 bg-white object-contain p-1" />
+            )}
+            <div>
+              <p className="font-mono text-[10px] text-foreground/50">UPI (India)</p>
+              {p.upi_id && <p className="select-all font-sans text-sm text-foreground">{p.upi_id}</p>}
+            </div>
+          </div>
+        )}
+        {paypal && (
+          <div>
+            <p className="font-mono text-[10px] text-foreground/50">PayPal</p>
+            {p.paypal_me_link ? (
+              <a href={ensureHttp(p.paypal_me_link)} target="_blank" rel="noopener noreferrer" className="font-sans text-sm text-sky-300 hover:underline">
+                {p.paypal_me_link}
+              </a>
+            ) : (
+              <p className="select-all font-sans text-sm text-foreground">{p.paypal_email}</p>
+            )}
+          </div>
+        )}
+        {link && (
+          <a
+            href={ensureHttp(p.payment_link)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.03]"
+          >
+            {p.payment_link_label || "Pay online"} →
+          </a>
+        )}
+        {bank && (
+          <div>
+            <p className="font-mono text-[10px] text-foreground/50">Bank transfer / wire</p>
+            <p className="whitespace-pre-line font-sans text-xs text-foreground/80">{p.bank_details}</p>
+          </div>
+        )}
+      </div>
+      {p.pay_instructions && (
+        <p className="mt-3 border-t border-foreground/10 pt-2 font-mono text-[10px] text-foreground/50">
+          {p.pay_instructions}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function ensureHttp(url: string) {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
 function StatusBadge({ status }: { status: string }) {
