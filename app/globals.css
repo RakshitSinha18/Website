@@ -30,19 +30,8 @@
     @apply border-border;
   }
 
-  /* Hide the native cursor only on precise pointers (desktop), where we render
-     the custom cursor. Never hide it on interactive text controls, so typing
-     always shows a caret. Touch devices keep their default behaviour. */
-  @media (hover: hover) and (pointer: fine) {
-    body:not(.no-custom-cursor) * {
-      cursor: none;
-    }
-  }
-  input,
-  textarea,
-  select {
-    cursor: auto !important;
-  }
+  /* Use the normal system cursor everywhere. Interactive elements get a
+     pointer via their own classes / element defaults. */
 
   body {
     @apply bg-background text-foreground;

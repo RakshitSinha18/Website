@@ -1,6 +1,5 @@
 "use client"
 
-import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
 import { WorkSection } from "@/components/sections/work-section"
 import { ServicesSection } from "@/components/sections/services-section"
@@ -154,7 +153,6 @@ export default function Home() {
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-background">
-      {isDesktop && <CustomCursor />}
       <GrainOverlay />
 
       {/* Animated gradient background (CSS-based) */}

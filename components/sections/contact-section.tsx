@@ -5,7 +5,15 @@ import { useReveal } from "@/hooks/use-reveal"
 import { useState, type FormEvent } from "react"
 import { supabase } from "@/lib/supabase"
 
-const TOPICS = ["Tableau / BI", "SQL & Data", "Career Guidance", "Advanced Excel", "Base SAS", "Other"]
+const TOPICS = [
+  "Data Analytics",
+  "Tableau & Dashboards",
+  "SQL & T-SQL",
+  "Advanced Excel",
+  "Base SAS 9.4",
+  "BI Career Coaching",
+  "Something else",
+]
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
