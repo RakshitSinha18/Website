@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
+import { useToast } from "@/components/toast"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,13 +15,21 @@ export default function LoginPage() {
 
   // Rakshit → admin dashboard; students → their portal.
   const destFor = (email?: string | null) => (isAdminEmail(email) ? "/admin" : "/portal")
+
+  // Clear Admin vs Student distinction. Default is student; ?role=mentor for admin.
+  const [role, setRole] = useState<"student" | "mentor">("student")
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("role") === "mentor") setRole("mentor")
+  }, [])
+  const isMentor = role === "mentor"
+
+  const { toast } = useToast()
   const [mode, setMode] = useState<"signin" | "signup">("signin")
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState("")
-  const [notice, setNotice] = useState("")
 
   // Already logged in → go to the right place (admin vs student).
   useEffect(() => {
@@ -29,15 +38,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError("")
-    setNotice("")
 
     if (!isSupabaseConfigured || !supabase) {
-      setError("Login isn't configured yet. Please try again later.")
+      toast("Login isn't configured yet. Please try again later.", "error")
       return
     }
     if (!email || !password) {
-      setError("Enter your email and password.")
+      toast("Enter your email and password.", "error")
       return
     }
 
@@ -50,21 +57,22 @@ export default function LoginPage() {
           options: { data: { full_name: fullName } },
         })
         if (error) throw error
-        // If email confirmation is on, there's no session yet.
         const { data } = await supabase.auth.getSession()
         if (data.session) {
+          toast("Welcome! Taking you to your dashboard…", "success")
           router.replace(destFor(email))
         } else {
-          setNotice("Check your email to confirm your account, then sign in.")
+          toast("Almost there — check your email to confirm your account, then sign in.", "success")
           setMode("signin")
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
+        toast("Signed in! Redirecting…", "success")
         router.replace(destFor(email))
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.")
+      toast(err instanceof Error ? err.message : "Something went wrong.", "error")
     } finally {
       setBusy(false)
     }
@@ -72,21 +80,19 @@ export default function LoginPage() {
 
   // Send a password-reset email (works for students AND Rakshit's owner account).
   const handleReset = async () => {
-    setError("")
-    setNotice("")
     if (!supabase) {
-      setError("Login isn't configured yet.")
+      toast("Login isn't configured yet.", "error")
       return
     }
     if (!email) {
-      setError("Enter your email above first, then tap “Forgot password”.")
+      toast("Enter your email above first, then tap “Forgot password”.", "info")
       return
     }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset/`,
     })
-    if (error) setError(error.message)
-    else setNotice("Password reset link sent — check your email.")
+    if (error) toast(error.message, "error")
+    else toast("Password reset link sent — check your email.", "success")
   }
 
   return (
@@ -104,26 +110,43 @@ export default function LoginPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Back to site
         </Link>
 
-        <div className="rounded-2xl border border-foreground/20 bg-background/85 p-6 shadow-2xl backdrop-blur-2xl md:p-8">
+        <div
+          className={`rounded-2xl border bg-background/85 p-6 shadow-2xl backdrop-blur-2xl md:p-8 ${
+            isMentor ? "border-sky-400/40" : "border-foreground/20"
+          }`}
+        >
+          {/* Clear Admin vs Student toggle */}
+          <div className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-foreground/15 bg-foreground/5 p-1">
+            <button
+              type="button"
+              onClick={() => setRole("student")}
+              className={`rounded-full py-2 font-mono text-xs transition-all ${
+                !isMentor ? "bg-foreground text-background" : "text-foreground/60 hover:text-foreground"
+              }`}
+            >
+              🎓 Student
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("mentor")}
+              className={`rounded-full py-2 font-mono text-xs transition-all ${
+                isMentor ? "bg-sky-500 text-white" : "text-foreground/60 hover:text-foreground"
+              }`}
+            >
+              🛡 Rakshit (Admin)
+            </button>
+          </div>
+
           <h1 className="mb-1 font-sans text-3xl font-light tracking-tight text-foreground">
-            {mode === "signin" ? "Sign in" : "Create your account"}
+            {isMentor ? "Mentor sign in" : mode === "signin" ? "Student sign in" : "Create your account"}
           </h1>
           <p className="mb-5 font-mono text-xs text-foreground/60">
-            {mode === "signin"
-              ? "One login for everyone — students reach their portal, Rakshit reaches the mentor dashboard."
-              : "Join to book 1-on-1 evening classes with Rakshit."}
+            {isMentor
+              ? "Rakshit's dashboard — manage bookings, courses, roadmap and payments."
+              : mode === "signin"
+                ? "Book evening classes and track your learning roadmap."
+                : "Join to book 1-on-1 evening classes with Rakshit."}
           </p>
-
-          {mode === "signin" && (
-            <div className="mb-5 flex gap-2">
-              <span className="flex-1 rounded-lg border border-foreground/15 bg-foreground/5 px-3 py-2 text-center font-mono text-[11px] text-foreground/70">
-                🎓 Student → Portal
-              </span>
-              <span className="flex-1 rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 py-2 text-center font-mono text-[11px] text-sky-200/90">
-                🛡 Rakshit → Admin
-              </span>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
@@ -166,13 +189,11 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-full bg-foreground/95 px-6 py-3 text-sm font-medium text-background transition-all hover:bg-foreground disabled:opacity-50"
+              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] hover:from-sky-400 hover:to-blue-500 disabled:opacity-50"
             >
               {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
             </button>
 
-            {error && <p className="text-center font-mono text-xs text-red-300/90">{error}</p>}
-            {notice && <p className="text-center font-mono text-xs text-emerald-300/90">{notice}</p>}
           </form>
 
           {mode === "signin" && (
@@ -186,7 +207,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="mt-4 text-center font-mono text-xs text-foreground/60">
+          {/* Students can self-register; the mentor account is pre-created. */}
+          <div className={`mt-4 text-center font-mono text-xs text-foreground/60 ${isMentor ? "hidden" : ""}`}>
             {mode === "signin" ? (
               <>
                 New here?{" "}

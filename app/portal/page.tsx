@@ -7,6 +7,7 @@ import { CalendarClock, LogOut, User as UserIcon, BookOpen, CheckCircle2, Clock,
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { BookingCalendar } from "@/components/booking-calendar"
+import { useToast } from "@/components/toast"
 
 interface ClassItem {
   id: string
@@ -48,7 +49,7 @@ export default function PortalPage() {
   const [date, setDate] = useState("")
   const [slot, setSlot] = useState("")
   const [notes, setNotes] = useState("")
-  const [msg, setMsg] = useState("")
+  const { toast } = useToast()
   const [savingProfile, setSavingProfile] = useState(false)
   const [booking, setBooking] = useState(false)
 
@@ -115,10 +116,9 @@ export default function PortalPage() {
   }, [bookings])
 
   const handleBook = async () => {
-    setMsg("")
     if (!supabase || !user) return
     if (!selectedClass || !date || !slot) {
-      setMsg("Pick a class, a date and an evening slot.")
+      toast("Pick a class, a date and an evening slot.", "info")
       return
     }
     const cls = classes.find((c) => c.id === selectedClass)
@@ -135,14 +135,14 @@ export default function PortalPage() {
     setBooking(false)
 
     if (error) {
-      setMsg(error.message)
+      toast(error.message, "error")
       return
     }
-    setMsg("Class requested! Rakshit will confirm your evening slot.")
+    toast("Class requested! Pay via UPI, then Rakshit confirms your evening slot.", "success")
     setNotes("")
     const { data: bks } = await supabase
       .from("class_bookings")
-      .select("id,class_title,scheduled_at,status,notes")
+      .select("id,class_title,scheduled_at,status,notes,payment_status")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
   }
@@ -158,7 +158,7 @@ export default function PortalPage() {
       updated_at: new Date().toISOString(),
     })
     setSavingProfile(false)
-    setMsg(error ? error.message : "Profile saved.")
+    toast(error ? error.message : "Profile saved.", error ? "error" : "success")
   }
 
   const handleLogout = async () => {
@@ -216,12 +216,6 @@ export default function PortalPage() {
           </button>
         </div>
 
-        {msg && (
-          <div className="mb-6 rounded-lg border border-foreground/20 bg-foreground/10 px-4 py-2.5 font-mono text-xs text-foreground/90 backdrop-blur">
-            {msg}
-          </div>
-        )}
-
         <div className="grid gap-6 md:grid-cols-2">
           {/* Book a class */}
           <section className="rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
@@ -269,7 +263,7 @@ export default function PortalPage() {
             <button
               onClick={handleBook}
               disabled={booking}
-              className="w-full rounded-full bg-foreground/95 px-6 py-2.5 text-sm font-medium text-background transition-all hover:bg-foreground disabled:opacity-50"
+              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] hover:from-sky-400 hover:to-blue-500 disabled:opacity-50"
             >
               {booking ? "Requesting…" : "Request class"}
             </button>

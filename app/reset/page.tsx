@@ -109,7 +109,7 @@ export default function ResetPage() {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full rounded-full bg-foreground/95 px-6 py-3 text-sm font-medium text-background transition-all hover:bg-foreground disabled:opacity-50"
+                className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] hover:from-sky-400 hover:to-blue-500 disabled:opacity-50"
               >
                 {busy ? "Updating…" : "Update password"}
               </button>

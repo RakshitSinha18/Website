@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
+import { ToastProvider } from "@/components/toast"
 import "./globals.css"
 
 const geist = Inter({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -60,7 +61,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   )

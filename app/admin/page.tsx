@@ -7,6 +7,7 @@ import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus,
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
+import { useToast } from "@/components/toast"
 
 interface ClassBooking {
   id: string
@@ -49,7 +50,13 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<SessionRequest[]>([])
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [roadmap, setRoadmap] = useState<RoadmapRow[]>([])
-  const [msg, setMsg] = useState("")
+  const { toast } = useToast()
+  // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
+  const setMsg = (text: string) => {
+    if (!text) return
+    const isErr = /error|failed|invalid|denied|not found|violates/i.test(text)
+    toast(text, isErr ? "error" : "success")
+  }
   const [busyId, setBusyId] = useState<string | null>(null)
 
   // New-item drafts
@@ -226,11 +233,6 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {msg && (
-          <div className="mb-6 rounded-lg border border-foreground/20 bg-foreground/10 px-4 py-2.5 font-mono text-xs text-foreground/90 backdrop-blur">
-            {msg}
-          </div>
-        )}
 
         {/* Payment settings (UPI) */}
         <section className="mb-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
