@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -26,13 +26,34 @@ interface SessionRequest {
   created_at: string
 }
 
+interface ClassRow {
+  id: string
+  title: string
+  description: string
+  duration: string
+  active: boolean
+}
+interface RoadmapRow {
+  id: string
+  track: string
+  day: number
+  title: string
+  description: string
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
   const [classBookings, setClassBookings] = useState<ClassBooking[]>([])
   const [requests, setRequests] = useState<SessionRequest[]>([])
+  const [classes, setClasses] = useState<ClassRow[]>([])
+  const [roadmap, setRoadmap] = useState<RoadmapRow[]>([])
   const [msg, setMsg] = useState("")
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  // New-item drafts
+  const [newClass, setNewClass] = useState({ title: "", description: "", duration: "1–2 hours" })
+  const [newTask, setNewTask] = useState({ track: "Data Analytics", day: "", title: "", description: "" })
 
   const allowed = !loading && user && isAdminEmail(user.email)
 
@@ -48,16 +69,61 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!allowed || !supabase) return
-    const load = async () => {
-      const [{ data: cb }, { data: sr }] = await Promise.all([
-        supabase.from("class_bookings").select("*").order("scheduled_at", { ascending: true }),
-        supabase.from("session_bookings").select("*").order("created_at", { ascending: false }),
-      ])
-      if (cb) setClassBookings(cb as ClassBooking[])
-      if (sr) setRequests(sr as SessionRequest[])
-    }
     load()
   }, [allowed])
+
+  const load = async () => {
+    if (!supabase) return
+    const [{ data: cb }, { data: sr }, { data: cl }, { data: rm }] = await Promise.all([
+      supabase.from("class_bookings").select("*").order("scheduled_at", { ascending: true }),
+      supabase.from("session_bookings").select("*").order("created_at", { ascending: false }),
+      supabase.from("classes").select("*").order("created_at", { ascending: true }),
+      supabase.from("roadmap_tasks").select("*").order("day", { ascending: true }),
+    ])
+    if (cb) setClassBookings(cb as ClassBooking[])
+    if (sr) setRequests(sr as SessionRequest[])
+    if (cl) setClasses(cl as ClassRow[])
+    if (rm) setRoadmap(rm as RoadmapRow[])
+  }
+
+  // --- Class catalog editing ---
+  const addClass = async () => {
+    if (!supabase || !newClass.title.trim()) return
+    const { error } = await supabase.from("classes").insert({ ...newClass, active: true })
+    setMsg(error ? error.message : `Added course “${newClass.title}”.`)
+    if (!error) {
+      setNewClass({ title: "", description: "", duration: "1–2 hours" })
+      load()
+    }
+  }
+  const removeClass = async (id: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("classes").delete().eq("id", id)
+    setMsg(error ? error.message : "Course removed.")
+    if (!error) load()
+  }
+
+  // --- Roadmap editing ---
+  const addTask = async () => {
+    if (!supabase || !newTask.title.trim() || !newTask.day) return
+    const { error } = await supabase.from("roadmap_tasks").insert({
+      track: newTask.track,
+      day: Number(newTask.day),
+      title: newTask.title,
+      description: newTask.description,
+    })
+    setMsg(error ? error.message : `Added roadmap task “${newTask.title}”.`)
+    if (!error) {
+      setNewTask({ track: "Data Analytics", day: "", title: "", description: "" })
+      load()
+    }
+  }
+  const removeTask = async (id: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("roadmap_tasks").delete().eq("id", id)
+    setMsg(error ? error.message : "Roadmap task removed.")
+    if (!error) load()
+  }
 
   const approve = async (b: ClassBooking) => {
     if (!supabase) return
@@ -201,6 +267,114 @@ export default function AdminPage() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* Manage courses */}
+        <section className="mt-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-foreground/70" />
+            <h2 className="font-sans text-lg font-light text-foreground">Manage courses</h2>
+          </div>
+
+          <ul className="mb-4 space-y-2">
+            {classes.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5"
+              >
+                <div>
+                  <p className="font-sans text-sm text-foreground">{c.title}</p>
+                  <p className="font-mono text-[11px] text-foreground/50">{c.duration}</p>
+                </div>
+                <button
+                  onClick={() => removeClass(c.id)}
+                  className="rounded-full border border-red-400/30 px-3 py-1 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+            <input
+              value={newClass.title}
+              onChange={(e) => setNewClass({ ...newClass, title: e.target.value })}
+              placeholder="New course title"
+              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+            />
+            <input
+              value={newClass.duration}
+              onChange={(e) => setNewClass({ ...newClass, duration: e.target.value })}
+              placeholder="Duration"
+              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+            />
+            <button
+              onClick={addClass}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-foreground/95 px-4 py-2 font-mono text-xs text-background transition-colors hover:bg-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+          </div>
+        </section>
+
+        {/* Manage roadmap */}
+        <section className="mt-6 rounded-2xl border border-foreground/15 bg-background/60 p-5 backdrop-blur-xl md:p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-foreground/70" />
+            <h2 className="font-sans text-lg font-light text-foreground">Manage learning roadmap</h2>
+          </div>
+
+          <ul className="mb-4 space-y-2">
+            {roadmap.map((t) => (
+              <li
+                key={t.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5"
+              >
+                <div>
+                  <p className="font-sans text-sm text-foreground">
+                    <span className="font-mono text-[11px] text-foreground/50">Day {t.day} · </span>
+                    {t.title}
+                  </p>
+                  <p className="font-mono text-[11px] text-foreground/50">{t.track}</p>
+                </div>
+                <button
+                  onClick={() => removeTask(t.id)}
+                  className="rounded-full border border-red-400/30 px-3 py-1 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="grid gap-2 md:grid-cols-[auto_1fr_1fr_auto]">
+            <input
+              type="number"
+              value={newTask.day}
+              onChange={(e) => setNewTask({ ...newTask, day: e.target.value })}
+              placeholder="Day"
+              className="w-20 rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+            />
+            <input
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              placeholder="Task title"
+              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+            />
+            <input
+              value={newTask.description}
+              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              placeholder="Short description"
+              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+            />
+            <button
+              onClick={addTask}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-foreground/95 px-4 py-2 font-mono text-xs text-background transition-colors hover:bg-foreground"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+          </div>
         </section>
       </div>
     </main>
