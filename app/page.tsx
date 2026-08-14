@@ -257,8 +257,8 @@ export default function Home() {
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {/* Hero Section */}
-        <section className="flex min-h-[100dvh] w-full shrink-0 flex-col justify-end px-5 pb-16 pt-24 md:w-screen md:px-12 md:pb-24">
-          <div className="flex flex-col items-start gap-8 md:flex-row md:items-end md:justify-between">
+        <section className="flex min-h-[100dvh] w-full shrink-0 flex-col justify-center px-5 pb-20 pt-24 md:w-screen md:px-12 md:pb-16">
+          <div className="flex flex-col items-start gap-10 md:flex-row md:items-center md:justify-between md:gap-16">
           <div className="max-w-3xl">
             <div className="mb-4 flex items-center gap-4 md:hidden">
               <ProfilePhoto className="h-16 w-16" />
@@ -316,18 +316,18 @@ export default function Home() {
           {/* Desktop photo with animated BI data-bars motif */}
           <div className="relative hidden shrink-0 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 md:block">
             {/* glow behind photo */}
-            <div className="absolute -inset-6 -z-10 rounded-full bg-gradient-to-br from-sky-500/30 to-amber-500/20 blur-3xl" />
+            <div className="absolute -inset-8 -z-10 rounded-[2rem] bg-gradient-to-br from-sky-500/40 to-amber-500/25 blur-3xl" />
             {/* animated bars */}
-            <div className="absolute -bottom-4 -left-6 flex h-16 items-end gap-1.5">
+            <div className="absolute -bottom-5 -left-7 flex h-20 items-end gap-1.5">
               {[0, 1, 2, 3, 4].map((i) => (
                 <span
                   key={i}
-                  className="data-bar w-1.5 rounded-full bg-gradient-to-t from-sky-400 to-amber-300"
-                  style={{ height: `${40 + i * 12}px`, animationDelay: `${i * 0.2}s` }}
+                  className="data-bar w-2 rounded-full bg-gradient-to-t from-sky-400 to-amber-300"
+                  style={{ height: `${48 + i * 14}px`, animationDelay: `${i * 0.2}s` }}
                 />
               ))}
             </div>
-            <ProfilePhoto className="h-56 w-56 lg:h-72 lg:w-72" />
+            <ProfilePhoto className="h-64 w-64 lg:h-80 lg:w-80" />
           </div>
           </div>
 
