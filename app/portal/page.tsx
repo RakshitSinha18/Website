@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { CalendarClock, LogOut, User as UserIcon, BookOpen, CheckCircle2, Clock, Map } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
+import { BookingCalendar } from "@/components/booking-calendar"
 
 interface ClassItem {
   id: string
@@ -43,7 +44,7 @@ export default function PortalPage() {
 
   const [selectedClass, setSelectedClass] = useState("")
   const [date, setDate] = useState("")
-  const [slot, setSlot] = useState(EVENING_SLOTS[1])
+  const [slot, setSlot] = useState("")
   const [notes, setNotes] = useState("")
   const [msg, setMsg] = useState("")
   const [savingProfile, setSavingProfile] = useState(false)
@@ -97,11 +98,23 @@ export default function PortalPage() {
 
   const minDate = useMemo(() => new Date().toISOString().split("T")[0], [])
 
+  // Which day+slot combos this student already has, so the calendar can grey them out.
+  const takenSlots = useMemo(() => {
+    const set = new Set<string>()
+    for (const b of bookings) {
+      const d = new Date(b.scheduled_at)
+      const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+      const time = `${String(d.getHours()).padStart(2, "0")}:00`
+      set.add(`${day}|${time}`)
+    }
+    return set
+  }, [bookings])
+
   const handleBook = async () => {
     setMsg("")
     if (!supabase || !user) return
-    if (!selectedClass || !date) {
-      setMsg("Pick a class and a date.")
+    if (!selectedClass || !date || !slot) {
+      setMsg("Pick a class, a date and an evening slot.")
       return
     }
     const cls = classes.find((c) => c.id === selectedClass)
@@ -229,31 +242,15 @@ export default function PortalPage() {
               ))}
             </select>
 
-            <div className="mb-3 grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block font-mono text-xs text-foreground/60">Date</label>
-                <input
-                  type="date"
-                  min={minDate}
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground focus:border-foreground/50 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block font-mono text-xs text-foreground/60">Evening slot</label>
-                <select
-                  value={slot}
-                  onChange={(e) => setSlot(e.target.value)}
-                  className="w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground focus:border-foreground/50 focus:outline-none [&>option]:text-black"
-                >
-                  {EVENING_SLOTS.map((s) => (
-                    <option key={s} value={s}>
-                      {formatSlot(s)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <label className="mb-1 block font-mono text-xs text-foreground/60">Pick a date &amp; evening slot</label>
+            <div className="mb-3 rounded-xl border border-foreground/10 bg-foreground/5 p-3">
+              <BookingCalendar
+                takenSlots={takenSlots}
+                onChange={(d, s) => {
+                  setDate(d || "")
+                  setSlot(s || "")
+                }}
+              />
             </div>
 
             <label className="mb-1 block font-mono text-xs text-foreground/60">Notes (optional)</label>
