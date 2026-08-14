@@ -129,6 +129,61 @@
   }
 }
 
+/* Shimmering gradient text for the hero name. */
+@layer utilities {
+  .shimmer-text {
+    background: linear-gradient(
+      100deg,
+      #ffffff 0%,
+      #ffffff 35%,
+      #7cc4ff 50%,
+      #ffb84d 62%,
+      #ffffff 78%,
+      #ffffff 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 6s linear infinite;
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: 130% 0;
+    }
+    100% {
+      background-position: -30% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer-text {
+      animation: none;
+    }
+  }
+
+  /* Little animated data-bars (BI motif) behind the hero photo. */
+  .data-bar {
+    transform-origin: bottom;
+    animation: barPulse 2.8s ease-in-out infinite;
+  }
+  @keyframes barPulse {
+    0%,
+    100% {
+      transform: scaleY(0.35);
+      opacity: 0.55;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .data-bar {
+      animation: none;
+    }
+  }
+}
+
 /* Animated gradient background (replaces the WebGL shader).
    Vivid, dependency-free, blue -> amber flow with visible motion. */
 @layer utilities {

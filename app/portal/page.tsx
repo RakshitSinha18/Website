@@ -151,14 +151,27 @@ export default function PortalPage() {
 
   if (loading || !user) {
     return (
-      <main className="relative flex min-h-[100dvh] items-center justify-center">
+      <main className="relative min-h-[100dvh]">
         <div className="animated-gradient fixed inset-0 z-0">
-          <div className="absolute inset-0 bg-black/35" />
+          <div className="absolute inset-0 bg-black/40" />
         </div>
-        <p className="relative z-10 font-mono text-sm text-foreground/70">Loading…</p>
+        <div className="relative z-10 mx-auto max-w-5xl px-5 py-8 md:py-12">
+          <div className="mb-8 h-10 w-48 animate-pulse rounded-lg bg-foreground/10" />
+          <div className="grid gap-6 md:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-2xl border border-foreground/10 bg-background/40"
+                style={{ animationDelay: `${i * 120}ms` }}
+              />
+            ))}
+          </div>
+        </div>
       </main>
     )
   }
+
+  const profileComplete = Boolean(profile.full_name && profile.experience && profile.goals)
 
   return (
     <main className="relative min-h-[100dvh]">

@@ -8,6 +8,7 @@ import { AboutSection } from "@/components/sections/about-section"
 import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { ProfilePhoto } from "@/components/profile-photo"
+import { RotatingText } from "@/components/rotating-text"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
@@ -252,9 +253,16 @@ export default function Home() {
                 Senior BI Consultant · Mentor · Mumbai, India
               </p>
             </div>
-            <h1 className="mb-5 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.05] tracking-tight text-foreground duration-1000 md:mb-6 md:text-7xl lg:text-8xl">
-              <span className="text-balance">Rakshit Sinha</span>
+            <h1 className="mb-2 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.05] tracking-tight duration-1000 md:mb-3 md:text-7xl lg:text-8xl">
+              <span className="shimmer-text text-balance">Rakshit Sinha</span>
             </h1>
+            <div className="mb-5 flex animate-in fade-in slide-in-from-bottom-4 items-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 md:mb-6 md:text-3xl">
+              <span className="text-foreground/50">I do</span>
+              <RotatingText
+                words={["Data Analytics", "Tableau Dashboards", "SQL & BI", "Mentoring"]}
+                className="bg-gradient-to-r from-sky-300 to-amber-300 bg-clip-text font-normal text-transparent"
+              />
+            </div>
             <p className="mb-5 max-w-2xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/90 duration-1000 delay-200 md:mb-6 md:text-xl">
               <span className="text-pretty">
                 Results-driven Senior Business Intelligence professional turning complex information into meaningful
@@ -266,7 +274,7 @@ export default function Home() {
               {["T-SQL", "Tableau", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
                 <span
                   key={skill}
-                  className="rounded-full border border-foreground/20 bg-foreground/10 px-3 py-1 font-mono text-[11px] text-foreground/90 backdrop-blur-md md:text-xs"
+                  className="cursor-default rounded-full border border-foreground/20 bg-foreground/10 px-3 py-1 font-mono text-[11px] text-foreground/90 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/40 hover:bg-foreground/20 md:text-xs"
                 >
                   {skill}
                 </span>
@@ -287,8 +295,20 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Desktop photo */}
-          <div className="hidden shrink-0 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 md:block">
+          {/* Desktop photo with animated BI data-bars motif */}
+          <div className="relative hidden shrink-0 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 md:block">
+            {/* glow behind photo */}
+            <div className="absolute -inset-6 -z-10 rounded-full bg-gradient-to-br from-sky-500/30 to-amber-500/20 blur-3xl" />
+            {/* animated bars */}
+            <div className="absolute -bottom-4 -left-6 flex h-16 items-end gap-1.5">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <span
+                  key={i}
+                  className="data-bar w-1.5 rounded-full bg-gradient-to-t from-sky-400 to-amber-300"
+                  style={{ height: `${40 + i * 12}px`, animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
             <ProfilePhoto className="h-56 w-56 lg:h-72 lg:w-72" />
           </div>
           </div>
