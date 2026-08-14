@@ -133,6 +133,25 @@ export default function Home() {
     }
   }, [currentSection, isDesktop])
 
+  // Keyboard navigation: arrows / Home / End move between sections (Operable, WCAG).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        if (currentSection < 4) scrollToSection(currentSection + 1)
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        if (currentSection > 0) scrollToSection(currentSection - 1)
+      } else if (e.key === "Home") {
+        scrollToSection(0)
+      } else if (e.key === "End") {
+        scrollToSection(4)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [currentSection, isDesktop])
+
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-background">
       {isDesktop && <CustomCursor />}
@@ -313,16 +332,21 @@ export default function Home() {
           </div>
           </div>
 
-          <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 animate-in fade-in duration-1000 delay-500 md:block">
-            <div className="flex items-center gap-2">
-              <p className="font-mono text-xs text-foreground/80">
-                {isDesktop ? "Scroll to explore" : "Swipe up to explore"}
-              </p>
-              <div className="flex h-6 w-12 items-center justify-center rounded-full border border-foreground/20 bg-foreground/15 backdrop-blur-md">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-foreground/80" />
-              </div>
+          {currentSection === 0 && (
+            <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 animate-in fade-in duration-1000 delay-500 md:block">
+              <button
+                onClick={() => scrollToSection(1)}
+                className="group flex items-center gap-2.5 rounded-full border border-foreground/20 bg-foreground/10 px-4 py-2 backdrop-blur-md transition-all hover:border-foreground/40 hover:bg-foreground/20"
+              >
+                <span className="font-mono text-xs text-foreground/90">
+                  {isDesktop ? "Scroll → or use ← → keys" : "Swipe up to explore"}
+                </span>
+                <span className="text-foreground/80 transition-transform duration-300 group-hover:translate-x-1">
+                  {isDesktop ? "→" : "↓"}
+                </span>
+              </button>
             </div>
-          </div>
+          )}
         </section>
 
         <WorkSection />
