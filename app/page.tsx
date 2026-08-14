@@ -1,6 +1,7 @@
 "use client"
 
 import { GrainOverlay } from "@/components/grain-overlay"
+import { LiquidBackground } from "@/components/liquid-background"
 import { WorkSection } from "@/components/sections/work-section"
 import { ServicesSection } from "@/components/sections/services-section"
 import { AboutSection } from "@/components/sections/about-section"
@@ -155,14 +156,15 @@ export default function Home() {
     <main className="relative h-[100dvh] w-full overflow-hidden bg-background">
       <GrainOverlay />
 
-      {/* Animated gradient background (CSS-based) */}
+      {/* Interactive liquid background — base gradient + mouse-reactive blobs */}
       <div
-        className={`animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden transition-opacity duration-700 ${
+        className={`animated-gradient fixed inset-0 z-0 overflow-hidden transition-opacity duration-700 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
       >
+        {isDesktop && <LiquidBackground />}
         {/* Lighter vignette so the colour stays vivid but text stays readable. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
       </div>
 
       <nav
