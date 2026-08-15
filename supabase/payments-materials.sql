@@ -144,6 +144,9 @@ create policy "mentor uploads materials"
 --    Extends the classes table so each course has editable rich detail.
 --    Public read (course pages); mentor-only edit.
 -- ---------------------------------------------------------------------------
+-- Numeric price for checkout (smallest unit, e.g. paise). The old free-form
+-- `price` text column stays for display; this one drives payment amounts.
+alter table public.classes add column if not exists price_paise integer not null default 0;
 alter table public.classes add column if not exists tagline    text;
 alter table public.classes add column if not exists level      text;
 alter table public.classes add column if not exists for_whom   text;

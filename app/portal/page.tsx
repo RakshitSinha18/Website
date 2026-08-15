@@ -28,12 +28,15 @@ import { BookingCalendar } from "@/components/booking-calendar"
 import { useToast } from "@/components/toast"
 import { QuoteOfDay } from "@/components/quote-of-day"
 import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@/components/ui/shell"
+import { startPayment, openRazorpay, type Provider } from "@/lib/payments"
+import { CreditCard } from "lucide-react"
 
 interface ClassItem {
   id: string
   title: string
   description: string
   duration: string
+  price_paise?: number
 }
 interface Booking {
   id: string
@@ -81,13 +84,27 @@ export default function PortalPage() {
     if (!loading && !user) router.replace("/login")
   }, [loading, user, router])
 
+  // Handle return from Stripe/Razorpay checkout.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("paid") === "1") {
+      toast("Payment received! Your booking is being confirmed.", "success")
+      setTab("classes")
+      window.history.replaceState({}, "", "/portal/")
+    } else if (params.get("canceled") === "1") {
+      toast("Payment canceled — you can try again anytime.", "info")
+      window.history.replaceState({}, "", "/portal/")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Load classes, bookings and profile.
   useEffect(() => {
     if (!user || !supabase) return
     const load = async () => {
       const [{ data: cls }, { data: bks }, { data: prof }, { data: tasks }, { data: prog }, { data: st }] =
         await Promise.all([
-          supabase.from("classes").select("id,title,description,duration").eq("active", true),
+          supabase.from("classes").select("id,title,description,duration,price_paise").eq("active", true),
           supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status").order("scheduled_at", { ascending: true }),
           supabase.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
           supabase.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
@@ -413,13 +430,19 @@ export default function PortalPage() {
                         })}
                       </p>
                       {/* Meeting invite — add confirmed session to any calendar. */}
-                      {confirmed && (
+                      {confirmed ? (
                         <button
                           onClick={() => addToCalendar(b)}
                           className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 font-mono text-[11px] text-sky-200 transition-colors hover:bg-sky-400/20"
                         >
                           <CalendarPlus className="h-3.5 w-3.5" /> Add to calendar
                         </button>
+                      ) : (
+                        <PayControls
+                          booking={b}
+                          amountPaise={classPrice(classes, b.class_title)}
+                          email={user.email ?? undefined}
+                        />
                       )}
                     </li>
                   )
@@ -671,6 +694,93 @@ function PaymentMethods({ p }: { p: Record<string, any> }) {
 
 function ensureHttp(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+// Look up a booking's price from the loaded classes (fallback 0 → "contact").
+function classPrice(classes: ClassItem[], title: string): number {
+  return classes.find((c) => c.title === title)?.price_paise ?? 0
+}
+
+// Per-booking payment controls: require T&C acceptance, then pay via provider.
+function PayControls({
+  booking,
+  amountPaise,
+  email,
+}: {
+  booking: Booking
+  amountPaise: number
+  email?: string
+}) {
+  const { toast } = useToast()
+  const [agree, setAgree] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  if (!amountPaise) {
+    return (
+      <p className="mt-2 font-mono text-[11px] text-foreground/45">
+        Awaiting confirmation — Rakshit will share payment details.
+      </p>
+    )
+  }
+
+  const pay = async (provider: Provider) => {
+    if (!agree) {
+      toast("Please accept the Terms & Refund policy first.", "info")
+      return
+    }
+    setBusy(true)
+    const res = await startPayment({
+      provider,
+      bookingId: booking.id,
+      amount: amountPaise,
+      currency: provider === "razorpay" ? "INR" : "USD",
+      title: booking.class_title,
+    })
+    setBusy(false)
+    if (!res.ok) {
+      toast(res.error ?? "Payment could not start.", "error")
+      return
+    }
+    if (res.razorpay) openRazorpay(res.razorpay, { name: booking.class_title, email })
+    // Stripe navigates away on success.
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+      <p className="mb-2 text-sm text-foreground">
+        Pay ₹{(amountPaise / 100).toFixed(0)} to confirm your slot
+      </p>
+      <label className="mb-3 flex cursor-pointer items-start gap-2 text-[11px] text-foreground/60">
+        <input
+          type="checkbox"
+          checked={agree}
+          onChange={(e) => setAgree(e.target.checked)}
+          className="mt-0.5 h-3.5 w-3.5 accent-sky-500"
+        />
+        <span>
+          I accept the{" "}
+          <a href="/terms/" target="_blank" className="text-sky-300 underline">Terms</a> and{" "}
+          <a href="/refund/" target="_blank" className="text-sky-300 underline">Refund policy</a>.
+        </span>
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => pay("razorpay")}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-3 py-1.5 font-mono text-[11px] font-medium text-white transition-colors hover:bg-sky-400 disabled:opacity-50"
+        >
+          <CreditCard className="h-3.5 w-3.5" /> Pay (India · UPI/Card)
+        </button>
+        <button
+          onClick={() => pay("stripe")}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 font-mono text-[11px] text-foreground transition-colors hover:bg-white/10 disabled:opacity-50"
+        >
+          <CreditCard className="h-3.5 w-3.5" /> Pay (International)
+        </button>
+      </div>
+    </div>
+  )
 }
 
 // Real, working preferences persisted to localStorage.
