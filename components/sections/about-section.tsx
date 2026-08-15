@@ -11,6 +11,57 @@ const STATS = [
   { value: 100, suffix: "+", label: "Dashboards", sublabel: "Shipped & maintained" },
 ]
 
+// Tool proficiency — a data professional's portfolio staple.
+// Qualitative tiers (no invented percentages); the bar width mirrors the tier.
+const TIER_WIDTH: Record<string, string> = {
+  Expert: "100%",
+  Advanced: "80%",
+  Proficient: "60%",
+}
+const SKILLS = [
+  { name: "Tableau", tier: "Expert" },
+  { name: "SQL / T-SQL", tier: "Expert" },
+  { name: "Advanced Excel", tier: "Advanced" },
+  { name: "Power BI", tier: "Advanced" },
+  { name: "Base SAS 9.4", tier: "Proficient" },
+]
+
+function SkillMatrix({ active }: { active: boolean }) {
+  return (
+    <div
+      className={`mt-6 rounded-2xl border border-white/10 bg-[#0d1526]/60 p-4 backdrop-blur-md transition-all duration-700 md:p-5 ${
+        active ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+      }`}
+      style={{ transitionDelay: "400ms" }}
+    >
+      <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-foreground/40">
+        Core toolkit
+      </p>
+      <ul className="space-y-2.5">
+        {SKILLS.map((s, i) => (
+          <li key={s.name}>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-sm text-foreground/90">{s.name}</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-foreground/50">
+                {s.tier}
+              </span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-sky-400 to-amber-300 transition-[width] duration-1000 ease-out"
+                style={{
+                  width: active ? TIER_WIDTH[s.tier] : "0%",
+                  transitionDelay: `${500 + i * 120}ms`,
+                }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function StatCard({
   stat,
   active,
@@ -84,6 +135,9 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
                 navigate career challenges, and reach their personal and professional goals.
               </p>
               <QuoteOfDay className="mt-5 max-w-md" />
+              <div className="max-w-md">
+                <SkillMatrix active={isVisible} />
+              </div>
             </div>
           </div>
 
