@@ -29,7 +29,7 @@ import { useToast } from "@/components/toast"
 import { QuoteOfDay } from "@/components/quote-of-day"
 import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@/components/ui/shell"
 import { startPayment, openRazorpay, type Provider } from "@/lib/payments"
-import { CreditCard } from "lucide-react"
+import { CreditCard, FileText, Paperclip } from "lucide-react"
 
 interface ClassItem {
   id: string
@@ -67,6 +67,10 @@ export default function PortalPage() {
   const [roadmap, setRoadmap] = useState<RoadmapTask[]>([])
   const [done, setDone] = useState<Set<string>>(new Set())
   const [payInfo, setPayInfo] = useState<Record<string, any> | null>(null)
+  // Materials (PPT/notes) keyed by class_id, visible for confirmed bookings.
+  const [materials, setMaterials] = useState<
+    { id: string; class_id: string; title: string; kind: string; file_url: string }[]
+  >([])
 
   const [selectedClass, setSelectedClass] = useState("")
   const [date, setDate] = useState("")
@@ -120,6 +124,13 @@ export default function PortalPage() {
       if (prof) setProfile({ full_name: prof.full_name || "", experience: prof.experience || "", goals: prof.goals || "" })
       if (tasks) setRoadmap(tasks as RoadmapTask[])
       if (prog) setDone(new Set(prog.filter((p: { completed: boolean }) => p.completed).map((p: { task_id: string }) => p.task_id)))
+
+      // Materials for classes the student can access (RLS returns only permitted rows).
+      const { data: mats } = await supabase
+        .from("class_materials")
+        .select("id,class_id,title,kind,file_url")
+        .order("created_at", { ascending: true })
+      if (mats) setMaterials(mats as typeof materials)
     }
     load()
   }, [user])
@@ -429,14 +440,21 @@ export default function PortalPage() {
                           minute: "2-digit",
                         })}
                       </p>
-                      {/* Meeting invite — add confirmed session to any calendar. */}
+                      {/* Meeting invite + materials for confirmed sessions. */}
                       {confirmed ? (
-                        <button
-                          onClick={() => addToCalendar(b)}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 font-mono text-[11px] text-sky-200 transition-colors hover:bg-sky-400/20"
-                        >
-                          <CalendarPlus className="h-3.5 w-3.5" /> Add to calendar
-                        </button>
+                        <>
+                          <button
+                            onClick={() => addToCalendar(b)}
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 font-mono text-[11px] text-sky-200 transition-colors hover:bg-sky-400/20"
+                          >
+                            <CalendarPlus className="h-3.5 w-3.5" /> Add to calendar
+                          </button>
+                          <SessionMaterials
+                            materials={materials.filter(
+                              (m) => m.class_id === classId(classes, b.class_title),
+                            )}
+                          />
+                        </>
                       ) : (
                         <PayControls
                           booking={b}
@@ -699,6 +717,41 @@ function ensureHttp(url: string) {
 // Look up a booking's price from the loaded classes (fallback 0 → "contact").
 function classPrice(classes: ClassItem[], title: string): number {
   return classes.find((c) => c.title === title)?.price_paise ?? 0
+}
+
+function classId(classes: ClassItem[], title: string): string | undefined {
+  return classes.find((c) => c.title === title)?.id
+}
+
+// Downloadable PPT / notes for a confirmed session.
+function SessionMaterials({
+  materials,
+}: {
+  materials: { id: string; title: string; kind: string; file_url: string }[]
+}) {
+  if (materials.length === 0) return null
+  return (
+    <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-2.5">
+      <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground/40">
+        Class materials
+      </p>
+      <ul className="space-y-1">
+        {materials.map((m) => (
+          <li key={m.id}>
+            <a
+              href={m.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-sky-300 hover:underline"
+            >
+              {m.kind === "ppt" ? <FileText className="h-3.5 w-3.5" /> : <Paperclip className="h-3.5 w-3.5" />}
+              {m.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 // Per-booking payment controls: require T&C acceptance, then pay via provider.
