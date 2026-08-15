@@ -15,6 +15,12 @@ import {
   Loader2,
   Check,
   GraduationCap,
+  Settings,
+  CalendarPlus,
+  KeyRound,
+  Mail,
+  AlertTriangle,
+  ShieldCheck,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
@@ -66,6 +72,9 @@ export default function PortalPage() {
   const { toast } = useToast()
   const [savingProfile, setSavingProfile] = useState(false)
   const [booking, setBooking] = useState(false)
+
+  // Which tab/view is active (tabbed portal).
+  const [tab, setTab] = useState<"book" | "classes" | "roadmap" | "settings">("book")
 
   // Redirect out if not logged in.
   useEffect(() => {
@@ -180,6 +189,45 @@ export default function PortalPage() {
     router.replace("/")
   }
 
+  // Settings → change password: reuse Supabase's reset-email flow.
+  const handleChangePassword = async () => {
+    if (!supabase || !user?.email) return
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${window.location.origin}/reset/`,
+    })
+    toast(
+      error ? error.message : "Password reset link sent — check your email.",
+      error ? "error" : "success",
+    )
+  }
+
+  // Meeting invite: download an .ics so a confirmed session lands in any calendar.
+  const addToCalendar = (b: Booking) => {
+    const start = new Date(b.scheduled_at)
+    const end = new Date(start.getTime() + 60 * 60 * 1000) // assume 1h
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
+    const ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Rakshit Sinha//Evening Classes//EN",
+      "BEGIN:VEVENT",
+      `UID:${b.id}@sinharakshit.com`,
+      `DTSTAMP:${fmt(new Date())}`,
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:${b.class_title} — with Rakshit Sinha`,
+      `DESCRIPTION:${(b.notes || "1-on-1 evening BI class").replace(/\n/g, " ")}`,
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n")
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }))
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${b.class_title.replace(/\s+/g, "-")}.ics`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading || !user) {
     return (
       <main className="relative min-h-[100dvh] text-foreground">
@@ -206,7 +254,7 @@ export default function PortalPage() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-5 py-8 md:py-12">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between gap-4">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <Link
               href="/"
@@ -225,9 +273,43 @@ export default function PortalPage() {
           </Button>
         </div>
 
-        <QuoteOfDay className="mb-6" />
+        {/* Tab navigation */}
+        <nav
+          role="tablist"
+          aria-label="Portal sections"
+          className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03] p-1"
+        >
+          {[
+            { id: "book", label: "Book", icon: CalendarClock },
+            { id: "classes", label: "My Classes", icon: BookOpen },
+            { id: "roadmap", label: "Roadmap", icon: Map },
+            { id: "settings", label: "Settings", icon: Settings },
+          ].map((t) => {
+            const active = tab === t.id
+            const Icon = t.icon
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setTab(t.id as typeof tab)}
+                className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  active
+                    ? "bg-white text-[#0b0f19] shadow-sm"
+                    : "text-foreground/55 hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" /> {t.label}
+              </button>
+            )
+          })}
+        </nav>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        {tab === "book" && <QuoteOfDay className="mb-6" />}
+
+        {/* ── BOOK TAB ─────────────────────────────────────────── */}
+        {tab === "book" && (
+        <div className="stagger grid gap-6 md:grid-cols-2">
           {/* Book a class */}
           <Card>
             <CardTitle
@@ -280,41 +362,10 @@ export default function PortalPage() {
             {payInfo && <PaymentMethods p={payInfo} />}
           </Card>
 
-          {/* My bookings */}
-          <Card>
-            <CardTitle icon={<BookOpen className="h-4 w-4" />} title="My classes" />
-            {bookings.length === 0 ? (
-              <p className="text-sm text-foreground/50">No classes booked yet.</p>
-            ) : (
-              <ul className="space-y-3">
-                {bookings.map((b) => (
-                  <li
-                    key={b.id}
-                    className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-foreground">{b.class_title}</span>
-                      <StatusBadge status={b.status} />
-                    </div>
-                    <p className="mt-1 font-mono text-[11px] text-foreground/55">
-                      {new Date(b.scheduled_at).toLocaleString([], {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
           {/* Available classes */}
-          <Card className="md:col-span-2">
+          <Card>
             <CardTitle title="Available classes" />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-1">
               {classes.map((c) => (
                 <div
                   key={c.id}
@@ -327,9 +378,62 @@ export default function PortalPage() {
               ))}
             </div>
           </Card>
+        </div>
+        )}
 
-          {/* Learning roadmap */}
-          <Card className="md:col-span-2">
+        {/* ── MY CLASSES TAB ───────────────────────────────────── */}
+        {tab === "classes" && (
+        <div className="stagger">
+          <Card>
+            <CardTitle icon={<BookOpen className="h-4 w-4" />} title="My classes" />
+            {bookings.length === 0 ? (
+              <p className="text-sm text-foreground/50">
+                No classes booked yet. Head to the <strong>Book</strong> tab to request one.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {bookings.map((b) => {
+                  const confirmed = b.status === "confirmed"
+                  return (
+                    <li
+                      key={b.id}
+                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-foreground">{b.class_title}</span>
+                        <StatusBadge status={b.status} />
+                      </div>
+                      <p className="mt-1 font-mono text-[11px] text-foreground/55">
+                        {new Date(b.scheduled_at).toLocaleString([], {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      {/* Meeting invite — add confirmed session to any calendar. */}
+                      {confirmed && (
+                        <button
+                          onClick={() => addToCalendar(b)}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 font-mono text-[11px] text-sky-200 transition-colors hover:bg-sky-400/20"
+                        >
+                          <CalendarPlus className="h-3.5 w-3.5" /> Add to calendar
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </Card>
+        </div>
+        )}
+
+        {/* ── ROADMAP TAB ──────────────────────────────────────── */}
+        {tab === "roadmap" && (
+        <div className="stagger">
+          <Card>
             <CardTitle
               icon={<Map className="h-4 w-4" />}
               title="My learning roadmap"
@@ -389,10 +493,15 @@ export default function PortalPage() {
               )}
             </ol>
           </Card>
+        </div>
+        )}
 
+        {/* ── SETTINGS TAB ─────────────────────────────────────── */}
+        {tab === "settings" && (
+        <div className="stagger space-y-6">
           {/* Profile */}
-          <Card className="md:col-span-2">
-            <CardTitle icon={<UserIcon className="h-4 w-4" />} title="My profile" />
+          <Card>
+            <CardTitle icon={<UserIcon className="h-4 w-4" />} title="Profile" hint="How Rakshit sees you and tailors your roadmap." />
             <div className="grid gap-3 md:grid-cols-3">
               <input
                 value={profile.full_name}
@@ -430,7 +539,58 @@ export default function PortalPage() {
               {savingProfile ? "Saving…" : "Save profile"}
             </Button>
           </Card>
+
+          {/* Account */}
+          <Card>
+            <CardTitle icon={<KeyRound className="h-4 w-4" />} title="Account" hint="Sign-in email and security." />
+            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
+              <Mail className="h-4 w-4 shrink-0 text-foreground/40" />
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] text-foreground/45">Signed in as</p>
+                <p className="truncate text-sm text-foreground">{user.email}</p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={handleChangePassword}>
+                <KeyRound className="h-3.5 w-3.5" /> Change password
+              </Button>
+              <Button variant="secondary" onClick={handleLogout}>
+                <LogOut className="h-3.5 w-3.5" /> Sign out
+              </Button>
+            </div>
+            {/* 2FA is planned — see SECURITY-2FA.md. */}
+            <p className="mt-3 flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 font-mono text-[11px] text-foreground/45">
+              <ShieldCheck className="h-3.5 w-3.5" /> Two-factor authentication — coming soon.
+            </p>
+          </Card>
+
+          {/* Preferences */}
+          <Card>
+            <CardTitle icon={<Settings className="h-4 w-4" />} title="Preferences" />
+            <PreferenceToggles />
+          </Card>
+
+          {/* Danger zone */}
+          <Card className="border-red-400/20">
+            <CardTitle icon={<AlertTriangle className="h-4 w-4" />} title="Danger zone" hint="Irreversible actions." />
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-400/20 bg-red-500/[0.04] px-3.5 py-3">
+              <div>
+                <p className="text-sm text-foreground">Delete account</p>
+                <p className="text-xs text-foreground/50">
+                  Removes your access. To fully erase your data, email Rakshit — deletion needs
+                  admin confirmation.
+                </p>
+              </div>
+              <a
+                href="mailto:rsinha1369@gmail.com?subject=Please delete my account"
+                className="shrink-0 rounded-lg border border-red-400/40 px-3 py-1.5 font-mono text-[11px] text-red-300 transition-colors hover:bg-red-500/10"
+              >
+                Request deletion
+              </a>
+            </div>
+          </Card>
         </div>
+        )}
       </div>
     </main>
   )
@@ -511,6 +671,69 @@ function PaymentMethods({ p }: { p: Record<string, any> }) {
 
 function ensureHttp(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+// Real, working preferences persisted to localStorage.
+function PreferenceToggles() {
+  const [reducedMotion, setReducedMotion] = useState(false)
+  const [emailReminders, setEmailReminders] = useState(true)
+
+  useEffect(() => {
+    setReducedMotion(localStorage.getItem("pref:reducedMotion") === "1")
+    setEmailReminders(localStorage.getItem("pref:emailReminders") !== "0")
+  }, [])
+
+  const toggleMotion = (v: boolean) => {
+    setReducedMotion(v)
+    localStorage.setItem("pref:reducedMotion", v ? "1" : "0")
+    document.documentElement.classList.toggle("reduce-motion", v)
+  }
+  const toggleEmail = (v: boolean) => {
+    setEmailReminders(v)
+    localStorage.setItem("pref:emailReminders", v ? "1" : "0")
+  }
+
+  const Row = ({
+    label,
+    hint,
+    checked,
+    onChange,
+  }: {
+    label: string
+    hint: string
+    checked: boolean
+    onChange: (v: boolean) => void
+  }) => (
+    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
+      <span>
+        <span className="block text-sm text-foreground">{label}</span>
+        <span className="block text-xs text-foreground/50">{hint}</span>
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 shrink-0 accent-sky-500"
+      />
+    </label>
+  )
+
+  return (
+    <div className="space-y-2">
+      <Row
+        label="Reduce motion"
+        hint="Tone down background and entrance animations."
+        checked={reducedMotion}
+        onChange={toggleMotion}
+      />
+      <Row
+        label="Email reminders"
+        hint="Get a note before a confirmed session (when enabled by Rakshit)."
+        checked={emailReminders}
+        onChange={toggleEmail}
+      />
+    </div>
+  )
 }
 
 function StatusBadge({ status }: { status: string }) {

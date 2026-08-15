@@ -1,22 +1,49 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 
 /**
  * Shared visual language for the auth + dashboard pages.
  *
  * The look reflects who Rakshit Sinha is — a Senior Business Intelligence
- * consultant: clean, precise, analytical. Calm dark surface, a single quiet
- * radial wash (no busy animation), crisp cards, real icons, generous spacing.
+ * consultant: clean, precise, analytical. Deep surface with slow-drifting
+ * ambient glows, a faint analytical grid (a BI motif), and a soft spotlight
+ * that follows the cursor — professional and alive without being noisy.
  */
 
-/** Full-page calm backdrop. Use once at the root of a page. */
+/** Full-page animated + mouse-reactive backdrop. Use once at the root of a page. */
 export function PageBackdrop() {
+  const spotRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    let raf = 0
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const el = spotRef.current
+        if (!el) return
+        el.style.background = `radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(80,150,255,0.10), transparent 60%)`
+      })
+    }
+    window.addEventListener("mousemove", onMove, { passive: true })
+    return () => {
+      window.removeEventListener("mousemove", onMove)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <div className="absolute inset-0 bg-[#0b0f19]" />
-      <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(56,120,220,0.14),transparent_70%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_85%_95%,rgba(255,160,70,0.07),transparent_70%)]" />
+      {/* Base radial washes */}
+      <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(56,120,220,0.16),transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_85%_95%,rgba(255,160,70,0.08),transparent_70%)]" />
+
+      {/* Slow-drifting ambient glow orbs (ambient animation) */}
+      <div className="page-orb page-orb--blue" />
+      <div className="page-orb page-orb--amber" />
+
       {/* Faint analytical grid — a subtle BI motif. */}
       <div
         className="absolute inset-0 opacity-[0.04]"
@@ -26,6 +53,9 @@ export function PageBackdrop() {
           backgroundSize: "48px 48px",
         }}
       />
+
+      {/* Cursor-following spotlight (interactive) */}
+      <div ref={spotRef} className="absolute inset-0 transition-[background] duration-200" />
     </div>
   )
 }

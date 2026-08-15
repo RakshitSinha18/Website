@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  BarChart3,
 } from "lucide-react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
@@ -108,8 +107,6 @@ export default function LoginPage() {
     else toast("Password reset link sent — check your email.", "success")
   }
 
-  const accent = isMentor ? "sky" : "slate"
-
   return (
     <main className="relative min-h-[100dvh] bg-[#0b0f19] text-foreground">
       <PageBackdrop />
@@ -125,17 +122,62 @@ export default function LoginPage() {
             Back to site
           </Link>
 
-          <div className="max-w-sm">
-            <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-              <BarChart3 className="h-5 w-5 text-sky-400" />
+          <div className="stagger max-w-sm">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <span className="font-mono text-[11px] text-foreground/70">
+                Senior BI Consultant @ IBM
+              </span>
             </div>
+
             <h2 className="text-2xl font-light leading-snug tracking-tight text-foreground">
-              Learn Business Intelligence, one evening at a time.
+              Turn data into decisions — learn BI one evening at a time.
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-foreground/55">
-              Book 1-on-1 sessions with Rakshit and track your learning roadmap across Tableau, SQL,
-              Advanced Excel and Base SAS.
+              1-on-1 evening classes and a tracked learning roadmap across Tableau, SQL,
+              Advanced Excel and Base SAS — taught by a working data professional.
             </p>
+
+            {/* Verifiable facts only — no invented metrics. */}
+            <div className="mt-8 grid grid-cols-3 gap-3">
+              {[
+                { value: "9+", label: "Years in BI" },
+                { value: "7", label: "Companies" },
+                { value: "100+", label: "Dashboards" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-center"
+                >
+                  <p className="text-xl font-medium text-foreground">{s.value}</p>
+                  <p className="mt-0.5 font-mono text-[10px] leading-tight text-foreground/50">
+                    {s.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Tech stack chips */}
+            <div className="mt-6">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-foreground/40">
+                Core stack
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["Tableau", "SQL / T-SQL", "Advanced Excel", "Base SAS 9.4", "Power BI"].map(
+                  (t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-foreground/70 transition-colors hover:border-sky-400/40 hover:text-foreground"
+                    >
+                      {t}
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
           </div>
 
           <p className="font-mono text-xs text-foreground/35">© Rakshit Sinha · sinharakshit.com</p>
@@ -152,7 +194,7 @@ export default function LoginPage() {
             Back to site
           </Link>
 
-          <div className="mx-auto w-full max-w-sm">
+          <div className="stagger mx-auto w-full max-w-sm">
             {/* Role toggle — real icons, no emojis */}
             <div
               role="tablist"

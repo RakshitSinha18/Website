@@ -250,3 +250,76 @@
     }
   }
 }
+
+/* Ambient glow orbs for the shared PageBackdrop (auth + dashboard pages). */
+@layer utilities {
+  .page-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(70px);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .page-orb--blue {
+    width: 40vw;
+    height: 40vw;
+    left: -6vw;
+    top: -8vw;
+    background: radial-gradient(circle, rgba(56, 130, 246, 0.35), transparent 70%);
+    animation: orbDriftA 22s ease-in-out infinite;
+  }
+  .page-orb--amber {
+    width: 34vw;
+    height: 34vw;
+    right: -6vw;
+    bottom: -8vw;
+    background: radial-gradient(circle, rgba(255, 160, 70, 0.22), transparent 70%);
+    animation: orbDriftB 28s ease-in-out infinite;
+  }
+  @keyframes orbDriftA {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(14vw, 10vh) scale(1.12); }
+  }
+  @keyframes orbDriftB {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-12vw, -8vh) scale(1.1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-orb {
+      animation: none;
+    }
+  }
+
+  /* Staggered fade-up for grouped elements (auth forms). */
+  .stagger > * {
+    opacity: 0;
+    animation: staggerUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.12s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.19s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.26s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.33s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.40s; }
+  @keyframes staggerUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stagger > * {
+      opacity: 1;
+      animation: none;
+    }
+  }
+
+  /* User-set "Reduce motion" preference (Settings → Preferences). */
+  .reduce-motion .page-orb,
+  .reduce-motion .animated-gradient,
+  .reduce-motion .stagger > *,
+  .reduce-motion .shimmer-text {
+    animation: none !important;
+  }
+  .reduce-motion .stagger > * {
+    opacity: 1 !important;
+  }
+}
