@@ -4,11 +4,12 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
 import { useToast } from "@/components/toast"
+import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@/components/ui/shell"
 
 interface ClassBooking {
   id: string
@@ -234,50 +235,46 @@ export default function AdminPage() {
 
   if (loading || !allowed) {
     return (
-      <main className="relative flex min-h-[100dvh] items-center justify-center">
-        <div className="animated-gradient fixed inset-0 z-0">
-          <div className="absolute inset-0 bg-black/45" />
-        </div>
-        <p className="relative z-10 font-mono text-sm text-foreground/70">Checking access…</p>
+      <main className="relative flex min-h-[100dvh] items-center justify-center text-foreground">
+        <PageBackdrop />
+        <p className="relative z-10 flex items-center gap-2 text-sm text-foreground/70">
+          <Loader2 className="h-4 w-4 animate-spin" /> Checking access…
+        </p>
       </main>
     )
   }
 
   return (
-    <main className="relative min-h-[100dvh]">
-      <div className="animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-black/45" />
-      </div>
+    <main className="relative min-h-[100dvh] text-foreground">
+      <PageBackdrop />
 
       <div className="relative z-10 mx-auto max-w-5xl px-5 py-8 md:py-12">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between gap-4">
           <div>
-            <Link href="/" className="font-mono text-xs text-foreground/60 hover:text-foreground">
-              ← sinharakshit.com
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-foreground/50 transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> sinharakshit.com
             </Link>
-            <h1 className="mt-1 flex items-center gap-2 font-sans text-2xl font-light text-foreground md:text-3xl">
-              <ShieldCheck className="h-6 w-6 text-sky-300" /> Mentor Dashboard
+            <h1 className="mt-1.5 flex items-center gap-2.5 text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+              <ShieldCheck className="h-6 w-6 text-sky-400" /> Admin Dashboard
             </h1>
-            <p className="font-mono text-xs text-foreground/60">Signed in as {user?.email}</p>
+            <p className="mt-0.5 text-xs text-foreground/50">Signed in as {user?.email}</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 rounded-full border border-foreground/20 bg-foreground/10 px-4 py-2 font-mono text-xs text-foreground transition-colors hover:bg-foreground/20"
-          >
+          <Button variant="secondary" onClick={handleLogout} className="shrink-0">
             <LogOut className="h-3.5 w-3.5" /> Sign out
-          </button>
+          </Button>
         </div>
 
 
         {/* Payment settings — UPI (India) + PayPal + link + bank (international) */}
-        <section className="mb-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-          <div className="mb-1 flex items-center gap-2">
-            <IndianRupee className="h-4 w-4 text-foreground/70" />
-            <h2 className="font-sans text-lg font-light text-foreground">Payment methods</h2>
-          </div>
-          <p className="mb-5 font-mono text-[11px] text-foreground/50">
-            Enable the ways students can pay. They pay you directly, then you confirm below. No gateway fees.
-          </p>
+        <Card className="mb-6">
+          <CardTitle
+            icon={<IndianRupee className="h-4 w-4" />}
+            title="Payment methods"
+            hint="Enable the ways students can pay. They pay you directly, then you confirm below. No gateway fees."
+          />
 
           <div className="space-y-4">
             {/* UPI */}
@@ -363,7 +360,7 @@ export default function AdminPage() {
 
             {/* Shared notes */}
             <div>
-              <label className="mb-1 block font-mono text-xs text-foreground/60">Notes for students (optional)</label>
+              <FieldLabel>Notes for students (optional)</FieldLabel>
               <input
                 value={pay.pay_instructions}
                 onChange={(e) => setPay({ ...pay, pay_instructions: e.target.value })}
@@ -378,22 +375,21 @@ export default function AdminPage() {
               />
             </div>
 
-            <button
-              onClick={savePayments}
-              disabled={savingPay}
-              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.01] disabled:opacity-50"
-            >
+            <Button onClick={savePayments} disabled={savingPay} className="w-full">
+              {savingPay && <Loader2 className="h-4 w-4 animate-spin" />}
               {savingPay ? "Saving…" : "Save payment methods"}
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
 
         {/* Class bookings */}
-        <section className="mb-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-foreground/70" />
-            <h2 className="font-sans text-lg font-light text-foreground">Class bookings</h2>
-            <span className="ml-1 rounded-full bg-foreground/10 px-2 py-0.5 font-mono text-[10px] text-foreground/70">
+        <Card className="mb-6">
+          <div className="mb-5 flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sky-400">
+              <CalendarClock className="h-4 w-4" />
+            </span>
+            <h2 className="text-base font-medium tracking-tight text-foreground">Class bookings</h2>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] text-foreground/70">
               {classBookings.length}
             </span>
           </div>
@@ -404,11 +400,11 @@ export default function AdminPage() {
               {classBookings.map((b) => (
                 <li
                   key={b.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
                 >
                   <div>
-                    <p className="font-sans text-sm text-foreground">{b.class_title}</p>
-                    <p className="font-mono text-[11px] text-foreground/60">
+                    <p className="text-sm text-foreground">{b.class_title}</p>
+                    <p className="font-mono text-[11px] text-foreground/55">
                       {new Date(b.scheduled_at).toLocaleString([], {
                         weekday: "short",
                         month: "short",
@@ -431,8 +427,9 @@ export default function AdminPage() {
                       <button
                         onClick={() => confirmPaid(b)}
                         disabled={busyId === b.id}
-                        className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-amber-400 px-4 py-1.5 font-mono text-[11px] font-medium text-black transition-all hover:scale-105 disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-full bg-sky-500 px-4 py-1.5 font-mono text-[11px] font-medium text-white transition-colors hover:bg-sky-400 disabled:opacity-50"
                       >
+                        {busyId === b.id && <Loader2 className="h-3 w-3 animate-spin" />}
                         {busyId === b.id ? "Confirming…" : "Mark paid & confirm"}
                       </button>
                     </div>
@@ -441,14 +438,16 @@ export default function AdminPage() {
               ))}
             </ul>
           )}
-        </section>
+        </Card>
 
         {/* Session requests (from public form) */}
-        <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Inbox className="h-4 w-4 text-foreground/70" />
-            <h2 className="font-sans text-lg font-light text-foreground">Session requests</h2>
-            <span className="ml-1 rounded-full bg-foreground/10 px-2 py-0.5 font-mono text-[10px] text-foreground/70">
+        <Card>
+          <div className="mb-5 flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sky-400">
+              <Inbox className="h-4 w-4" />
+            </span>
+            <h2 className="text-base font-medium tracking-tight text-foreground">Session requests</h2>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] text-foreground/70">
               {requests.length}
             </span>
           </div>
@@ -457,9 +456,9 @@ export default function AdminPage() {
           ) : (
             <ul className="space-y-2">
               {requests.map((r) => (
-                <li key={r.id} className="rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-3">
+                <li key={r.id} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-sans text-sm text-foreground">
+                    <p className="text-sm text-foreground">
                       {r.name} <span className="font-mono text-[11px] text-foreground/50">· {r.topic}</span>
                     </p>
                     <a
@@ -469,35 +468,33 @@ export default function AdminPage() {
                       <Mail className="h-3 w-3" /> {r.email}
                     </a>
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-foreground/70">{r.message}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-foreground/65">{r.message}</p>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
 
         {/* Manage courses */}
-        <section className="mt-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-foreground/70" />
-            <h2 className="font-sans text-lg font-light text-foreground">Manage courses</h2>
-          </div>
+        <Card className="mt-6">
+          <CardTitle icon={<BookOpen className="h-4 w-4" />} title="Manage courses" />
 
           <ul className="mb-4 space-y-2">
             {classes.map((c) => (
               <li
                 key={c.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5"
+                className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5"
               >
                 <div>
-                  <p className="font-sans text-sm text-foreground">{c.title}</p>
+                  <p className="text-sm text-foreground">{c.title}</p>
                   <p className="font-mono text-[11px] text-foreground/50">{c.duration}</p>
                 </div>
                 <button
                   onClick={() => removeClass(c.id)}
-                  className="rounded-full border border-red-400/30 px-3 py-1 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
+                  aria-label={`Remove ${c.title}`}
+                  className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
                 >
-                  Remove
+                  <Trash2 className="h-3 w-3" /> Remove
                 </button>
               </li>
             ))}
@@ -508,38 +505,34 @@ export default function AdminPage() {
               value={newClass.title}
               onChange={(e) => setNewClass({ ...newClass, title: e.target.value })}
               placeholder="New course title"
-              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+              aria-label="New course title"
+              className={fieldClass}
             />
             <input
               value={newClass.duration}
               onChange={(e) => setNewClass({ ...newClass, duration: e.target.value })}
               placeholder="Duration"
-              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+              aria-label="Course duration"
+              className={fieldClass}
             />
-            <button
-              onClick={addClass}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-foreground/95 px-4 py-2 font-mono text-xs text-background transition-colors hover:bg-foreground"
-            >
+            <Button onClick={addClass}>
               <Plus className="h-3.5 w-3.5" /> Add
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
 
         {/* Manage roadmap */}
-        <section className="mt-6 rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-foreground/70" />
-            <h2 className="font-sans text-lg font-light text-foreground">Manage learning roadmap</h2>
-          </div>
+        <Card className="mt-6">
+          <CardTitle icon={<Map className="h-4 w-4" />} title="Manage learning roadmap" />
 
           <ul className="mb-4 space-y-2">
             {roadmap.map((t) => (
               <li
                 key={t.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-foreground/10 bg-foreground/5 px-4 py-2.5"
+                className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5"
               >
                 <div>
-                  <p className="font-sans text-sm text-foreground">
+                  <p className="text-sm text-foreground">
                     <span className="font-mono text-[11px] text-foreground/50">Day {t.day} · </span>
                     {t.title}
                   </p>
@@ -547,9 +540,10 @@ export default function AdminPage() {
                 </div>
                 <button
                   onClick={() => removeTask(t.id)}
-                  className="rounded-full border border-red-400/30 px-3 py-1 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
+                  aria-label={`Remove day ${t.day} task`}
+                  className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
                 >
-                  Remove
+                  <Trash2 className="h-3 w-3" /> Remove
                 </button>
               </li>
             ))}
@@ -561,28 +555,28 @@ export default function AdminPage() {
               value={newTask.day}
               onChange={(e) => setNewTask({ ...newTask, day: e.target.value })}
               placeholder="Day"
-              className="w-20 rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+              aria-label="Day number"
+              className={`${fieldClass} w-24`}
             />
             <input
               value={newTask.title}
               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
               placeholder="Task title"
-              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+              aria-label="Task title"
+              className={fieldClass}
             />
             <input
               value={newTask.description}
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               placeholder="Short description"
-              className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+              aria-label="Task description"
+              className={fieldClass}
             />
-            <button
-              onClick={addTask}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-foreground/95 px-4 py-2 font-mono text-xs text-background transition-colors hover:bg-foreground"
-            >
+            <Button onClick={addTask}>
               <Plus className="h-3.5 w-3.5" /> Add
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       </div>
     </main>
   )
@@ -590,14 +584,14 @@ export default function AdminPage() {
 
 function EmptyRow({ label }: { label: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-foreground/15 px-4 py-6 text-center font-mono text-xs text-foreground/50">
+    <div className="rounded-xl border border-dashed border-white/15 px-4 py-6 text-center text-xs text-foreground/50">
       {label}
     </div>
   )
 }
 
 const inputCls =
-  "w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+  "w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none"
 
 function PayBlock({
   label,
@@ -611,9 +605,9 @@ function PayBlock({
   children: React.ReactNode
 }) {
   return (
-    <div className={`rounded-xl border p-3 transition-colors ${enabled ? "border-sky-400/25 bg-sky-400/5" : "border-foreground/10 bg-foreground/5"}`}>
+    <div className={`rounded-xl border p-3.5 transition-colors ${enabled ? "border-sky-400/25 bg-sky-400/[0.06]" : "border-white/10 bg-white/[0.03]"}`}>
       <label className="mb-2 flex cursor-pointer items-center justify-between">
-        <span className="font-sans text-sm text-foreground">{label}</span>
+        <span className="text-sm font-medium text-foreground">{label}</span>
         <span className="flex items-center gap-2">
           <span className="font-mono text-[10px] text-foreground/50">{enabled ? "on" : "off"}</span>
           <input

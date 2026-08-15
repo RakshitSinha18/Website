@@ -54,8 +54,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           return (
             <div
               key={t.id}
-              role="status"
-              aria-live="polite"
+              // Errors are announced immediately; success/info wait politely.
+              role={t.kind === "error" ? "alert" : "status"}
+              aria-live={t.kind === "error" ? "assertive" : "polite"}
               className={`pointer-events-auto flex items-start gap-2.5 rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-xl ${STYLES[t.kind]} animate-in fade-in slide-in-from-bottom-4 duration-300`}
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0" />

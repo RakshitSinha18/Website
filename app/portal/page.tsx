@@ -3,12 +3,25 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CalendarClock, LogOut, User as UserIcon, BookOpen, CheckCircle2, Clock, Map } from "lucide-react"
+import {
+  CalendarClock,
+  LogOut,
+  User as UserIcon,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Map,
+  ArrowLeft,
+  Loader2,
+  Check,
+  GraduationCap,
+} from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { BookingCalendar } from "@/components/booking-calendar"
 import { useToast } from "@/components/toast"
 import { QuoteOfDay } from "@/components/quote-of-day"
+import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@/components/ui/shell"
 
 interface ClassItem {
   id: string
@@ -169,17 +182,15 @@ export default function PortalPage() {
 
   if (loading || !user) {
     return (
-      <main className="relative min-h-[100dvh]">
-        <div className="animated-gradient fixed inset-0 z-0">
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
+      <main className="relative min-h-[100dvh] text-foreground">
+        <PageBackdrop />
         <div className="relative z-10 mx-auto max-w-5xl px-5 py-8 md:py-12">
-          <div className="mb-8 h-10 w-48 animate-pulse rounded-lg bg-foreground/10" />
+          <div className="mb-8 h-10 w-48 animate-pulse rounded-lg bg-white/10" />
           <div className="grid gap-6 md:grid-cols-2">
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-48 animate-pulse rounded-2xl border border-foreground/10 bg-background/40"
+                className="h-48 animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]"
                 style={{ animationDelay: `${i * 120}ms` }}
               />
             ))}
@@ -189,52 +200,48 @@ export default function PortalPage() {
     )
   }
 
-  const profileComplete = Boolean(profile.full_name && profile.experience && profile.goals)
-
   return (
-    <main className="relative min-h-[100dvh]">
-      <div className="animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
+    <main className="relative min-h-[100dvh] text-foreground">
+      <PageBackdrop />
 
       <div className="relative z-10 mx-auto max-w-5xl px-5 py-8 md:py-12">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between gap-4">
           <div>
-            <Link href="/" className="font-mono text-xs text-foreground/60 hover:text-foreground">
-              ← rakshitsinha.com
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-foreground/50 transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> sinharakshit.com
             </Link>
-            <h1 className="mt-1 font-sans text-2xl font-light text-foreground md:text-3xl">
+            <h1 className="mt-1.5 flex items-center gap-2.5 text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+              <GraduationCap className="h-6 w-6 text-sky-400" />
               Student Portal
             </h1>
-            <p className="font-mono text-xs text-foreground/60">{user.email}</p>
+            <p className="mt-0.5 text-xs text-foreground/50">{user.email}</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 rounded-full border border-foreground/20 bg-foreground/10 px-4 py-2 font-mono text-xs text-foreground transition-colors hover:bg-foreground/20"
-          >
+          <Button variant="secondary" onClick={handleLogout} className="shrink-0">
             <LogOut className="h-3.5 w-3.5" /> Sign out
-          </button>
+          </Button>
         </div>
 
         <QuoteOfDay className="mb-6" />
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Book a class */}
-          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-foreground/70" />
-              <h2 className="font-sans text-lg font-light text-foreground">Book an evening class</h2>
-            </div>
-            <p className="mb-4 font-mono text-[11px] text-foreground/50">
-              Classes run after office hours · 1–2 hours per session
-            </p>
+          <Card>
+            <CardTitle
+              icon={<CalendarClock className="h-4 w-4" />}
+              title="Book an evening class"
+              hint="Classes run after office hours · 1–2 hours per session"
+            />
 
-            <label className="mb-1 block font-mono text-xs text-foreground/60">Class</label>
+            <FieldLabel htmlFor="class-select">Class</FieldLabel>
             <select
+              id="class-select"
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="mb-3 w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground focus:border-foreground/50 focus:outline-none [&>option]:text-black"
+              className={`${fieldClass} mb-4`}
             >
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -243,8 +250,8 @@ export default function PortalPage() {
               ))}
             </select>
 
-            <label className="mb-1 block font-mono text-xs text-foreground/60">Pick a date &amp; evening slot</label>
-            <div className="mb-3 rounded-xl border border-foreground/10 bg-foreground/5 p-3">
+            <FieldLabel>Pick a date &amp; evening slot</FieldLabel>
+            <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
               <BookingCalendar
                 takenSlots={takenSlots}
                 onChange={(d, s) => {
@@ -254,44 +261,42 @@ export default function PortalPage() {
               />
             </div>
 
-            <label className="mb-1 block font-mono text-xs text-foreground/60">Notes (optional)</label>
+            <FieldLabel htmlFor="notes">Notes (optional)</FieldLabel>
             <textarea
+              id="notes"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="What would you like to focus on?"
-              className="mb-4 w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+              className={`${fieldClass} mb-4`}
             />
 
-            <button
-              onClick={handleBook}
-              disabled={booking}
-              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] hover:from-sky-400 hover:to-blue-500 disabled:opacity-50"
-            >
+            <Button onClick={handleBook} disabled={booking} className="w-full">
+              {booking && <Loader2 className="h-4 w-4 animate-spin" />}
               {booking ? "Requesting…" : "Request class"}
-            </button>
+            </Button>
 
             {/* Payment methods */}
             {payInfo && <PaymentMethods p={payInfo} />}
-          </section>
+          </Card>
 
           {/* My bookings */}
-          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-foreground/70" />
-              <h2 className="font-sans text-lg font-light text-foreground">My classes</h2>
-            </div>
+          <Card>
+            <CardTitle icon={<BookOpen className="h-4 w-4" />} title="My classes" />
             {bookings.length === 0 ? (
-              <p className="font-mono text-xs text-foreground/50">No classes booked yet.</p>
+              <p className="text-sm text-foreground/50">No classes booked yet.</p>
             ) : (
               <ul className="space-y-3">
                 {bookings.map((b) => (
-                  <li key={b.id} className="rounded-lg border border-foreground/10 bg-foreground/5 px-3 py-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-sans text-sm text-foreground">{b.class_title}</span>
+                  <li
+                    key={b.id}
+                    className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-foreground">{b.class_title}</span>
                       <StatusBadge status={b.status} />
                     </div>
-                    <p className="mt-0.5 font-mono text-[11px] text-foreground/60">
+                    <p className="mt-1 font-mono text-[11px] text-foreground/55">
                       {new Date(b.scheduled_at).toLocaleString([], {
                         weekday: "short",
                         month: "short",
@@ -304,34 +309,35 @@ export default function PortalPage() {
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
 
           {/* Available classes */}
-          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
-            <h2 className="mb-4 font-sans text-lg font-light text-foreground">Available classes</h2>
+          <Card className="md:col-span-2">
+            <CardTitle title="Available classes" />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {classes.map((c) => (
-                <div key={c.id} className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
-                  <h3 className="mb-1 font-sans text-sm text-foreground">{c.title}</h3>
-                  <p className="mb-2 text-xs leading-relaxed text-foreground/70">{c.description}</p>
-                  <span className="font-mono text-[11px] text-foreground/50">{c.duration}</span>
+                <div
+                  key={c.id}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                >
+                  <h3 className="mb-1 text-sm font-medium text-foreground">{c.title}</h3>
+                  <p className="mb-2 text-xs leading-relaxed text-foreground/60">{c.description}</p>
+                  <span className="font-mono text-[11px] text-foreground/45">{c.duration}</span>
                 </div>
               ))}
             </div>
-          </section>
+          </Card>
 
           {/* Learning roadmap */}
-          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
-            <div className="mb-1 flex items-center gap-2">
-              <Map className="h-4 w-4 text-foreground/70" />
-              <h2 className="font-sans text-lg font-light text-foreground">My learning roadmap</h2>
-            </div>
-            <p className="mb-4 font-mono text-[11px] text-foreground/50">
-              {roadmap.length > 0 ? roadmap[0].track : "Your"} track · {done.size}/{roadmap.length} completed
-            </p>
+          <Card className="md:col-span-2">
+            <CardTitle
+              icon={<Map className="h-4 w-4" />}
+              title="My learning roadmap"
+              hint={`${roadmap.length > 0 ? roadmap[0].track : "Your"} track · ${done.size}/${roadmap.length} completed`}
+            />
 
             {/* Progress bar */}
-            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
+            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-sky-400 to-amber-400 transition-all duration-500"
                 style={{ width: roadmap.length ? `${(done.size / roadmap.length) * 100}%` : "0%" }}
@@ -345,60 +351,61 @@ export default function PortalPage() {
                   <li key={task.id}>
                     <button
                       onClick={() => toggleTask(task.id)}
-                      className={`flex w-full items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
+                      className={`flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 text-left transition-all ${
                         complete
                           ? "border-emerald-400/30 bg-emerald-400/10"
-                          : "border-foreground/10 bg-foreground/5 hover:border-foreground/25"
+                          : "border-white/10 bg-white/[0.03] hover:border-white/25"
                       }`}
                     >
                       <span
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-mono ${
                           complete
                             ? "border-emerald-400 bg-emerald-400 text-black"
-                            : "border-foreground/30 text-foreground/50"
+                            : "border-white/30 text-foreground/50"
                         }`}
                       >
-                        {complete ? "✓" : task.day}
+                        {complete ? <Check className="h-3 w-3" /> : task.day}
                       </span>
                       <span>
                         <span
-                          className={`block font-sans text-sm ${
-                            complete ? "text-foreground/70 line-through" : "text-foreground"
+                          className={`block text-sm ${
+                            complete ? "text-foreground/60 line-through" : "text-foreground"
                           }`}
                         >
                           Day {task.day}: {task.title}
                         </span>
-                        <span className="block text-xs leading-relaxed text-foreground/60">{task.description}</span>
+                        <span className="block text-xs leading-relaxed text-foreground/55">
+                          {task.description}
+                        </span>
                       </span>
                     </button>
                   </li>
                 )
               })}
               {roadmap.length === 0 && (
-                <p className="font-mono text-xs text-foreground/50">
+                <p className="text-sm text-foreground/50">
                   Your roadmap will appear here once Rakshit adds your track.
                 </p>
               )}
             </ol>
-          </section>
+          </Card>
 
           {/* Profile */}
-          <section className="rounded-2xl border border-foreground/15 bg-[#0d1526]/90 p-5 backdrop-blur-xl md:col-span-2 md:p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <UserIcon className="h-4 w-4 text-foreground/70" />
-              <h2 className="font-sans text-lg font-light text-foreground">My profile</h2>
-            </div>
+          <Card className="md:col-span-2">
+            <CardTitle icon={<UserIcon className="h-4 w-4" />} title="My profile" />
             <div className="grid gap-3 md:grid-cols-3">
               <input
                 value={profile.full_name}
                 onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                 placeholder="Full name"
-                className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+                aria-label="Full name"
+                className={fieldClass}
               />
               <select
                 value={profile.experience}
                 onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
-                className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground focus:border-foreground/50 focus:outline-none [&>option]:text-black"
+                aria-label="Experience level"
+                className={fieldClass}
               >
                 <option value="">Experience level…</option>
                 <option>Beginner</option>
@@ -409,17 +416,20 @@ export default function PortalPage() {
                 value={profile.goals}
                 onChange={(e) => setProfile({ ...profile, goals: e.target.value })}
                 placeholder="Your goals"
-                className="rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
+                aria-label="Your goals"
+                className={fieldClass}
               />
             </div>
-            <button
+            <Button
+              variant="secondary"
               onClick={handleSaveProfile}
               disabled={savingProfile}
-              className="mt-4 rounded-full border border-foreground/20 bg-foreground/10 px-5 py-2 font-mono text-xs text-foreground transition-colors hover:bg-foreground/20 disabled:opacity-50"
+              className="mt-4"
             >
+              {savingProfile && <Loader2 className="h-4 w-4 animate-spin" />}
               {savingProfile ? "Saving…" : "Save profile"}
-            </button>
-          </section>
+            </Button>
+          </Card>
         </div>
       </div>
     </main>
@@ -443,8 +453,8 @@ function PaymentMethods({ p }: { p: Record<string, any> }) {
   if (!any) return null
 
   return (
-    <div className="mt-4 rounded-xl border border-foreground/15 bg-foreground/5 p-3">
-      <p className="mb-3 font-mono text-[11px] text-foreground/70">
+    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
+      <p className="mb-3 text-[11px] text-foreground/65">
         Pay to confirm — Rakshit confirms once received.
         {p.currency_note ? ` (${p.currency_note})` : ""}
       </p>
@@ -453,23 +463,23 @@ function PaymentMethods({ p }: { p: Record<string, any> }) {
           <div className="flex items-center gap-3">
             {p.upi_qr_url && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.upi_qr_url} alt="UPI QR" className="h-16 w-16 rounded-lg border border-foreground/15 bg-white object-contain p-1" />
+              <img src={p.upi_qr_url} alt="UPI QR" className="h-16 w-16 rounded-lg border border-white/15 bg-white object-contain p-1" />
             )}
             <div>
-              <p className="font-mono text-[10px] text-foreground/50">UPI (India)</p>
-              {p.upi_id && <p className="select-all font-sans text-sm text-foreground">{p.upi_id}</p>}
+              <p className="font-mono text-[10px] text-foreground/45">UPI (India)</p>
+              {p.upi_id && <p className="select-all text-sm text-foreground">{p.upi_id}</p>}
             </div>
           </div>
         )}
         {paypal && (
           <div>
-            <p className="font-mono text-[10px] text-foreground/50">PayPal</p>
+            <p className="font-mono text-[10px] text-foreground/45">PayPal</p>
             {p.paypal_me_link ? (
-              <a href={ensureHttp(p.paypal_me_link)} target="_blank" rel="noopener noreferrer" className="font-sans text-sm text-sky-300 hover:underline">
+              <a href={ensureHttp(p.paypal_me_link)} target="_blank" rel="noopener noreferrer" className="text-sm text-sky-300 hover:underline">
                 {p.paypal_me_link}
               </a>
             ) : (
-              <p className="select-all font-sans text-sm text-foreground">{p.paypal_email}</p>
+              <p className="select-all text-sm text-foreground">{p.paypal_email}</p>
             )}
           </div>
         )}
@@ -478,20 +488,20 @@ function PaymentMethods({ p }: { p: Record<string, any> }) {
             href={ensureHttp(p.payment_link)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white transition-transform hover:scale-[1.03]"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-semibold text-[#0b0f19] transition-colors hover:bg-white/90"
           >
             {p.payment_link_label || "Pay online"} →
           </a>
         )}
         {bank && (
           <div>
-            <p className="font-mono text-[10px] text-foreground/50">Bank transfer / wire</p>
-            <p className="whitespace-pre-line font-sans text-xs text-foreground/80">{p.bank_details}</p>
+            <p className="font-mono text-[10px] text-foreground/45">Bank transfer / wire</p>
+            <p className="whitespace-pre-line text-xs text-foreground/75">{p.bank_details}</p>
           </div>
         )}
       </div>
       {p.pay_instructions && (
-        <p className="mt-3 border-t border-foreground/10 pt-2 font-mono text-[10px] text-foreground/50">
+        <p className="mt-3 border-t border-white/10 pt-2 font-mono text-[10px] text-foreground/45">
           {p.pay_instructions}
         </p>
       )}

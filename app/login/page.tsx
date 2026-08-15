@@ -3,11 +3,23 @@
 import { useState, type FormEvent, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import {
+  ArrowLeft,
+  GraduationCap,
+  ShieldCheck,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  Loader2,
+  BarChart3,
+} from "lucide-react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
 import { useToast } from "@/components/toast"
+import { PageBackdrop } from "@/components/ui/shell"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -29,6 +41,7 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
 
   // Already logged in → go to the right place (admin vs student).
@@ -95,138 +108,243 @@ export default function LoginPage() {
     else toast("Password reset link sent — check your email.", "success")
   }
 
+  const accent = isMentor ? "sky" : "slate"
+
   return (
-    <main className="relative flex min-h-[100dvh] items-center justify-center px-5 py-16">
-      {/* Full-bleed fixed background so it always covers the viewport */}
-      <div className="animated-gradient floating-orbs fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+    <main className="relative min-h-[100dvh] bg-[#0b0f19] text-foreground">
+      <PageBackdrop />
 
-      <div className="relative z-10 w-full max-w-md">
-        <Link
-          href="/"
-          className="mb-6 inline-flex items-center gap-2 font-mono text-xs text-foreground/80 transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to site
-        </Link>
+      <div className="relative z-10 mx-auto grid min-h-[100dvh] w-full max-w-6xl grid-cols-1 lg:grid-cols-2">
+        {/* Brand / context panel (hidden on small screens) */}
+        <aside className="hidden flex-col justify-between border-r border-white/5 p-10 lg:flex xl:p-14">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-foreground/60 transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to site
+          </Link>
 
-        <div
-          className={`rounded-2xl border bg-[#0d1526]/95 p-6 shadow-2xl backdrop-blur-2xl md:p-8 ${
-            isMentor ? "border-sky-400/40" : "border-foreground/20"
-          }`}
-        >
-          {/* Clear Admin vs Student toggle */}
-          <div className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-foreground/15 bg-foreground/5 p-1">
-            <button
-              type="button"
-              onClick={() => setRole("student")}
-              className={`rounded-full py-2 font-mono text-xs transition-all ${
-                !isMentor ? "bg-foreground text-background" : "text-foreground/60 hover:text-foreground"
-              }`}
-            >
-              🎓 Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole("mentor")}
-              className={`rounded-full py-2 font-mono text-xs transition-all ${
-                isMentor ? "bg-sky-500 text-white" : "text-foreground/60 hover:text-foreground"
-              }`}
-            >
-              🛡 Rakshit (Admin)
-            </button>
+          <div className="max-w-sm">
+            <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+              <BarChart3 className="h-5 w-5 text-sky-400" />
+            </div>
+            <h2 className="text-2xl font-light leading-snug tracking-tight text-foreground">
+              Learn Business Intelligence, one evening at a time.
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-foreground/55">
+              Book 1-on-1 sessions with Rakshit and track your learning roadmap across Tableau, SQL,
+              Advanced Excel and Base SAS.
+            </p>
           </div>
 
-          <h1 className="mb-1 font-sans text-3xl font-light tracking-tight text-foreground">
-            {isMentor ? "Mentor sign in" : mode === "signin" ? "Student sign in" : "Create your account"}
-          </h1>
-          <p className="mb-5 font-mono text-xs text-foreground/60">
-            {isMentor
-              ? "Rakshit's dashboard — manage bookings, courses, roadmap and payments."
-              : mode === "signin"
-                ? "Book evening classes and track your learning roadmap."
-                : "Join to book 1-on-1 evening classes with Rakshit."}
-          </p>
+          <p className="font-mono text-xs text-foreground/35">© Rakshit Sinha · sinharakshit.com</p>
+        </aside>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "signup" && (
-              <div>
-                <label className="mb-1 block font-mono text-xs text-foreground/80">Full name</label>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
-                  placeholder="Your name"
-                />
-              </div>
-            )}
+        {/* Form panel */}
+        <section className="flex flex-col justify-center px-6 py-14 sm:px-10 lg:px-14">
+          {/* Mobile-only back link */}
+          <Link
+            href="/"
+            className="mb-8 inline-flex items-center gap-2 self-start text-sm text-foreground/60 transition-colors hover:text-foreground lg:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to site
+          </Link>
 
-            <div>
-              <label className="mb-1 block font-mono text-xs text-foreground/60">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
-                placeholder="your@email.com"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block font-mono text-xs text-foreground/60">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-foreground/20 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/50 focus:outline-none"
-                placeholder="At least 6 characters"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] hover:from-sky-400 hover:to-blue-500 disabled:opacity-50"
+          <div className="mx-auto w-full max-w-sm">
+            {/* Role toggle — real icons, no emojis */}
+            <div
+              role="tablist"
+              aria-label="Choose account type"
+              className="mb-8 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1"
             >
-              {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
-            </button>
-
-          </form>
-
-          {mode === "signin" && (
-            <div className="mt-3 text-center">
               <button
-                onClick={handleReset}
-                className="font-mono text-xs text-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                type="button"
+                role="tab"
+                aria-selected={!isMentor}
+                onClick={() => setRole("student")}
+                className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  !isMentor
+                    ? "bg-white text-[#0b0f19] shadow-sm"
+                    : "text-foreground/55 hover:text-foreground"
+                }`}
               >
-                Forgot password?
+                <GraduationCap className="h-4 w-4" />
+                Student
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isMentor}
+                onClick={() => setRole("mentor")}
+                className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  isMentor
+                    ? "bg-sky-500 text-white shadow-sm"
+                    : "text-foreground/55 hover:text-foreground"
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Admin
               </button>
             </div>
-          )}
 
-          {/* Students can self-register; the mentor account is pre-created. */}
-          <div className={`mt-4 text-center font-mono text-xs text-foreground/60 ${isMentor ? "hidden" : ""}`}>
-            {mode === "signin" ? (
-              <>
-                New here?{" "}
-                <button onClick={() => setMode("signup")} className="text-foreground underline underline-offset-2">
-                  Create an account
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button onClick={() => setMode("signin")} className="text-foreground underline underline-offset-2">
-                  Sign in
-                </button>
-              </>
+            <h1 className="text-2xl font-medium tracking-tight text-foreground">
+              {isMentor ? "Admin sign in" : mode === "signin" ? "Welcome back" : "Create your account"}
+            </h1>
+            <p className="mt-1.5 text-sm text-foreground/55">
+              {isMentor
+                ? "Manage bookings, courses, roadmap and payments."
+                : mode === "signin"
+                  ? "Sign in to book classes and track your roadmap."
+                  : "Join to book 1-on-1 evening classes with Rakshit."}
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              {mode === "signup" && !isMentor && (
+                <Field label="Full name" htmlFor="fullName" icon={<User className="h-4 w-4" />}>
+                  <input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className={inputClass}
+                    placeholder="Your name"
+                    autoComplete="name"
+                  />
+                </Field>
+              )}
+
+              <Field label="Email" htmlFor="email" icon={<Mail className="h-4 w-4" />}>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className={inputClass}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                />
+              </Field>
+
+              <Field
+                label="Password"
+                htmlFor="password"
+                icon={<Lock className="h-4 w-4" />}
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="pointer-events-auto text-foreground/40 transition-colors hover:text-foreground/80"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              >
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className={`${inputClass} pr-10`}
+                  placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                />
+              </Field>
+
+              {mode === "signin" && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="text-xs text-foreground/50 transition-colors hover:text-foreground"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={busy}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all disabled:opacity-60 ${
+                  isMentor
+                    ? "bg-sky-500 text-white hover:bg-sky-400"
+                    : "bg-white text-[#0b0f19] hover:bg-white/90"
+                }`}
+              >
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+              </button>
+            </form>
+
+            {/* Students can self-register; the admin account is pre-created. */}
+            {!isMentor && (
+              <p className="mt-6 text-center text-sm text-foreground/55">
+                {mode === "signin" ? (
+                  <>
+                    New here?{" "}
+                    <button
+                      onClick={() => setMode("signup")}
+                      className="font-medium text-foreground underline-offset-4 hover:underline"
+                    >
+                      Create an account
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => setMode("signin")}
+                      className="font-medium text-foreground underline-offset-4 hover:underline"
+                    >
+                      Sign in
+                    </button>
+                  </>
+                )}
+              </p>
             )}
           </div>
-        </div>
+        </section>
       </div>
     </main>
+  )
+}
+
+const inputClass =
+  "w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none"
+
+/** Labeled input wrapper with a leading icon and optional trailing control. */
+function Field({
+  label,
+  htmlFor,
+  icon,
+  trailing,
+  children,
+}: {
+  label: string
+  htmlFor: string
+  icon: React.ReactNode
+  trailing?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-medium text-foreground/70">
+        {label}
+      </label>
+      <div className="relative">
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-foreground/40">
+          {icon}
+        </span>
+        {children}
+        {trailing && (
+          <span className="absolute inset-y-0 right-3 flex items-center">{trailing}</span>
+        )}
+      </div>
+    </div>
   )
 }
