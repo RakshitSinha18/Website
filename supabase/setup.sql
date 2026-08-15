@@ -283,9 +283,12 @@ alter table public.settings add column if not exists bank_enabled       boolean 
 
 alter table public.settings enable row level security;
 
+-- Payment details (UPI ID, PayPal, bank) should not be readable by anonymous
+-- visitors — only signed-in students (who are about to pay) and the mentor.
 drop policy if exists "anyone reads settings" on public.settings;
-create policy "anyone reads settings"
-  on public.settings for select to anon, authenticated using (true);
+drop policy if exists "authenticated reads settings" on public.settings;
+create policy "authenticated reads settings"
+  on public.settings for select to authenticated using (true);
 
 drop policy if exists "mentor updates settings" on public.settings;
 create policy "mentor updates settings"
