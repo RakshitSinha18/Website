@@ -240,6 +240,14 @@ export function ContactSection() {
             </form>
           </div>
         </div>
+
+        {/* Footer — legal links */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-foreground/10 pt-6 font-mono text-xs text-foreground/50">
+          <a href="/terms/" className="transition-colors hover:text-foreground">Terms</a>
+          <a href="/privacy/" className="transition-colors hover:text-foreground">Privacy</a>
+          <a href="/refund/" className="transition-colors hover:text-foreground">Refund policy</a>
+          <span className="text-foreground/30">© {new Date().getFullYear()} Rakshit Sinha</span>
+        </div>
       </div>
     </section>
   )
