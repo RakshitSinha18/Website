@@ -312,14 +312,42 @@
     }
   }
 
-  /* User-set "Reduce motion" preference (Settings → Preferences). */
+  /* User-set "Reduce motion" preference (Settings → Preferences / a11y button). */
   .reduce-motion .page-orb,
   .reduce-motion .animated-gradient,
+  .reduce-motion .floating-orbs::before,
+  .reduce-motion .floating-orbs::after,
   .reduce-motion .stagger > *,
-  .reduce-motion .shimmer-text {
+  .reduce-motion .shimmer-text,
+  .reduce-motion .data-bar,
+  .reduce-motion [class*="animate-"] {
     animation: none !important;
+    transition: none !important;
   }
   .reduce-motion .stagger > * {
     opacity: 1 !important;
+  }
+
+  /* Accessibility widget: larger text (scales the whole type scale via rem). */
+  html.a11y-large-text {
+    font-size: 118%;
+  }
+
+  /* Accessibility widget: high contrast — boost text & borders. */
+  .a11y-high-contrast {
+    --foreground: oklch(1 0 0);
+  }
+  .a11y-high-contrast .text-foreground\/55,
+  .a11y-high-contrast .text-foreground\/50,
+  .a11y-high-contrast .text-foreground\/45,
+  .a11y-high-contrast .text-foreground\/40,
+  .a11y-high-contrast .text-foreground\/60,
+  .a11y-high-contrast .text-foreground\/70 {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+  .a11y-high-contrast [class*="border-white/1"],
+  .a11y-high-contrast [class*="border-white/12"],
+  .a11y-high-contrast [class*="border-foreground/1"] {
+    border-color: rgba(255, 255, 255, 0.45) !important;
   }
 }
