@@ -29,23 +29,6 @@ Sections: **Home → Experience → Skills → About → Contact (Book a Session
 
 ---
 
-## Run locally
-
-```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # static export → ./out
-```
-
-Create `.env.local` for the booking form to work locally:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-KEY
-```
-
----
-
 ## Booking / sign-ups (Supabase)
 
 1. Create a free project at [supabase.com](https://supabase.com).
