@@ -27,6 +27,9 @@ create table if not exists public.payments (
   updated_at     timestamptz not null default now()
 );
 
+-- Ensure the bookings table has the column the webhook writes (safe if present).
+alter table public.class_bookings add column if not exists payment_status text not null default 'unpaid';
+
 create index if not exists payments_user_idx on public.payments(user_id);
 create unique index if not exists payments_provider_ref_idx
   on public.payments(provider, provider_ref) where provider_ref is not null;
