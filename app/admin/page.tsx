@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -65,6 +65,15 @@ export default function AdminPage() {
   const [newClass, setNewClass] = useState({ title: "", description: "", duration: "1–2 hours" })
   const [newTask, setNewTask] = useState({ track: "Data Analytics", day: "", title: "", description: "" })
 
+  // Course materials (PPT/notes) management
+  const [materials, setMaterials] = useState<
+    { id: string; class_id: string; title: string; kind: string; file_url: string }[]
+  >([])
+  const [matClass, setMatClass] = useState("")
+  const [matTitle, setMatTitle] = useState("")
+  const [matKind, setMatKind] = useState<"ppt" | "notes">("ppt")
+  const [uploadingMat, setUploadingMat] = useState(false)
+
   // Payment settings (UPI + PayPal + link + bank)
   const [pay, setPay] = useState({
     upi_id: "",
@@ -110,8 +119,17 @@ export default function AdminPage() {
     ])
     if (cb) setClassBookings(cb as ClassBooking[])
     if (sr) setRequests(sr as SessionRequest[])
-    if (cl) setClasses(cl as ClassRow[])
+    if (cl) {
+      setClasses(cl as ClassRow[])
+      if (cl[0]) setMatClass((m) => m || (cl[0] as ClassRow).id)
+    }
     if (rm) setRoadmap(rm as RoadmapRow[])
+
+    const { data: mats } = await supabase
+      .from("class_materials")
+      .select("id,class_id,title,kind,file_url")
+      .order("created_at", { ascending: true })
+    if (mats) setMaterials(mats as typeof materials)
 
     const { data: st } = await supabase.from("settings").select("*").eq("id", 1).single()
     if (st) {
@@ -167,6 +185,48 @@ export default function AdminPage() {
     }
     setPay((p) => ({ ...p, upi_qr_url: url }))
     setMsg("QR code uploaded.")
+  }
+
+  // --- Course materials (PPT / notes) ---
+  const uploadMaterial = async (file: File) => {
+    if (!supabase || !matClass) {
+      setMsg("Pick a course first.")
+      return
+    }
+    setUploadingMat(true)
+    const path = `${matClass}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`
+    const { error: upErr } = await supabase.storage.from("materials").upload(path, file, { upsert: true })
+    if (upErr) {
+      setUploadingMat(false)
+      setMsg(
+        /bucket/i.test(upErr.message)
+          ? "Create a public Storage bucket named 'materials' (run payments-materials.sql)."
+          : upErr.message,
+      )
+      return
+    }
+    const { data: pub } = supabase.storage.from("materials").getPublicUrl(path)
+    const { error } = await supabase.from("class_materials").insert({
+      class_id: matClass,
+      title: matTitle.trim() || file.name,
+      kind: matKind,
+      file_url: pub.publicUrl,
+    })
+    setUploadingMat(false)
+    if (error) {
+      setMsg(error.message)
+      return
+    }
+    setMatTitle("")
+    setMsg("Material uploaded.")
+    load()
+  }
+
+  const removeMaterial = async (id: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("class_materials").delete().eq("id", id)
+    setMsg(error ? error.message : "Material removed.")
+    if (!error) load()
   }
 
   // --- Class catalog editing ---
@@ -519,6 +579,93 @@ export default function AdminPage() {
               <Plus className="h-3.5 w-3.5" /> Add
             </Button>
           </div>
+        </Card>
+
+        {/* Course materials (PPT / notes) */}
+        <Card className="mt-6">
+          <CardTitle
+            icon={<FileText className="h-4 w-4" />}
+            title="Course materials"
+            hint="Upload slides (PPT) and notes for each course — students see them once their booking is confirmed."
+          />
+
+          <ul className="mb-4 space-y-2">
+            {materials.map((m) => {
+              const cls = classes.find((c) => c.id === m.class_id)
+              return (
+                <li
+                  key={m.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <a
+                      href={m.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate text-sm text-sky-300 hover:underline"
+                    >
+                      {m.title}
+                    </a>
+                    <p className="font-mono text-[11px] text-foreground/50">
+                      {m.kind} · {cls?.title ?? "—"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => removeMaterial(m.id)}
+                    aria-label={`Remove ${m.title}`}
+                    className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
+                  >
+                    <Trash2 className="h-3 w-3" /> Remove
+                  </button>
+                </li>
+              )
+            })}
+            {materials.length === 0 && <EmptyRow label="No materials uploaded yet." />}
+          </ul>
+
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+            <select
+              value={matClass}
+              onChange={(e) => setMatClass(e.target.value)}
+              aria-label="Course for material"
+              className={fieldClass}
+            >
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+            <input
+              value={matTitle}
+              onChange={(e) => setMatTitle(e.target.value)}
+              placeholder="Material title (optional)"
+              aria-label="Material title"
+              className={fieldClass}
+            />
+            <select
+              value={matKind}
+              onChange={(e) => setMatKind(e.target.value as "ppt" | "notes")}
+              aria-label="Material type"
+              className={fieldClass}
+            >
+              <option value="ppt">PPT / slides</option>
+              <option value="notes">Notes</option>
+            </select>
+          </div>
+          <label className="mt-2 flex cursor-pointer items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 font-mono text-xs text-[#0b0f19] transition-colors hover:bg-white/90">
+              {uploadingMat ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              {uploadingMat ? "Uploading…" : "Upload file"}
+            </span>
+            <input
+              type="file"
+              accept=".ppt,.pptx,.pdf,.doc,.docx,.txt,.zip"
+              onChange={(e) => e.target.files?.[0] && uploadMaterial(e.target.files[0])}
+              className="hidden"
+              disabled={uploadingMat}
+            />
+          </label>
         </Card>
 
         {/* Manage roadmap */}
