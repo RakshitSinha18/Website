@@ -218,20 +218,8 @@ function DeepDive({ course, onClose }: { course: Course; onClose: () => void }) 
           </ul>
         </Section>
 
-        <Section title="Syllabus">
-          <ol className="space-y-2">
-            {course.syllabus.map((s, i) => (
-              <li key={s} className="flex items-start gap-3 text-sm text-foreground/80">
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[11px] text-black"
-                  style={{ background: `linear-gradient(135deg, ${course.accent[0]}, ${course.accent[1]})` }}
-                >
-                  {i + 1}
-                </span>
-                {s}
-              </li>
-            ))}
-          </ol>
+        <Section title="Learning path">
+          <LearningPath steps={course.syllabus} accent={course.accent} />
         </Section>
 
         <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-foreground/10 pt-5">
@@ -246,6 +234,44 @@ function DeepDive({ course, onClose }: { course: Course; onClose: () => void }) 
         </div>
       </div>
     </div>
+  )
+}
+
+// Visual learning-path: syllabus steps as a connected vertical flow diagram.
+function LearningPath({ steps, accent }: { steps: string[]; accent: [string, string] }) {
+  if (steps.length === 0) return null
+  return (
+    <ol className="relative ml-1">
+      {/* connecting line */}
+      <span
+        className="absolute bottom-3 left-[11px] top-3 w-px"
+        style={{ background: `linear-gradient(${accent[0]}, ${accent[1]})` }}
+        aria-hidden
+      />
+      {steps.map((s, i) => (
+        <li key={s} className="relative flex items-start gap-3 pb-4 last:pb-0">
+          <span
+            className="relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[11px] text-black ring-4 ring-[#0d1526]"
+            style={{ background: `linear-gradient(135deg, ${accent[0]}, ${accent[1]})` }}
+          >
+            {i + 1}
+          </span>
+          <div className="pt-0.5">
+            <span className="text-sm text-foreground/85">{s}</span>
+            {i === 0 && (
+              <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-foreground/40">
+                start
+              </span>
+            )}
+            {i === steps.length - 1 && (
+              <span className="ml-2 font-mono text-[10px] uppercase tracking-wide" style={{ color: accent[0] }}>
+                capstone
+              </span>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
   )
 }
 
