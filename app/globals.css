@@ -328,6 +328,21 @@
     opacity: 1 !important;
   }
 
+  /* Page loader spinner ring. */
+  .page-loader-ring {
+    animation: loaderSpin 0.9s linear infinite;
+  }
+  @keyframes loaderSpin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-loader-ring {
+      animation: none;
+    }
+  }
+
   /* Accessibility widget: larger text (scales the whole type scale via rem). */
   html.a11y-large-text {
     font-size: 118%;
