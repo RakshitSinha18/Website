@@ -54,9 +54,6 @@ interface RoadmapTask {
   description: string
 }
 
-// After-work-hours slots only (1–2 hour evening classes).
-const EVENING_SLOTS = ["18:00", "19:00", "20:00", "21:00"]
-
 export default function PortalPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
@@ -637,12 +634,6 @@ export default function PortalPage() {
   )
 }
 
-function formatSlot(s: string) {
-  const [h] = s.split(":").map(Number)
-  const end = h + 1
-  const to12 = (n: number) => `${((n + 11) % 12) + 1}:00 ${n >= 12 ? "PM" : "AM"}`
-  return `${to12(h)} – ${to12(end)}`
-}
 
 // Shows every payment method the mentor has enabled (UPI, PayPal, link, bank).
 function PaymentMethods({ p }: { p: Record<string, any> }) {
