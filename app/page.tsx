@@ -10,11 +10,17 @@ import { MagneticButton } from "@/components/magnetic-button"
 import { RotatingText } from "@/components/rotating-text"
 import { SpotlightHeroLazy } from "@/components/spotlight/spotlight-hero-lazy"
 import { useMediaQuery } from "@/hooks/use-media-query"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, Mail } from "lucide-react"
 import Link from "next/link"
 import { useRef, useEffect, useState } from "react"
 
-const NAV_ITEMS = ["Home", "Experience", "Courses", "About", "Contact"]
+const NAV_ITEMS = [
+  { label: "Home", Icon: HomeIcon },
+  { label: "Experience", Icon: Briefcase },
+  { label: "Courses", Icon: GraduationCap },
+  { label: "About", Icon: UserRound },
+  { label: "Contact", Icon: Mail },
+]
 
 export default function Home() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -180,16 +186,17 @@ export default function Home() {
         </button>
 
         {/* Desktop nav */}
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-7 md:flex">
           {NAV_ITEMS.map((item, index) => (
             <button
-              key={item}
+              key={item.label}
               onClick={() => scrollToSection(index)}
-              className={`group relative font-sans text-sm font-medium transition-colors ${
+              className={`group relative inline-flex items-center gap-1.5 font-sans text-sm font-medium transition-colors ${
                 currentSection === index ? "text-foreground" : "text-foreground/80 hover:text-foreground"
               }`}
             >
-              {item}
+              <item.Icon className="h-3.5 w-3.5" />
+              {item.label}
               <span
                 className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
                   currentSection === index ? "w-full" : "w-0 group-hover:w-full"
@@ -226,13 +233,14 @@ export default function Home() {
         <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6 bg-background/90 backdrop-blur-xl md:hidden">
           {NAV_ITEMS.map((item, index) => (
             <button
-              key={item}
+              key={item.label}
               onClick={() => scrollToSection(index)}
-              className={`font-sans text-2xl font-light transition-colors ${
+              className={`inline-flex items-center gap-2.5 font-sans text-2xl font-light transition-colors ${
                 currentSection === index ? "text-foreground" : "text-foreground/60"
               }`}
             >
-              {item}
+              <item.Icon className="h-5 w-5" />
+              {item.label}
             </button>
           ))}
           <Link
@@ -342,9 +350,9 @@ export default function Home() {
       >
         {NAV_ITEMS.map((item, index) => (
           <button
-            key={item}
+            key={item.label}
             onClick={() => scrollToSection(index)}
-            aria-label={`Go to ${item}`}
+            aria-label={`Go to ${item.label}`}
             aria-current={currentSection === index}
             className="group relative flex items-center justify-center p-1.5"
           >
@@ -356,7 +364,7 @@ export default function Home() {
               }`}
             />
             <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded-md bg-background/80 px-2 py-1 font-mono text-[10px] text-foreground opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 md:block">
-              {item}
+              {item.label}
             </span>
           </button>
         ))}
