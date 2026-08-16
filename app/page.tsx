@@ -9,7 +9,6 @@ import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { ProfilePhoto } from "@/components/profile-photo"
 import { RotatingText } from "@/components/rotating-text"
-import { BIChart3DLazy } from "@/components/bi-chart-3d-lazy"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
@@ -320,8 +319,6 @@ export default function Home() {
           <div className="relative hidden shrink-0 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 md:block">
             {/* glow behind photo */}
             <div className="absolute -inset-8 -z-10 rounded-[2rem] bg-gradient-to-br from-sky-500/40 to-amber-500/25 blur-3xl" />
-            {/* Floating 3D bar chart (Blender → glTF), desktop-only + lazy */}
-            <BIChart3DLazy className="pointer-events-none absolute -right-16 -top-20 -z-0 h-40 w-40 lg:h-48 lg:w-48" />
             {/* animated bars */}
             <div className="absolute -bottom-5 -left-7 flex h-20 items-end gap-1.5">
               {[0, 1, 2, 3, 4].map((i) => (
