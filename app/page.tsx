@@ -7,8 +7,8 @@ import { ServicesSection } from "@/components/sections/services-section"
 import { AboutSection } from "@/components/sections/about-section"
 import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
-import { ProfilePhoto } from "@/components/profile-photo"
 import { RotatingText } from "@/components/rotating-text"
+import { SpotlightRaysLazy } from "@/components/spotlight/spotlight-rays-lazy"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
@@ -258,17 +258,13 @@ export default function Home() {
         } flex flex-col overflow-y-auto overflow-x-hidden md:flex-row md:overflow-x-auto md:overflow-y-hidden`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {/* Hero Section */}
-        <section className="flex min-h-[100dvh] w-full shrink-0 flex-col justify-center px-5 pb-20 pt-24 md:w-screen md:px-12 md:pb-16">
-          <div className="flex flex-col items-start gap-10 md:flex-row md:items-center md:justify-between md:gap-16">
-          <div className="max-w-3xl">
-            <div className="mb-4 flex items-center gap-4 md:hidden">
-              <ProfilePhoto className="h-16 w-16" />
-              <div className="inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700">
-                <p className="font-mono text-[10px] text-foreground/90">Senior BI Consultant · Mentor</p>
-              </div>
-            </div>
-            <div className="mb-4 hidden animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:inline-block md:px-4">
+        {/* Hero Section — spotlight backdrop + centered content */}
+        <section className="relative flex min-h-[100dvh] w-full shrink-0 flex-col items-center justify-center overflow-hidden px-5 pb-20 pt-24 text-center md:w-screen md:px-12 md:pb-16">
+          {/* Animated spotlight light-rays (desktop, motion-on) */}
+          <SpotlightRaysLazy />
+
+          <div className="relative z-10 flex max-w-3xl flex-col items-center">
+            <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:px-4">
               <p className="font-mono text-[10px] text-foreground/90 md:text-xs">
                 Senior BI Consultant · Mentor · Mumbai, India
               </p>
@@ -276,7 +272,7 @@ export default function Home() {
             <h1 className="mb-2 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.05] tracking-tight duration-1000 md:mb-3 md:text-7xl lg:text-8xl">
               <span className="shimmer-text text-balance">Rakshit Sinha</span>
             </h1>
-            <div className="mb-5 flex animate-in fade-in slide-in-from-bottom-4 items-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 md:mb-6 md:text-3xl">
+            <div className="mb-5 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 md:mb-6 md:text-3xl">
               <span className="text-foreground/50">I do</span>
               <RotatingText
                 words={["Data Analytics", "Tableau Dashboards", "SQL & BI", "Mentoring"]}
@@ -290,7 +286,7 @@ export default function Home() {
                 careers.
               </span>
             </p>
-            <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap gap-2 duration-1000 delay-200 md:mb-8">
+            <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap justify-center gap-2 duration-1000 delay-200 md:mb-8">
               {["T-SQL", "Tableau", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
                 <span
                   key={skill}
@@ -300,7 +296,7 @@ export default function Home() {
                 </span>
               ))}
             </div>
-            <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center">
+            <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col items-center gap-4 duration-1000 delay-300 sm:flex-row">
               {/* One dominant primary action; the secondary recedes to a quiet link. */}
               <MagneticButton size="lg" variant="primary" onClick={() => scrollToSection(4)}>
                 Book a Session
@@ -313,24 +309,6 @@ export default function Home() {
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </button>
             </div>
-          </div>
-
-          {/* Desktop photo with animated BI data-bars motif */}
-          <div className="relative hidden shrink-0 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 md:block">
-            {/* glow behind photo */}
-            <div className="absolute -inset-8 -z-10 rounded-[2rem] bg-gradient-to-br from-sky-500/40 to-amber-500/25 blur-3xl" />
-            {/* animated bars */}
-            <div className="absolute -bottom-5 -left-7 flex h-20 items-end gap-1.5">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <span
-                  key={i}
-                  className="data-bar w-2 rounded-full bg-gradient-to-t from-sky-400 to-amber-300"
-                  style={{ height: `${48 + i * 14}px`, animationDelay: `${i * 0.2}s` }}
-                />
-              ))}
-            </div>
-            <ProfilePhoto className="h-64 w-64 lg:h-80 lg:w-80" />
-          </div>
           </div>
 
           {currentSection === 0 && (
