@@ -1,53 +1,21 @@
-* {
-	border: 0;
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-}
-:root {
+/* Scoped to the switch only — the original template's global `*` reset and
+   :root font-size were removed so this cannot affect the rest of the site.
+   All rules below are namespaced under .switch-container / .switch*. */
+.switch-container {
 	--hue: 223;
 	--fg: hsl(var(--hue),10%,10%);
 	--trans-dur: 0.3s;
 	--trans-timing: cubic-bezier(0.83, 0, 0.17, 1);
-	/* O font-size original para o corpo da página */
-	font-size: calc(30px + (60 - 30) * (100vw - 320px) / (2560 - 320));
-}
-
-/* ============================================== */
-/* === ÚNICA ALTERAÇÃO NECESSÁRIA FICA AQUI === */
-/* ============================================== */
-/* Define um font-size base 70% menor (30% do original) apenas para o container do switch */
-.switch-container {
 	font-size: calc(9px + (18 - 9) * (100vw - 320px) / (2560 - 320));
 }
-
-
-main,
-label,
-.col {
+.switch-container * {
+	box-sizing: border-box;
+}
+.switch-container label {
 	display: flex;
-}
-main {
-	flex-direction: column;
-	width: 100%;
-}
-label {
 	align-items: center;
 	margin: auto;
 	-webkit-tap-highlight-color: transparent;
-}
-.col {
-	background-color: hsl(var(--hue),10%,90%);
-	background-image: linear-gradient(hsla(0,0%,0%,0),hsla(0,0%,0%,0.4));
-	padding: 1.5em;
-	width: 100%;
-	height: 100%;
-}
-.sr {
-	overflow: hidden;
-	position: absolute;
-	width: 1px;
-	height: 1px;
 }
 
 /* Light theme */

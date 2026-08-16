@@ -120,8 +120,9 @@ const frag = `precision highp float; uniform float iTime; uniform vec2 iResoluti
       updatePlacement()
       animationId = requestAnimationFrame(loop)
       
-      const unsubX = dynamicOrigin?.x.onChange(v => { if (uniformsRef.current) uniformsRef.current.rayPos.value[0] = v * renderer.dpr })
-      const unsubY = dynamicOrigin?.y.onChange(v => { if (uniformsRef.current) uniformsRef.current.rayPos.value[1] = v * renderer.dpr })
+      // framer-motion v11: use .on("change", …) (v10's .onChange was removed).
+      const unsubX = dynamicOrigin?.x.on("change", (v) => { if (uniformsRef.current) uniformsRef.current.rayPos.value[0] = v * renderer.dpr })
+      const unsubY = dynamicOrigin?.y.on("change", (v) => { if (uniformsRef.current) uniformsRef.current.rayPos.value[1] = v * renderer.dpr })
 
       cleanupFunction = () => {
         cancelAnimationFrame(animationId)

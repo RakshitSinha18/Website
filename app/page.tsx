@@ -8,7 +8,7 @@ import { AboutSection } from "@/components/sections/about-section"
 import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { RotatingText } from "@/components/rotating-text"
-import { SpotlightRaysLazy } from "@/components/spotlight/spotlight-rays-lazy"
+import { SpotlightHeroLazy } from "@/components/spotlight/spotlight-hero-lazy"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
@@ -258,58 +258,65 @@ export default function Home() {
         } flex flex-col overflow-y-auto overflow-x-hidden md:flex-row md:overflow-x-auto md:overflow-y-hidden`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {/* Hero Section — spotlight backdrop + centered content */}
+        {/* Hero Section — interactive spotlight (draggable lamp + switch) behind centered content */}
         <section className="relative flex min-h-[100dvh] w-full shrink-0 flex-col items-center justify-center overflow-hidden px-5 pb-20 pt-24 text-center md:w-screen md:px-12 md:pb-16">
-          {/* Animated spotlight light-rays (desktop, motion-on) */}
-          <SpotlightRaysLazy />
-
-          <div className="relative z-10 flex max-w-3xl flex-col items-center">
-            <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:px-4">
-              <p className="font-mono text-[10px] text-foreground/90 md:text-xs">
-                Senior BI Consultant · Mentor · Mumbai, India
-              </p>
+          <SpotlightHeroLazy
+            fallback={
+              <div className="pointer-events-none absolute inset-0 z-0">
+                {/* Static beam for mobile / reduced-motion */}
+                <div className="absolute left-1/2 top-0 h-[70%] w-[60%] -translate-x-1/2 bg-[radial-gradient(closest-side,rgba(142,197,255,0.25),transparent)]" />
+              </div>
+            }
+          >
+            <div className="pointer-events-none flex min-h-[100dvh] w-full items-center justify-center">
+              <div className="pointer-events-auto flex max-w-3xl flex-col items-center px-5 text-center">
+                <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:px-4">
+                  <p className="font-mono text-[10px] text-foreground/90 md:text-xs">
+                    Senior BI Consultant · Mentor · Mumbai, India
+                  </p>
+                </div>
+                <h1 className="mb-2 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.05] tracking-tight duration-1000 md:mb-3 md:text-7xl lg:text-8xl">
+                  <span className="shimmer-text text-balance">Rakshit Sinha</span>
+                </h1>
+                <div className="mb-5 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 md:mb-6 md:text-3xl">
+                  <span className="text-foreground/50">I do</span>
+                  <RotatingText
+                    words={["Data Analytics", "Tableau Dashboards", "SQL & BI", "Mentoring"]}
+                    className="bg-gradient-to-r from-sky-300 to-amber-300 bg-clip-text font-normal text-transparent"
+                  />
+                </div>
+                <p className="mb-5 max-w-2xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/90 duration-1000 delay-200 md:mb-6 md:text-xl">
+                  <span className="text-pretty">
+                    Results-driven Senior Business Intelligence professional turning complex information into meaningful
+                    business insights — and an after-hours mentor helping aspiring professionals grow their skills and
+                    careers.
+                  </span>
+                </p>
+                <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap justify-center gap-2 duration-1000 delay-200 md:mb-8">
+                  {["T-SQL", "Tableau", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
+                    <span
+                      key={skill}
+                      className="cursor-default rounded-full border border-foreground/20 bg-foreground/10 px-3 py-1 font-mono text-[11px] text-foreground/90 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/40 hover:bg-foreground/20 md:text-xs"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col items-center gap-4 duration-1000 delay-300 sm:flex-row">
+                  <MagneticButton size="lg" variant="primary" onClick={() => scrollToSection(4)}>
+                    Book a Session
+                  </MagneticButton>
+                  <button
+                    onClick={() => scrollToSection(1)}
+                    className="group inline-flex items-center gap-1.5 font-sans text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+                  >
+                    View experience
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <h1 className="mb-2 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.05] tracking-tight duration-1000 md:mb-3 md:text-7xl lg:text-8xl">
-              <span className="shimmer-text text-balance">Rakshit Sinha</span>
-            </h1>
-            <div className="mb-5 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 md:mb-6 md:text-3xl">
-              <span className="text-foreground/50">I do</span>
-              <RotatingText
-                words={["Data Analytics", "Tableau Dashboards", "SQL & BI", "Mentoring"]}
-                className="bg-gradient-to-r from-sky-300 to-amber-300 bg-clip-text font-normal text-transparent"
-              />
-            </div>
-            <p className="mb-5 max-w-2xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/90 duration-1000 delay-200 md:mb-6 md:text-xl">
-              <span className="text-pretty">
-                Results-driven Senior Business Intelligence professional turning complex information into meaningful
-                business insights — and an after-hours mentor helping aspiring professionals grow their skills and
-                careers.
-              </span>
-            </p>
-            <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap justify-center gap-2 duration-1000 delay-200 md:mb-8">
-              {["T-SQL", "Tableau", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
-                <span
-                  key={skill}
-                  className="cursor-default rounded-full border border-foreground/20 bg-foreground/10 px-3 py-1 font-mono text-[11px] text-foreground/90 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/40 hover:bg-foreground/20 md:text-xs"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-            <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col items-center gap-4 duration-1000 delay-300 sm:flex-row">
-              {/* One dominant primary action; the secondary recedes to a quiet link. */}
-              <MagneticButton size="lg" variant="primary" onClick={() => scrollToSection(4)}>
-                Book a Session
-              </MagneticButton>
-              <button
-                onClick={() => scrollToSection(1)}
-                className="group inline-flex items-center gap-1.5 font-sans text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
-              >
-                View experience
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-              </button>
-            </div>
-          </div>
+          </SpotlightHeroLazy>
 
           {currentSection === 0 && (
             <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 animate-in fade-in duration-1000 delay-500 md:block">
