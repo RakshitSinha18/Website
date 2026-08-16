@@ -62,6 +62,8 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<SessionRequest[]>([])
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [roadmap, setRoadmap] = useState<RoadmapRow[]>([])
+  // Tabbed admin navigation.
+  const [tab, setTab] = useState<"bookings" | "courses" | "roadmap" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -363,7 +365,39 @@ export default function AdminPage() {
           </Button>
         </div>
 
+        {/* Tab navigation */}
+        <nav
+          role="tablist"
+          aria-label="Admin sections"
+          className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03] p-1"
+        >
+          {[
+            { id: "bookings", label: "Bookings", icon: CalendarClock },
+            { id: "courses", label: "Courses", icon: BookOpen },
+            { id: "roadmap", label: "Roadmap", icon: Map },
+            { id: "payments", label: "Payments", icon: IndianRupee },
+          ].map((t) => {
+            const active = tab === t.id
+            const Icon = t.icon
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setTab(t.id as typeof tab)}
+                className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  active ? "bg-white text-[#0b0f19] shadow-sm" : "text-foreground/55 hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" /> {t.label}
+              </button>
+            )
+          })}
+        </nav>
 
+        {/* ── PAYMENTS TAB ─────────────────────────────────────── */}
+        {tab === "payments" && (
+        <>
         {/* Payment settings — UPI (India) + PayPal + link + bank (international) */}
         <Card className="mb-6">
           <CardTitle
@@ -477,7 +511,12 @@ export default function AdminPage() {
             </Button>
           </div>
         </Card>
+        </>
+        )}
 
+        {/* ── BOOKINGS TAB (bookings + session requests) ───────── */}
+        {tab === "bookings" && (
+        <>
         {/* Class bookings */}
         <Card className="mb-6">
           <div className="mb-5 flex items-center gap-2.5">
@@ -570,9 +609,14 @@ export default function AdminPage() {
             </ul>
           )}
         </Card>
+        </>
+        )}
 
+        {/* ── COURSES TAB (courses + curriculum + materials) ───── */}
+        {tab === "courses" && (
+        <>
         {/* Manage courses */}
-        <Card className="mt-6">
+        <Card>
           <CardTitle icon={<BookOpen className="h-4 w-4" />} title="Manage courses" />
 
           <ul className="mb-4 space-y-2">
@@ -718,9 +762,12 @@ export default function AdminPage() {
             />
           </label>
         </Card>
+        </>
+        )}
 
-        {/* Manage roadmap */}
-        <Card className="mt-6">
+        {/* ── ROADMAP TAB ──────────────────────────────────────── */}
+        {tab === "roadmap" && (
+        <Card>
           <CardTitle icon={<Map className="h-4 w-4" />} title="Manage learning roadmap" />
 
           <ul className="mb-4 space-y-2">
@@ -775,6 +822,7 @@ export default function AdminPage() {
             </Button>
           </div>
         </Card>
+        )}
       </div>
     </main>
   )
