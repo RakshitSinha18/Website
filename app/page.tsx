@@ -199,14 +199,14 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           <Link
             href="/login/"
-            className="font-sans text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+            className="rounded-full border border-foreground/40 bg-transparent px-5 py-2 font-sans text-sm font-medium text-foreground backdrop-blur-md transition-all hover:scale-[1.02] hover:border-foreground hover:bg-foreground hover:text-background active:scale-[0.98]"
           >
             Login
           </Link>
-          <MagneticButton variant="primary" onClick={() => scrollToSection(4)}>
+          <MagneticButton variant="ghost" onClick={() => scrollToSection(4)}>
             Book a Session
           </MagneticButton>
         </div>
@@ -242,7 +242,7 @@ export default function Home() {
             Login
           </Link>
           <div className="mt-4">
-            <MagneticButton variant="primary" onClick={() => scrollToSection(4)}>
+            <MagneticButton variant="ghost" onClick={() => scrollToSection(4)}>
               Book a Session
             </MagneticButton>
           </div>

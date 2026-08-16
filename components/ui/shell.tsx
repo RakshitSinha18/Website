@@ -106,8 +106,10 @@ export function CardTitle({
 
 type ButtonVariant = "primary" | "secondary" | "ghost"
 
+// Ghost-style action buttons site-wide: outlined/transparent at rest, fill on hover.
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-white text-[#0b0f19] hover:bg-white/90",
+  primary:
+    "border border-white/40 bg-transparent text-foreground hover:bg-white hover:text-[#0b0f19] hover:border-white",
   secondary: "border border-white/15 bg-white/[0.04] text-foreground hover:bg-white/[0.08]",
   ghost: "text-foreground/60 hover:text-foreground",
 }
