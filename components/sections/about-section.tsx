@@ -111,7 +111,7 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
                 isVisible ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0"
               }`}
             >
-              <h2 className="mb-3 font-sans text-3xl font-light leading-[1.1] tracking-tight text-foreground md:mb-4 md:text-6xl lg:text-7xl">
+              <h2 className="mb-3 font-sans text-2xl font-light leading-[1.1] tracking-tight text-foreground md:mb-4 md:text-4xl lg:text-5xl">
                 Data by day,
                 <br />
                 <span className="text-foreground/40">mentoring</span>
