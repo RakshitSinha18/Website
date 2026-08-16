@@ -25,7 +25,6 @@ export function useInitElasticBoxPositions(
     const updatePositions = () => {
       if (!containerRef.current) return
       const rect = containerRef.current.getBoundingClientRect()
-      const centerX = rect.width / 2
 
       // Keep the lamp toward the right so it doesn't sit over the centered
       // hero text. Anchor + rest position both shift to ~72% width.

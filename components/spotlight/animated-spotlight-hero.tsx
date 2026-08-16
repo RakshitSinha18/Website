@@ -54,23 +54,23 @@ export function AnimatedSpotlightHero() {
     >
       {/* Dark overlay when the light is off */}
       <motion.div
-        className="absolute inset-0 z-30 pointer-events-none"
+        className="pointer-events-none absolute inset-0 z-[35]"
         style={{ backgroundColor: "#020617" }}
         animate={{ opacity: isLightOn ? 0 : 0.85 }}
         transition={{ duration: 0.5 }}
       />
 
-      {/* On/off switch — moved below the fixed nav; interactive */}
-      <div className="switch-container pointer-events-auto absolute right-6 top-24 z-50 md:top-28">
-        <RealisticSwitch isOn={isLightOn} onToggle={handleToggle} orientation="vertical" />
-      </div>
-
-      {/* WebGL light-rays that follow the lamp */}
+      {/* WebGL light-rays that follow the lamp (behind hero text) */}
       <div className="absolute inset-0 z-0">
         <BackgroundEffects dynamicOrigin={{ x, y }} isLightOn={isLightOn} />
       </div>
 
-      {/* Draggable lamp */}
+      {/* On/off switch — top-right, above everything, interactive */}
+      <div className="switch-container pointer-events-auto absolute right-6 top-24 z-[45] md:top-28">
+        <RealisticSwitch isOn={isLightOn} onToggle={handleToggle} orientation="vertical" />
+      </div>
+
+      {/* Draggable lamp — hangs on the right, above hero text so it's grabbable */}
       {isPositioned && (
         <Lamp
           x={x}
