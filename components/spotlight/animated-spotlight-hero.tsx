@@ -60,17 +60,15 @@ export function AnimatedSpotlightHero({ children }: { children?: ReactNode }) {
         transition={{ duration: 0.5 }}
       />
 
-      {/* On/off switch */}
-      <div className="switch-container absolute left-6 top-6 z-50">
-        <RealisticSwitch isOn={isLightOn} onToggle={toggle} orientation="vertical" />
-      </div>
-
       {/* WebGL light-rays that follow the lamp */}
       <div className="absolute inset-0 z-0">
         <BackgroundEffects dynamicOrigin={{ x, y }} isLightOn={isLightOn} />
       </div>
 
-      {/* Draggable lamp */}
+      {/* Hero content, centered — sits above rays but below the lamp/switch */}
+      {children && <div className="relative z-20">{children}</div>}
+
+      {/* Draggable lamp — above content so it's always visible & grabbable */}
       {isPositioned && (
         <Lamp
           x={x}
@@ -83,8 +81,10 @@ export function AnimatedSpotlightHero({ children }: { children?: ReactNode }) {
         />
       )}
 
-      {/* Hero content, centered above the scene */}
-      {children && <div className="relative z-40">{children}</div>}
+      {/* On/off switch — clears the fixed top nav, top-most layer */}
+      <div className="switch-container absolute right-6 top-24 z-[60] md:top-28">
+        <RealisticSwitch isOn={isLightOn} onToggle={toggle} orientation="vertical" />
+      </div>
     </div>
   )
 }

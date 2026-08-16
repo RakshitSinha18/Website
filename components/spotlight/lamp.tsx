@@ -17,20 +17,20 @@ interface LampProps {
 export function Lamp({ x, y, rotation, anchor, isLightOn, onPointerDown, onCordPull }: LampProps) {
   return (
     <>
-      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" style={{ overflow: "visible" }}>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-40" style={{ overflow: "visible" }}>
         <motion.line
           x1={anchor.x}
           y1={anchor.y}
           x2={x}
           y2={y}
-          stroke="#141414"
-          strokeWidth={4}
+          stroke="#e2e8f0"
+          strokeWidth={3}
           strokeLinecap="round"
         />
       </svg>
-      
+
       <motion.div
-        className="absolute z-20 cursor-grab active:cursor-grabbing"
+        className="absolute z-50 cursor-grab active:cursor-grabbing"
         style={{
           x, y, rotate: rotation, width: 120, height: 150,
           originX: "50%", originY: "0%", translateX: "-50%", translateY: "-15px",
