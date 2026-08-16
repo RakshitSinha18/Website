@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { ToastProvider } from "@/components/toast"
 import { AccessibilityButton } from "@/components/accessibility-button"
+import { RefreshButton } from "@/components/refresh-button"
 import "./globals.css"
 
 const geist = Inter({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -64,6 +65,7 @@ export default function RootLayout({
         </a>
         <ToastProvider>{children}</ToastProvider>
         <AccessibilityButton />
+        <RefreshButton />
       </body>
     </html>
   )
