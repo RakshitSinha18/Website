@@ -30,7 +30,7 @@ export function Lamp({ x, y, rotation, anchor, isLightOn, onPointerDown, onCordP
       </svg>
 
       <motion.div
-        className="absolute z-50 cursor-grab active:cursor-grabbing"
+        className="pointer-events-auto absolute z-50 cursor-grab active:cursor-grabbing"
         style={{
           x, y, rotate: rotation, width: 120, height: 150,
           originX: "50%", originY: "0%", translateX: "-50%", translateY: "-15px",

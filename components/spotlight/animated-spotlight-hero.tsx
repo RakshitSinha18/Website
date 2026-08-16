@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, type ReactNode } from "react"
+import { useState, useRef } from "react"
 import { motion, useMotionValue } from "framer-motion"
 import { BackgroundEffects } from "./solution-hero-background"
 import { useGravityEffect } from "@/src/hooks/use-gravity-effect"
@@ -15,7 +15,7 @@ import "@/app/realistic-switch.css"
  *  - A realistic on/off switch (top-left) that dims the whole scene.
  *  - `children` are the page's hero content, centered over the scene.
  */
-export function AnimatedSpotlightHero({ children }: { children?: ReactNode }) {
+export function AnimatedSpotlightHero() {
   const containerRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
   const [isLightOn, setIsLightOn] = useState(true)
@@ -51,7 +51,10 @@ export function AnimatedSpotlightHero({ children }: { children?: ReactNode }) {
   const toggle = () => setIsLightOn((v) => !v)
 
   return (
-    <div ref={containerRef} className="absolute inset-0 overflow-hidden touch-none">
+    <div
+      ref={containerRef}
+      className="pointer-events-none absolute inset-0 z-20 overflow-hidden touch-none"
+    >
       {/* Dark overlay when the light is off */}
       <motion.div
         className="absolute inset-0 z-30 pointer-events-none"
@@ -65,10 +68,7 @@ export function AnimatedSpotlightHero({ children }: { children?: ReactNode }) {
         <BackgroundEffects dynamicOrigin={{ x, y }} isLightOn={isLightOn} />
       </div>
 
-      {/* Hero content, centered — sits above rays but below the lamp/switch */}
-      {children && <div className="relative z-20">{children}</div>}
-
-      {/* Draggable lamp — above content so it's always visible & grabbable */}
+      {/* Draggable lamp */}
       {isPositioned && (
         <Lamp
           x={x}
@@ -82,7 +82,7 @@ export function AnimatedSpotlightHero({ children }: { children?: ReactNode }) {
       )}
 
       {/* On/off switch — clears the fixed top nav, top-most layer */}
-      <div className="switch-container absolute right-6 top-24 z-[60] md:top-28">
+      <div className="switch-container pointer-events-auto absolute right-6 top-24 z-[60] md:top-28">
         <RealisticSwitch isOn={isLightOn} onToggle={toggle} orientation="vertical" />
       </div>
     </div>

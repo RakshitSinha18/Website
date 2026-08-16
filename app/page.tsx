@@ -258,18 +258,14 @@ export default function Home() {
         } flex flex-col overflow-y-auto overflow-x-hidden md:flex-row md:overflow-x-auto md:overflow-y-hidden`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {/* Hero Section — interactive spotlight (draggable lamp + switch) behind centered content */}
+        {/* Hero Section — interactive spotlight backdrop BEHIND always-rendered content */}
         <section className="relative flex min-h-[100dvh] w-full shrink-0 flex-col items-center justify-center overflow-hidden px-5 pb-20 pt-24 text-center md:w-screen md:px-12 md:pb-16">
-          <SpotlightHeroLazy
-            fallback={
-              <div className="pointer-events-none absolute inset-0 z-0">
-                {/* Static beam for mobile / reduced-motion */}
-                <div className="absolute left-1/2 top-0 h-[70%] w-[60%] -translate-x-1/2 bg-[radial-gradient(closest-side,rgba(142,197,255,0.25),transparent)]" />
-              </div>
-            }
-          >
-            <div className="pointer-events-none flex min-h-[100dvh] w-full items-center justify-center">
-              <div className="pointer-events-auto flex max-w-3xl flex-col items-center px-5 text-center">
+          {/* Spotlight backdrop (draggable lamp + switch on desktop; static beam otherwise). */}
+          <SpotlightHeroLazy />
+
+          {/* Hero content — always rendered (server-side), sits above the backdrop. */}
+          <div className="relative z-10 flex w-full items-center justify-center">
+              <div className="flex max-w-3xl flex-col items-center px-5 text-center">
                 <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:px-4">
                   <p className="font-mono text-[10px] text-foreground/90 md:text-xs">
                     Senior BI Consultant · Mentor · Mumbai, India
@@ -315,8 +311,7 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-            </div>
-          </SpotlightHeroLazy>
+          </div>
 
           {currentSection === 0 && (
             <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 animate-in fade-in duration-1000 delay-500 md:block">
