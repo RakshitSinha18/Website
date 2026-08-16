@@ -36,6 +36,16 @@ interface ClassRow {
   description: string
   duration: string
   active: boolean
+  // Curriculum (editable). Arrays stored as jsonb in Supabase.
+  tagline?: string
+  level?: string
+  for_whom?: string
+  summary?: string
+  price_paise?: number
+  outcomes?: string[]
+  syllabus?: string[]
+  tools?: string[]
+  learning_path?: string[]
 }
 interface RoadmapRow {
   id: string
@@ -239,6 +249,32 @@ export default function AdminPage() {
       load()
     }
   }
+  // Save full curriculum for one course.
+  const saveCourse = async (c: ClassRow) => {
+    if (!supabase) return
+    setBusyId(c.id)
+    const { error } = await supabase
+      .from("classes")
+      .update({
+        title: c.title,
+        description: c.description,
+        duration: c.duration,
+        tagline: c.tagline ?? null,
+        level: c.level ?? null,
+        for_whom: c.for_whom ?? null,
+        summary: c.summary ?? null,
+        price_paise: c.price_paise ?? 0,
+        outcomes: c.outcomes ?? [],
+        syllabus: c.syllabus ?? [],
+        tools: c.tools ?? [],
+        learning_path: c.learning_path ?? [],
+      })
+      .eq("id", c.id)
+    setBusyId(null)
+    setMsg(error ? error.message : `Saved “${c.title}”.`)
+    if (!error) load()
+  }
+
   const removeClass = async (id: string) => {
     if (!supabase) return
     const { error } = await supabase.from("classes").delete().eq("id", id)
@@ -581,6 +617,21 @@ export default function AdminPage() {
           </div>
         </Card>
 
+        {/* Course curriculum editor */}
+        <Card className="mt-6">
+          <CardTitle
+            icon={<BookOpen className="h-4 w-4" />}
+            title="Course curriculum"
+            hint="Edit each course's structure — tagline, level, price, outcomes, syllabus and learning path. Shown on the public course pages."
+          />
+          <div className="space-y-2">
+            {classes.map((c) => (
+              <CurriculumEditor key={c.id} course={c} busy={busyId === c.id} onSave={saveCourse} />
+            ))}
+            {classes.length === 0 && <EmptyRow label="Add a course above first." />}
+          </div>
+        </Card>
+
         {/* Course materials (PPT / notes) */}
         <Card className="mt-6">
           <CardTitle
@@ -726,6 +777,99 @@ export default function AdminPage() {
         </Card>
       </div>
     </main>
+  )
+}
+
+// Expandable editor for one course's full curriculum.
+function CurriculumEditor({
+  course,
+  busy,
+  onSave,
+}: {
+  course: ClassRow
+  busy: boolean
+  onSave: (c: ClassRow) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<ClassRow>(course)
+
+  // Keep local draft in sync if the parent reloads.
+  useEffect(() => setDraft(course), [course])
+
+  const setField = (patch: Partial<ClassRow>) => setDraft((d) => ({ ...d, ...patch }))
+  const toLines = (a?: string[]) => (a ?? []).join("\n")
+  const fromLines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean)
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03]">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <span className="text-sm text-foreground">{course.title}</span>
+        <span className="font-mono text-[11px] text-foreground/50">{open ? "close" : "edit"}</span>
+      </button>
+
+      {open && (
+        <div className="space-y-3 border-t border-white/10 p-4">
+          <div className="grid gap-2 md:grid-cols-2">
+            <div>
+              <FieldLabel>Tagline</FieldLabel>
+              <input value={draft.tagline ?? ""} onChange={(e) => setField({ tagline: e.target.value })} className={inputCls} placeholder="Turn raw data into decisions" />
+            </div>
+            <div>
+              <FieldLabel>Level</FieldLabel>
+              <input value={draft.level ?? ""} onChange={(e) => setField({ level: e.target.value })} className={inputCls} placeholder="Beginner → Advanced" />
+            </div>
+            <div>
+              <FieldLabel>Duration</FieldLabel>
+              <input value={draft.duration ?? ""} onChange={(e) => setField({ duration: e.target.value })} className={inputCls} placeholder="6–8 evening sessions" />
+            </div>
+            <div>
+              <FieldLabel>Price (₹, whole rupees)</FieldLabel>
+              <input
+                type="number"
+                value={draft.price_paise ? draft.price_paise / 100 : ""}
+                onChange={(e) => setField({ price_paise: Math.round(Number(e.target.value) * 100) || 0 })}
+                className={inputCls}
+                placeholder="1500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Summary</FieldLabel>
+            <textarea rows={2} value={draft.summary ?? ""} onChange={(e) => setField({ summary: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <FieldLabel>Who it's for</FieldLabel>
+            <textarea rows={2} value={draft.for_whom ?? ""} onChange={(e) => setField({ for_whom: e.target.value })} className={inputCls} />
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2">
+            <div>
+              <FieldLabel>Outcomes (one per line)</FieldLabel>
+              <textarea rows={4} value={toLines(draft.outcomes)} onChange={(e) => setField({ outcomes: fromLines(e.target.value) })} className={inputCls} />
+            </div>
+            <div>
+              <FieldLabel>Syllabus / learning path (one step per line)</FieldLabel>
+              <textarea rows={4} value={toLines(draft.syllabus)} onChange={(e) => setField({ syllabus: fromLines(e.target.value), learning_path: fromLines(e.target.value) })} className={inputCls} />
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Tools (comma or new line)</FieldLabel>
+            <input value={(draft.tools ?? []).join(", ")} onChange={(e) => setField({ tools: e.target.value.split(/[,\n]/).map((x) => x.trim()).filter(Boolean) })} className={inputCls} placeholder="Excel, SQL, Tableau" />
+          </div>
+
+          <Button onClick={() => onSave(draft)} disabled={busy}>
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {busy ? "Saving…" : "Save course"}
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }
 
