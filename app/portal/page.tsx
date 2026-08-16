@@ -785,7 +785,17 @@ function PayControls({
       toast(res.error ?? "Payment could not start.", "error")
       return
     }
-    if (res.razorpay) openRazorpay(res.razorpay, { name: booking.class_title, email })
+    if (res.razorpay)
+      openRazorpay(res.razorpay, {
+        name: booking.class_title,
+        email,
+        onVerified: () => {
+          toast("Payment verified! Your booking is confirmed.", "success")
+          window.location.assign("/portal/?paid=1")
+        },
+        onError: (msg) => toast(msg, "error"),
+        onDismiss: () => toast("Payment canceled — you can try again anytime.", "info"),
+      })
     // Stripe navigates away on success.
   }
 

@@ -93,7 +93,8 @@ export function AnimatedSpotlightHero() {
         />
       )}
 
-      {/* Secret quote revealed by the lamp — royal card, lower-right. */}
+      {/* Secret quote revealed by the lamp — royal card, lower-center (clear of
+          the floating a11y/refresh buttons in the corners). */}
       <AnimatePresence>
         {isLightOn && quote && (
           <motion.figure
@@ -102,7 +103,7 @@ export function AnimatedSpotlightHero() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-none absolute bottom-24 right-6 z-40 max-w-xs rounded-2xl border border-[#d4af37]/30 bg-[#0b0f19]/70 p-5 text-right backdrop-blur-xl md:right-12 md:max-w-sm"
+            className="pointer-events-none absolute bottom-20 left-1/2 z-40 w-[min(92vw,26rem)] -translate-x-1/2 rounded-2xl border border-[#d4af37]/30 bg-[#0b0f19]/75 p-5 text-center shadow-2xl backdrop-blur-xl"
           >
             <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-[#d4af37]/70">
               Illuminated
@@ -111,7 +112,7 @@ export function AnimatedSpotlightHero() {
               “{quote.text}”
             </blockquote>
             <figcaption className="mt-2 font-mono text-[11px] text-[#d4af37]/80">
-              — {quote.author}
+              — {quote.author} · pull the lamp for another
             </figcaption>
           </motion.figure>
         )}

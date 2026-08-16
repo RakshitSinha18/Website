@@ -4,8 +4,11 @@ Server-side logic runs as **Supabase Edge Functions** (your static site can't ho
 or receive webhooks). Two functions:
 
 - `create-payment` — starts a Stripe Checkout session or Razorpay order.
-- `payment-webhook` — verifies the provider signature, then (via the service-role key) marks the
-  payment paid and the booking confirmed, and triggers the receipt email.
+- `payment-webhook` — verifies the provider signature (server-to-server), then (via the
+  service-role key) marks the payment paid and the booking confirmed, and triggers the receipt.
+- `verify-payment` — verifies the Razorpay **Standard Checkout** signature
+  `HMAC-SHA256(order_id|payment_id)` returned to the browser, then confirms the booking. Both
+  paths are idempotent; either one confirms a payment.
 
 ## 1. Apply the schema
 
@@ -16,6 +19,7 @@ Run `supabase/payments-materials.sql` in Supabase → SQL Editor.
 ```bash
 supabase functions deploy create-payment
 supabase functions deploy payment-webhook --no-verify-jwt
+supabase functions deploy verify-payment
 ```
 
 ## 3. Set secrets

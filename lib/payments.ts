@@ -60,8 +60,36 @@ export interface RazorpayResult {
   currency: string
 }
 
+interface RazorpayHandlers {
+  name: string
+  email?: string
+  onVerified?: () => void
+  onError?: (message: string) => void
+  onDismiss?: () => void
+}
+
+/** Verifies a Razorpay checkout success via the verify-payment Edge Function. */
+async function verifyRazorpay(resp: {
+  razorpay_order_id: string
+  razorpay_payment_id: string
+  razorpay_signature: string
+}): Promise<boolean> {
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/verify-payment`
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(resp),
+    })
+    const data = await res.json().catch(() => ({}))
+    return res.ok && data.verified === true
+  } catch {
+    return false
+  }
+}
+
 /** Loads the Razorpay Checkout script once and opens the payment modal. */
-export function openRazorpay(r: RazorpayResult, opts: { name: string; email?: string }) {
+export function openRazorpay(r: RazorpayResult, opts: RazorpayHandlers) {
   const open = () => {
     // @ts-expect-error injected by the Razorpay script
     const rzp = new window.Razorpay({
@@ -73,6 +101,21 @@ export function openRazorpay(r: RazorpayResult, opts: { name: string; email?: st
       description: opts.name,
       prefill: { email: opts.email },
       theme: { color: "#0b0f19" },
+      // Success → verify the signature server-side before trusting it.
+      handler: async (resp: {
+        razorpay_order_id: string
+        razorpay_payment_id: string
+        razorpay_signature: string
+      }) => {
+        const ok = await verifyRazorpay(resp)
+        if (ok) opts.onVerified?.()
+        else opts.onError?.("We couldn't verify your payment. If you were charged, contact us.")
+      },
+      modal: { ondismiss: () => opts.onDismiss?.() },
+    })
+    // Payment failed inside the modal.
+    rzp.on("payment.failed", (e: any) => {
+      opts.onError?.(e?.error?.description || "Payment failed. Please try again.")
     })
     rzp.open()
   }
@@ -81,5 +124,6 @@ export function openRazorpay(r: RazorpayResult, opts: { name: string; email?: st
   const s = document.createElement("script")
   s.src = "https://checkout.razorpay.com/v1/checkout.js"
   s.onload = open
+  s.onerror = () => opts.onError?.("Couldn't load the payment window. Check your connection.")
   document.body.appendChild(s)
 }
