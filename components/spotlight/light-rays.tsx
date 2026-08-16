@@ -118,6 +118,14 @@ const frag = `precision highp float; uniform float iTime; uniform vec2 iResoluti
       
       window.addEventListener("resize", updatePlacement)
       updatePlacement()
+
+      // Seed the ray origin from the lamp's CURRENT position so a re-init
+      // (e.g. toggling the light on/off, which changes ray props) doesn't snap
+      // the light back to the corner until the next move.
+      if (dynamicOrigin) {
+        uniforms.rayPos.value = [dynamicOrigin.x.get() * renderer.dpr, dynamicOrigin.y.get() * renderer.dpr]
+      }
+
       animationId = requestAnimationFrame(loop)
       
       // framer-motion v11: use .on("change", …) (v10's .onChange was removed).
@@ -134,7 +142,27 @@ const frag = `precision highp float; uniform float iTime; uniform vec2 iResoluti
 
     initializeWebGL()
     return () => cleanupFunction?.()
-  }, [isVisible, raysOrigin, raysColor, raysSpeed, lightSpread, rayLength, pulsating, fadeDistance, saturation, mouseInfluence, noiseAmount, distortion, introAnimation, dynamicOrigin])
+    // Init WebGL once when visible. Prop changes (color/spread/etc.) are applied
+    // live via the effect below — WITHOUT re-initializing, which used to snap the
+    // light back to the corner on every on/off toggle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible, raysOrigin, dynamicOrigin, introAnimation])
+
+  // Live-update ray uniforms when props change (no re-init, no position jump).
+  useEffect(() => {
+    const u = uniformsRef.current
+    if (!u) return
+    u.raysColor.value = hexToRgb(raysColor)
+    u.raysSpeed.value = raysSpeed
+    u.lightSpread.value = lightSpread
+    u.rayLength.value = rayLength
+    u.pulsating.value = pulsating ? 1.0 : 0.0
+    u.fadeDistance.value = fadeDistance
+    u.saturation.value = saturation
+    u.mouseInfluence.value = mouseInfluence
+    u.noiseAmount.value = noiseAmount
+    u.distortion.value = distortion
+  }, [raysColor, raysSpeed, lightSpread, rayLength, pulsating, fadeDistance, saturation, mouseInfluence, noiseAmount, distortion])
 
   return <div ref={containerRef} className={`w-full h-full pointer-events-none z-[3] overflow-hidden relative ${className}`.trim()} />
 }
