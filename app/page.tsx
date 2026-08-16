@@ -9,7 +9,6 @@ import { ContactSection } from "@/components/sections/contact-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { RotatingText } from "@/components/rotating-text"
 import { SpotlightHeroLazy } from "@/components/spotlight/spotlight-hero-lazy"
-import { useMediaQuery } from "@/hooks/use-media-query"
 import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, Mail } from "lucide-react"
 import Link from "next/link"
 import { useRef, useEffect, useState } from "react"
@@ -27,88 +26,23 @@ export default function Home() {
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const touchStartY = useRef(0)
-  const touchStartX = useRef(0)
   const scrollThrottleRef = useRef<number>()
-
-  // Desktop drives a horizontal "slide" experience; mobile is normal vertical scroll.
-  const isDesktop = useMediaQuery("(min-width: 768px)")
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100)
     return () => clearTimeout(timer)
   }, [])
 
+  // Plain vertical scroll — jump to a section by index.
   const scrollToSection = (index: number) => {
     setMenuOpen(false)
     const container = scrollContainerRef.current
-    if (!container) return
-
-    if (isDesktop) {
-      const sectionWidth = container.offsetWidth
-      container.scrollTo({ left: sectionWidth * index, behavior: "smooth" })
-    } else {
-      const target = container.children[index] as HTMLElement | undefined
-      target?.scrollIntoView({ behavior: "smooth" })
-    }
+    const target = container?.children[index] as HTMLElement | undefined
+    target?.scrollIntoView({ behavior: "smooth" })
     setCurrentSection(index)
   }
 
-  // --- Desktop-only: hijack vertical wheel/touch to scroll horizontally ---
-  useEffect(() => {
-    if (!isDesktop) return
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY
-      touchStartX.current = e.touches[0].clientX
-    }
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (Math.abs(e.touches[0].clientY - touchStartY.current) > 10) {
-        e.preventDefault()
-      }
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      const deltaY = touchStartY.current - e.changedTouches[0].clientY
-      const deltaX = touchStartX.current - e.changedTouches[0].clientX
-
-      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
-        if (deltaY > 0 && currentSection < 4) scrollToSection(currentSection + 1)
-        else if (deltaY < 0 && currentSection > 0) scrollToSection(currentSection - 1)
-      }
-    }
-
-    const handleWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault()
-        const container = scrollContainerRef.current
-        if (!container) return
-        container.scrollBy({ left: e.deltaY, behavior: "instant" as ScrollBehavior })
-        const newSection = Math.round(container.scrollLeft / container.offsetWidth)
-        if (newSection !== currentSection) setCurrentSection(newSection)
-      }
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("touchstart", handleTouchStart, { passive: true })
-      container.addEventListener("touchmove", handleTouchMove, { passive: false })
-      container.addEventListener("touchend", handleTouchEnd, { passive: true })
-      container.addEventListener("wheel", handleWheel, { passive: false })
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("touchstart", handleTouchStart)
-        container.removeEventListener("touchmove", handleTouchMove)
-        container.removeEventListener("touchend", handleTouchEnd)
-        container.removeEventListener("wheel", handleWheel)
-      }
-    }
-  }, [currentSection, isDesktop])
-
-  // Keep the active nav item in sync with scroll position (both axes).
+  // Keep the active nav item in sync with vertical scroll position.
   useEffect(() => {
     const handleScroll = () => {
       if (scrollThrottleRef.current) return
@@ -118,45 +52,37 @@ export default function Home() {
           scrollThrottleRef.current = undefined
           return
         }
-
-        const newSection = isDesktop
-          ? Math.round(container.scrollLeft / container.offsetWidth)
-          : Math.round(container.scrollTop / container.offsetHeight)
-
+        const newSection = Math.round(container.scrollTop / container.offsetHeight)
         if (newSection !== currentSection && newSection >= 0 && newSection <= 4) {
           setCurrentSection(newSection)
         }
         scrollThrottleRef.current = undefined
       })
     }
-
     const container = scrollContainerRef.current
     if (container) container.addEventListener("scroll", handleScroll, { passive: true })
-
     return () => {
       if (container) container.removeEventListener("scroll", handleScroll)
       if (scrollThrottleRef.current) cancelAnimationFrame(scrollThrottleRef.current)
     }
-  }, [currentSection, isDesktop])
+  }, [currentSection])
 
-  // Keyboard navigation: arrows / Home / End move between sections (Operable, WCAG).
+  // Keyboard navigation: Home/End jump to first/last section.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        if (currentSection < 4) scrollToSection(currentSection + 1)
-      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        if (currentSection > 0) scrollToSection(currentSection - 1)
-      } else if (e.key === "Home") {
+      if (e.key === "Home") {
+        e.preventDefault()
         scrollToSection(0)
       } else if (e.key === "End") {
+        e.preventDefault()
         scrollToSection(4)
       }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [currentSection, isDesktop])
+  }, [currentSection])
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-background">
@@ -168,7 +94,9 @@ export default function Home() {
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
       >
-        {isDesktop && <LiquidBackground />}
+        <div className="hidden md:block">
+          <LiquidBackground />
+        </div>
         {/* Lighter vignette so the colour stays vivid but text stays readable. */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
       </div>
@@ -261,13 +189,13 @@ export default function Home() {
         id="main"
         ref={scrollContainerRef}
         data-scroll-container
-        className={`relative z-10 h-[100dvh] transition-opacity duration-700 ${
+        className={`relative z-10 h-[100dvh] overflow-y-auto overflow-x-hidden transition-opacity duration-700 ${
           isLoaded ? "opacity-100" : "opacity-0"
-        } flex flex-col overflow-y-auto overflow-x-hidden md:flex-row md:overflow-x-auto md:overflow-y-hidden`}
+        }`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {/* Hero Section — interactive spotlight backdrop BEHIND always-rendered content */}
-        <section className="relative flex min-h-[100dvh] w-full shrink-0 flex-col items-center justify-center overflow-hidden px-5 pb-20 pt-24 text-center md:w-screen md:px-12 md:pb-16">
+        <section className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden px-5 pb-20 pt-24 text-center md:px-12 md:pb-16">
           {/* Spotlight backdrop (draggable lamp + switch on desktop; static beam otherwise). */}
           <SpotlightHeroLazy />
 
@@ -324,11 +252,9 @@ export default function Home() {
                 onClick={() => scrollToSection(1)}
                 className="group flex items-center gap-2.5 rounded-full border border-foreground/20 bg-foreground/10 px-4 py-2 backdrop-blur-md transition-all hover:border-foreground/40 hover:bg-foreground/20"
               >
-                <span className="font-mono text-xs text-foreground/90">
-                  {isDesktop ? "Scroll → or use ← → keys" : "Swipe up to explore"}
-                </span>
-                <span className="text-foreground/80 transition-transform duration-300 group-hover:translate-x-1">
-                  {isDesktop ? "→" : "↓"}
+                <span className="font-mono text-xs text-foreground/90">Scroll to explore</span>
+                <span className="text-foreground/80 transition-transform duration-300 group-hover:translate-y-0.5">
+                  ↓
                 </span>
               </button>
             </div>

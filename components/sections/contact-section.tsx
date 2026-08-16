@@ -9,7 +9,7 @@ import Link from "next/link"
  */
 export function ContactSection() {
   return (
-    <section className="flex min-h-[100dvh] w-full shrink-0 snap-start flex-col justify-between px-5 py-24 md:w-screen md:px-12 md:py-16 lg:px-16">
+    <section className="flex min-h-[100dvh] w-full flex-col justify-between px-5 py-24 md:px-12 md:py-16 lg:px-16">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
         <div className="mb-8 md:mb-12">
           <h2 className="mb-2 font-sans text-4xl font-light leading-[1.05] tracking-tight text-foreground md:mb-3 md:text-7xl lg:text-8xl">

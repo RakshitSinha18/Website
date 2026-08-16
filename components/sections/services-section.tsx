@@ -9,7 +9,7 @@ export function ServicesSection() {
   return (
     <section
       ref={ref}
-      className="flex min-h-[100dvh] w-full shrink-0 snap-start items-center px-5 py-24 md:w-screen md:px-12 md:py-0 lg:px-16"
+      className="flex min-h-[100dvh] w-full items-center px-5 py-24 md:px-12 lg:px-16"
     >
       <div className="mx-auto w-full max-w-6xl">
         <div
