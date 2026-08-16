@@ -42,6 +42,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(false)
+  // Captcha token (set when the widget is configured/solved). Optional until
+  // captcha is enabled in Supabase — see SIGNUP-CAPTCHA.md.
+  const [captchaToken] = useState<string>("")
 
   // Already logged in → go to the right place (admin vs student).
   useEffect(() => {
@@ -60,13 +64,33 @@ export default function LoginPage() {
       return
     }
 
+    // Extra guardrails on signup for a cleaner experience.
+    if (mode === "signup" && !isMentor) {
+      if (!fullName.trim()) {
+        toast("Please enter your full name.", "error")
+        return
+      }
+      if (password.length < 8) {
+        toast("Use at least 8 characters for a strong password.", "error")
+        return
+      }
+      if (!agreeTerms) {
+        toast("Please accept the Terms & Privacy Policy to continue.", "error")
+        return
+      }
+    }
+
     setBusy(true)
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: {
+            data: { full_name: fullName },
+            emailRedirectTo: `${window.location.origin}/login/`,
+            ...(captchaToken ? { captchaToken } : {}),
+          },
         })
         if (error) throw error
         const { data } = await supabase.auth.getSession()
@@ -290,12 +314,17 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={mode === "signup" ? 8 : 6}
                   className={`${inputClass} pr-10`}
-                  placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
+                  placeholder={mode === "signup" ? "At least 8 characters" : "••••••••"}
                   autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 />
               </Field>
+
+              {/* Password strength (signup only) */}
+              {mode === "signup" && !isMentor && password.length > 0 && (
+                <PasswordStrength value={password} />
+              )}
 
               {mode === "signin" && (
                 <div className="flex justify-end">
@@ -307,6 +336,23 @@ export default function LoginPage() {
                     Forgot password?
                   </button>
                 </div>
+              )}
+
+              {/* Terms acceptance (signup only) */}
+              {mode === "signup" && !isMentor && (
+                <label className="flex cursor-pointer items-start gap-2 text-xs text-foreground/60">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-sky-500"
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <a href="/terms/" target="_blank" className="text-sky-300 underline">Terms</a> and{" "}
+                    <a href="/privacy/" target="_blank" className="text-sky-300 underline">Privacy Policy</a>.
+                  </span>
+                </label>
               )}
 
               <button
@@ -358,6 +404,34 @@ export default function LoginPage() {
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none"
+
+/** Simple password strength meter: length + character variety. */
+function PasswordStrength({ value }: { value: string }) {
+  let score = 0
+  if (value.length >= 8) score++
+  if (value.length >= 12) score++
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++
+  if (/\d/.test(value)) score++
+  if (/[^A-Za-z0-9]/.test(value)) score++
+  const level = Math.min(score, 4)
+  const labels = ["Very weak", "Weak", "Fair", "Good", "Strong"]
+  const colors = ["bg-red-500", "bg-red-400", "bg-amber-400", "bg-sky-400", "bg-emerald-400"]
+  return (
+    <div>
+      <div className="flex gap-1">
+        {[0, 1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${
+              i < level ? colors[level] : "bg-white/10"
+            }`}
+          />
+        ))}
+      </div>
+      <p className="mt-1 font-mono text-[10px] text-foreground/45">{labels[level]}</p>
+    </div>
+  )
+}
 
 /** Labeled input wrapper with a leading icon and optional trailing control. */
 function Field({
