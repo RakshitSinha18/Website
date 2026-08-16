@@ -10,10 +10,9 @@ import { RealisticSwitch } from "./realistic-switch"
 import "@/app/realistic-switch.css"
 
 /**
- * Interactive spotlight hero from the animated-spotlight template.
- *  - Draggable hanging lamp; the WebGL light-rays follow it (dynamicOrigin).
- *  - A realistic on/off switch (top-left) that dims the whole scene.
- *  - `children` are the page's hero content, centered over the scene.
+ * Faithful port of the animated-spotlight template's interactive scene
+ * (draggable lamp + light rays that follow it + on/off switch), with `children`
+ * overlaid centered on top for the page's hero text.
  */
 export function AnimatedSpotlightHero() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -34,34 +33,37 @@ export function AnimatedSpotlightHero() {
       y.set(e.clientY - rect.top)
     }
   }
-
   const handlePointerUp = () => {
     isDraggingRef.current = false
     window.removeEventListener("pointermove", handlePointerMove)
     window.removeEventListener("pointerup", handlePointerUp)
   }
-
   const handlePointerDown = (e: React.PointerEvent) => {
     isDraggingRef.current = true
     ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
     window.addEventListener("pointermove", handlePointerMove)
     window.addEventListener("pointerup", handlePointerUp)
   }
-
-  const toggle = () => setIsLightOn((v) => !v)
+  const handleToggle = () => setIsLightOn((v) => !v)
 
   return (
     <div
       ref={containerRef}
-      className="pointer-events-none absolute inset-0 z-20 overflow-hidden touch-none"
+      className="pointer-events-none absolute inset-0 overflow-hidden font-sans touch-none"
+      style={{ background: "radial-gradient(circle, #1E293B 0%, #0F172A 100%)" }}
     >
       {/* Dark overlay when the light is off */}
       <motion.div
         className="absolute inset-0 z-30 pointer-events-none"
         style={{ backgroundColor: "#020617" }}
-        animate={{ opacity: isLightOn ? 0 : 0.9 }}
+        animate={{ opacity: isLightOn ? 0 : 0.85 }}
         transition={{ duration: 0.5 }}
       />
+
+      {/* On/off switch — moved below the fixed nav; interactive */}
+      <div className="switch-container pointer-events-auto absolute right-6 top-24 z-50 md:top-28">
+        <RealisticSwitch isOn={isLightOn} onToggle={handleToggle} orientation="vertical" />
+      </div>
 
       {/* WebGL light-rays that follow the lamp */}
       <div className="absolute inset-0 z-0">
@@ -77,14 +79,9 @@ export function AnimatedSpotlightHero() {
           anchor={anchor}
           isLightOn={isLightOn}
           onPointerDown={handlePointerDown}
-          onCordPull={toggle}
+          onCordPull={handleToggle}
         />
       )}
-
-      {/* On/off switch — clears the fixed top nav, top-most layer */}
-      <div className="switch-container pointer-events-auto absolute right-6 top-24 z-[60] md:top-28">
-        <RealisticSwitch isOn={isLightOn} onToggle={toggle} orientation="vertical" />
-      </div>
     </div>
   )
 }

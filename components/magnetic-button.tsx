@@ -54,7 +54,9 @@ export function MagneticButton({
       "bg-foreground/95 text-background hover:bg-foreground backdrop-blur-md hover:scale-[1.02] active:scale-[0.98]",
     secondary:
       "bg-foreground/5 text-foreground hover:bg-foreground/10 backdrop-blur-xl border border-foreground/10 hover:border-foreground/20",
-    ghost: "bg-transparent text-foreground hover:bg-foreground/5 backdrop-blur-sm",
+    // Visible outline at rest; fills in on hover (classic ghost button).
+    ghost:
+      "bg-transparent text-foreground border border-foreground/40 backdrop-blur-md hover:bg-foreground hover:text-background hover:border-foreground hover:scale-[1.02] active:scale-[0.98]",
   }
 
   const sizes = {

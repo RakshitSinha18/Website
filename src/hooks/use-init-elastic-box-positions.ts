@@ -27,12 +27,14 @@ export function useInitElasticBoxPositions(
       const rect = containerRef.current.getBoundingClientRect()
       const centerX = rect.width / 2
 
+      // Keep the lamp toward the right so it doesn't sit over the centered
+      // hero text. Anchor + rest position both shift to ~72% width.
+      const rightX = rect.width * 0.72
+
       const newPositions = {
         isPositioned: true,
-        anchor: { x: centerX, y: 0 }, 
-        // 2. LUMINÁRIA POSICIONADA MAIS ALTA
-        // Um valor menor (0.15) significa mais perto do topo da tela.
-        restPosition: { x: centerX, y: rect.height * 0.15 }, 
+        anchor: { x: rightX, y: 0 },
+        restPosition: { x: rightX, y: rect.height * 0.15 },
       }
       
       setPositionState(newPositions)
