@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Github,
+  Linkedin,
 } from "lucide-react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
@@ -160,6 +162,20 @@ export default function LoginPage() {
     else toast("Password reset link sent — check your email.", "success")
   }
 
+  // Social sign-in. Supabase redirects back to /login/, where the useAuth effect
+  // routes the user by role (admin vs student). OAuth users skip email confirmation.
+  const handleOAuth = async (provider: "google" | "github" | "linkedin_oidc") => {
+    if (!supabase) {
+      toast("Login isn't configured yet.", "error")
+      return
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/login/` },
+    })
+    if (error) toast(error.message, "error")
+  }
+
   return (
     <main className="relative min-h-[100dvh] bg-[#0b0f19] text-foreground">
       <PageBackdrop />
@@ -295,7 +311,23 @@ export default function LoginPage() {
                   : "Join to book 1-on-1 evening classes with Rakshit."}
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            {/* Social sign-in — no email confirmation needed (provider verifies). */}
+            {!isMentor && (
+              <div className="mt-6">
+                <div className="grid gap-2">
+                  <OAuthButton label="Continue with Google" onClick={() => handleOAuth("google")} icon={<GoogleIcon />} />
+                  <OAuthButton label="Continue with GitHub" onClick={() => handleOAuth("github")} icon={<Github className="h-4 w-4" />} />
+                  <OAuthButton label="Continue with LinkedIn" onClick={() => handleOAuth("linkedin_oidc")} icon={<Linkedin className="h-4 w-4" />} />
+                </div>
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/10" />
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-foreground/40">or</span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className={isMentor ? "mt-8 space-y-4" : "space-y-4"}>
               {mode === "signup" && !isMentor && (
                 <Field label="Full name" htmlFor="fullName" icon={<User className="h-4 w-4" />}>
                   <input
@@ -447,6 +479,40 @@ export default function LoginPage() {
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none"
+
+/** A social sign-in button. */
+function OAuthButton({
+  label,
+  icon,
+  onClick,
+}: {
+  label: string
+  icon: React.ReactNode
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.08]"
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+/** Google "G" mark (lucide has no brand logo). */
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" />
+      <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38z" />
+    </svg>
+  )
+}
 
 /** Simple password strength meter: length + character variety. */
 function PasswordStrength({ value }: { value: string }) {
