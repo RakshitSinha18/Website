@@ -43,6 +43,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
+  // Set when sign-in fails because the email isn't confirmed yet.
+  const [needsVerify, setNeedsVerify] = useState(false)
   // Captcha token (set when the widget is configured/solved). Optional until
   // captcha is enabled in Supabase — see SIGNUP-CAPTCHA.md.
   const [captchaToken] = useState<string>("")
@@ -81,6 +83,7 @@ export default function LoginPage() {
     }
 
     setBusy(true)
+    setNeedsVerify(false)
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -108,10 +111,36 @@ export default function LoginPage() {
         router.replace(destFor(email))
       }
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Something went wrong.", "error")
+      const msg = err instanceof Error ? err.message : "Something went wrong."
+      // Supabase says "Email not confirmed" — offer a resend instead of a dead end.
+      if (/not confirmed|confirm/i.test(msg)) {
+        setNeedsVerify(true)
+        toast("Your email isn't verified yet. Check your inbox/spam, or resend below.", "error")
+      } else {
+        toast(msg, "error")
+      }
     } finally {
       setBusy(false)
     }
+  }
+
+  // Re-send the confirmation email for an account that hasn't been verified.
+  const handleResendVerification = async () => {
+    if (!supabase) {
+      toast("Login isn't configured yet.", "error")
+      return
+    }
+    if (!email) {
+      toast("Enter your email above first.", "info")
+      return
+    }
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/login/` },
+    })
+    if (error) toast(error.message, "error")
+    else toast("Verification email resent — check your inbox (and spam).", "success")
   }
 
   // Send a password-reset email (works for students AND Rakshit's owner account).
@@ -367,6 +396,20 @@ export default function LoginPage() {
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
               </button>
+
+              {/* Shown when sign-in fails because the email isn't verified. */}
+              {needsVerify && (
+                <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
+                  <p>This email hasn&apos;t been verified yet. Check your inbox and spam, or resend the link.</p>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    className="mt-2 font-medium underline underline-offset-4 hover:text-white"
+                  >
+                    Resend verification email
+                  </button>
+                </div>
+              )}
             </form>
 
             {/* Students can self-register; the admin account is pre-created. */}
