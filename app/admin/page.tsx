@@ -63,7 +63,7 @@ export default function AdminPage() {
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [roadmap, setRoadmap] = useState<RoadmapRow[]>([])
   // Tabbed admin navigation.
-  const [tab, setTab] = useState<"bookings" | "courses" | "roadmap" | "payments">("bookings")
+  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "roadmap" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -103,6 +103,14 @@ export default function AdminPage() {
     currency_note: "",
   })
   const [savingPay, setSavingPay] = useState(false)
+
+  // Weekly recurring availability (0=Sun … 6=Sat → array of "HH:MM"), holiday
+  // blocking, and a student-facing note. Drives the booking calendar.
+  const [weekly, setWeekly] = useState<Record<string, string[]>>({})
+  const [blockedDates, setBlockedDates] = useState<string[]>([])
+  const [availNote, setAvailNote] = useState("")
+  const [newBlockDate, setNewBlockDate] = useState("")
+  const [savingAvail, setSavingAvail] = useState(false)
 
   const allowed = !loading && user && isAdminEmail(user.email)
 
@@ -161,8 +169,49 @@ export default function AdminPage() {
         pay_instructions: st.pay_instructions || "",
         currency_note: st.currency_note || "",
       }))
+      setWeekly((st.weekly_availability as Record<string, string[]>) || {})
+      setBlockedDates((st.blocked_dates as string[]) || [])
+      setAvailNote(st.availability_note || "")
     }
   }
+
+  // Persist the weekly schedule + blocked dates to the settings row.
+  const saveAvailability = async () => {
+    if (!supabase) return
+    setSavingAvail(true)
+    const { error } = await supabase
+      .from("settings")
+      .update({
+        weekly_availability: weekly,
+        blocked_dates: blockedDates,
+        availability_note: availNote,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", 1)
+    setSavingAvail(false)
+    setMsg(error ? error.message : "Availability saved.")
+  }
+
+  // Toggle a single "HH:MM" slot on/off for a given weekday (0–6).
+  const toggleSlot = (weekday: number, hhmm: string) => {
+    setWeekly((prev) => {
+      const key = String(weekday)
+      const cur = prev[key] ?? []
+      const next = cur.includes(hhmm) ? cur.filter((s) => s !== hhmm) : [...cur, hhmm].sort()
+      return { ...prev, [key]: next }
+    })
+  }
+  // Turn a whole weekday off (clear its slots).
+  const clearDay = (weekday: number) =>
+    setWeekly((prev) => ({ ...prev, [String(weekday)]: [] }))
+
+  const addBlockedDate = () => {
+    if (!newBlockDate) return
+    setBlockedDates((prev) => (prev.includes(newBlockDate) ? prev : [...prev, newBlockDate].sort()))
+    setNewBlockDate("")
+  }
+  const removeBlockedDate = (d: string) =>
+    setBlockedDates((prev) => prev.filter((x) => x !== d))
 
   const savePayments = async () => {
     if (!supabase) return
@@ -373,6 +422,7 @@ export default function AdminPage() {
         >
           {[
             { id: "bookings", label: "Bookings", icon: CalendarClock },
+            { id: "availability", label: "Availability", icon: CalendarClock },
             { id: "courses", label: "Courses", icon: BookOpen },
             { id: "roadmap", label: "Roadmap", icon: Map },
             { id: "payments", label: "Payments", icon: IndianRupee },
@@ -510,6 +560,83 @@ export default function AdminPage() {
               {savingPay ? "Saving…" : "Save payment methods"}
             </Button>
           </div>
+        </Card>
+        </>
+        )}
+
+        {/* ── AVAILABILITY TAB ─────────────────────────────────── */}
+        {tab === "availability" && (
+        <>
+        <Card className="mb-6">
+          <CardTitle
+            icon={<CalendarClock className="h-4 w-4" />}
+            title="Weekly availability"
+            hint="Toggle the hours you're free each weekday. This repeats every week and controls which slots students can book. Turn a day off to hide it."
+          />
+          <div className="space-y-2">
+            {WEEKDAYS.map((name, wd) => (
+              <AvailabilityDay
+                key={wd}
+                name={name}
+                slots={weekly[String(wd)] ?? []}
+                onToggle={(hhmm) => toggleSlot(wd, hhmm)}
+                onClear={() => clearDay(wd)}
+              />
+            ))}
+          </div>
+        </Card>
+
+        <Card className="mb-6">
+          <CardTitle
+            icon={<CalendarClock className="h-4 w-4" />}
+            title="Block specific dates"
+            hint="Close individual dates (holidays, travel) even if that weekday is normally open."
+          />
+          <div className="mb-3 flex flex-wrap gap-2">
+            {blockedDates.length === 0 && <EmptyRow label="No blocked dates." />}
+            {blockedDates.map((d) => (
+              <span
+                key={d}
+                className="inline-flex items-center gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 font-mono text-[11px] text-amber-200"
+              >
+                {d}
+                <button
+                  onClick={() => removeBlockedDate(d)}
+                  aria-label={`Unblock ${d}`}
+                  className="text-amber-200/70 hover:text-amber-100"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+            <input
+              type="date"
+              value={newBlockDate}
+              min={new Date().toISOString().split("T")[0]}
+              onChange={(e) => setNewBlockDate(e.target.value)}
+              aria-label="Date to block"
+              className={fieldClass}
+            />
+            <Button onClick={addBlockedDate} variant="secondary">
+              <Plus className="h-3.5 w-3.5" /> Block date
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="mb-6">
+          <FieldLabel>Note for students (optional)</FieldLabel>
+          <input
+            value={availNote}
+            onChange={(e) => setAvailNote(e.target.value)}
+            placeholder="e.g. Times shown in IST · evenings only"
+            className={inputCls}
+          />
+          <Button onClick={saveAvailability} disabled={savingAvail} className="mt-4 w-full">
+            {savingAvail && <Loader2 className="h-4 w-4 animate-spin" />}
+            {savingAvail ? "Saving…" : "Save availability"}
+          </Button>
         </Card>
         </>
         )}
@@ -931,6 +1058,64 @@ function EmptyRow({ label }: { label: string }) {
 
 const inputCls =
   "w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none"
+
+// Full-day, editable hour range for availability (07:00 → 22:00 starts).
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+const HOURS = Array.from({ length: 16 }, (_, i) => `${String(i + 7).padStart(2, "0")}:00`) // 07:00..22:00
+
+function hourLabel(hhmm: string) {
+  const h = Number(hhmm.split(":")[0])
+  return `${((h + 11) % 12) + 1}${h >= 12 ? "pm" : "am"}`
+}
+
+// One weekday row: on/off state + a wrap of hour toggles.
+function AvailabilityDay({
+  name,
+  slots,
+  onToggle,
+  onClear,
+}: {
+  name: string
+  slots: string[]
+  onToggle: (hhmm: string) => void
+  onClear: () => void
+}) {
+  const on = slots.length > 0
+  return (
+    <div className={`rounded-xl border p-3.5 transition-colors ${on ? "border-sky-400/25 bg-sky-400/[0.06]" : "border-white/10 bg-white/[0.03]"}`}>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">{name}</span>
+        {on ? (
+          <button onClick={onClear} className="font-mono text-[10px] text-foreground/50 hover:text-foreground">
+            turn off
+          </button>
+        ) : (
+          <span className="font-mono text-[10px] text-foreground/40">off</span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {HOURS.map((h) => {
+          const active = slots.includes(h)
+          return (
+            <button
+              key={h}
+              type="button"
+              onClick={() => onToggle(h)}
+              aria-pressed={active}
+              className={`rounded-md px-2 py-1 font-mono text-[11px] transition-colors ${
+                active
+                  ? "bg-gradient-to-r from-sky-500 to-amber-400 text-black"
+                  : "border border-white/10 text-foreground/60 hover:border-white/25 hover:text-foreground"
+              }`}
+            >
+              {hourLabel(h)}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function PayBlock({
   label,

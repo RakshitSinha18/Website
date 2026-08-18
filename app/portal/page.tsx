@@ -361,6 +361,8 @@ export default function PortalPage() {
             <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
               <BookingCalendar
                 takenSlots={takenSlots}
+                weeklyAvailability={payInfo?.weekly_availability ?? undefined}
+                blockedDates={payInfo?.blocked_dates ?? []}
                 onChange={(d, s) => {
                   setDate(d || "")
                   setSlot(s || "")

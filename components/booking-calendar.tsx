@@ -3,8 +3,12 @@
 import { useMemo, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-// Evening, after-work-hours slots (1–2 hour classes).
-const EVENING_SLOTS = ["18:00", "19:00", "20:00", "21:00"]
+// Fallback slots if the mentor hasn't configured a weekly schedule yet.
+const DEFAULT_SLOTS = ["18:00", "19:00", "20:00", "21:00"]
+
+// Rakshit's weekly recurring availability, keyed by weekday (0=Sun … 6=Sat).
+// Each value is an array of "HH:MM" start times he's open that weekday.
+export type WeeklyAvailability = Record<string, string[]>
 
 const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 const MONTHS = [
@@ -21,17 +25,40 @@ function slotLabel(s: string) {
 }
 
 /**
- * Calendly-style month calendar for booking an evening slot.
- * Calls onSelect(dateISO, slot) when the user picks a day + time.
- * `takenSlots` is a set of "YYYY-MM-DD|HH:MM" strings that are already booked.
+ * Calendly-style month calendar for booking a slot.
+ * Calls onChange(dateISO, slot) when the user picks a day + time.
+ *
+ * `takenSlots`         — set of "YYYY-MM-DD|HH:MM" strings already booked (greyed out).
+ * `weeklyAvailability` — mentor's recurring schedule by weekday; only these days/slots
+ *                        are offered. If empty/undefined, every day falls back to
+ *                        DEFAULT_SLOTS (preserves old behaviour before setup).
+ * `blockedDates`       — specific "YYYY-MM-DD" dates that are closed (holidays).
  */
 export function BookingCalendar({
   onChange,
   takenSlots = new Set<string>(),
+  weeklyAvailability,
+  blockedDates = [],
 }: {
   onChange: (dateISO: string | null, slot: string | null) => void
   takenSlots?: Set<string>
+  weeklyAvailability?: WeeklyAvailability
+  blockedDates?: string[]
 }) {
+  // Has the mentor configured any weekly availability at all?
+  const hasSchedule = useMemo(
+    () => Boolean(weeklyAvailability && Object.values(weeklyAvailability).some((s) => s?.length)),
+    [weeklyAvailability],
+  )
+  const blocked = useMemo(() => new Set(blockedDates), [blockedDates])
+
+  // Slots offered on a given date: the mentor's weekday slots (or the default set
+  // when no schedule exists). Blocked dates return no slots.
+  const slotsForDate = (dateISO: string, weekday: number): string[] => {
+    if (blocked.has(dateISO)) return []
+    if (!hasSchedule) return DEFAULT_SLOTS
+    return weeklyAvailability?.[String(weekday)] ?? []
+  }
   const today = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -108,19 +135,24 @@ export function BookingCalendar({
         {cells.map((day, i) => {
           if (day === null) return <div key={i} />
           const d = new Date(year, month, day)
+          const iso = fmt(d)
           const isPast = d < today
-          const isSelected = selectedDay && fmt(selectedDay) === fmt(d)
-          const isToday = fmt(d) === fmt(today)
+          // A day is unavailable if it's a holiday or the mentor has no slots that weekday.
+          const noSlots = slotsForDate(iso, d.getDay()).length === 0
+          const disabled = isPast || noSlots
+          const isSelected = selectedDay && fmt(selectedDay) === iso
+          const isToday = iso === fmt(today)
           return (
             <button
               key={i}
               type="button"
-              disabled={isPast}
+              disabled={disabled}
               onClick={() => pickDay(day)}
+              title={!isPast && noSlots ? "Not available" : undefined}
               className={`flex h-9 items-center justify-center rounded-lg text-sm transition-all ${
                 isSelected
                   ? "bg-foreground text-background"
-                  : isPast
+                  : disabled
                     ? "text-foreground/20"
                     : "text-foreground/80 hover:bg-foreground/10"
               } ${isToday && !isSelected ? "ring-1 ring-inset ring-sky-400/60" : ""}`}
@@ -131,15 +163,15 @@ export function BookingCalendar({
         })}
       </div>
 
-      {/* Evening slots */}
+      {/* Slots for the selected day */}
       {selectedDay && (
         <div className="mt-4">
           <p className="mb-2 font-mono text-[11px] text-foreground/60">
-            Evening slots ·{" "}
+            Available slots ·{" "}
             {selectedDay.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {EVENING_SLOTS.map((s) => {
+            {slotsForDate(fmt(selectedDay), selectedDay.getDay()).map((s) => {
               const taken = takenSlots.has(`${fmt(selectedDay)}|${s}`)
               const active = selectedSlot === s
               return (
