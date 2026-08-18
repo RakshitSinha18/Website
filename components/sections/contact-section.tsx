@@ -75,6 +75,26 @@ export function ContactSection() {
         <a href="/privacy/" className="transition-colors hover:text-foreground">Privacy</a>
         <a href="/refund/" className="transition-colors hover:text-foreground">Refunds</a>
         <span className="hidden sm:inline text-foreground/30">·</span>
+        {/* Social icons */}
+        <a
+          href="https://github.com/RakshitSinha18"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub"
+          className="inline-flex items-center transition-colors hover:text-foreground"
+        >
+          <Github className="h-3.5 w-3.5" />
+        </a>
+        <a
+          href="https://www.linkedin.com/in/rakshitsinha555/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="LinkedIn"
+          className="inline-flex items-center transition-colors hover:text-foreground"
+        >
+          <Linkedin className="h-3.5 w-3.5" />
+        </a>
+        <span className="hidden sm:inline text-foreground/30">·</span>
         <span>© {new Date().getFullYear()} · Built with care in Mumbai</span>
       </footer>
     </section>
