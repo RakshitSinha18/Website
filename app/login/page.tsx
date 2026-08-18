@@ -311,32 +311,25 @@ export default function LoginPage() {
                   : "Join to book 1-on-1 evening classes with Rakshit."}
             </p>
 
-            {/* Social sign-in — no email confirmation needed (provider verifies).
-                GitHub is shown for BOTH students and the mentor: admin access is
-                granted server-side by RLS on the account's email, so Rakshit can
-                sign in with a GitHub account whose email matches ADMIN_EMAIL. */}
-            <div className="mt-6">
-              <div className="grid gap-2">
-                {/* Google & LinkedIn hidden until their providers are enabled in Supabase.
-                    Re-enable by uncommenting once configured (see PAYMENTS-SETUP / auth setup). */}
-                {!isMentor && (
-                  <>
-                    {/* <OAuthButton label="Continue with Google" onClick={() => handleOAuth("google")} icon={<GoogleIcon />} /> */}
-                  </>
-                )}
-                <OAuthButton
-                  label={isMentor ? "Sign in with GitHub" : "Continue with GitHub"}
-                  onClick={() => handleOAuth("github")}
-                  icon={<Github className="h-4 w-4" />}
-                />
-                {/* <OAuthButton label="Continue with LinkedIn" onClick={() => handleOAuth("linkedin_oidc")} icon={<Linkedin className="h-4 w-4" />} /> */}
+            {/* Social sign-in — students only. The mentor/admin signs in with
+                email + password (admin access is gated by email, and mixing in
+                GitHub for admin risks landing on the wrong account). */}
+            {!isMentor && (
+              <div className="mt-6">
+                <div className="grid gap-2">
+                  {/* Google & LinkedIn hidden until their providers are enabled in Supabase.
+                      Re-enable by uncommenting once configured (see PAYMENTS-SETUP / auth setup). */}
+                  {/* <OAuthButton label="Continue with Google" onClick={() => handleOAuth("google")} icon={<GoogleIcon />} /> */}
+                  <OAuthButton label="Continue with GitHub" onClick={() => handleOAuth("github")} icon={<Github className="h-4 w-4" />} />
+                  {/* <OAuthButton label="Continue with LinkedIn" onClick={() => handleOAuth("linkedin_oidc")} icon={<Linkedin className="h-4 w-4" />} /> */}
+                </div>
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/10" />
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-foreground/40">or</span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
               </div>
-              <div className="my-5 flex items-center gap-3">
-                <span className="h-px flex-1 bg-white/10" />
-                <span className="font-mono text-[10px] uppercase tracking-wider text-foreground/40">or</span>
-                <span className="h-px flex-1 bg-white/10" />
-              </div>
-            </div>
+            )}
 
             <form onSubmit={handleSubmit} className={isMentor ? "mt-8 space-y-4" : "space-y-4"}>
               {mode === "signup" && !isMentor && (
