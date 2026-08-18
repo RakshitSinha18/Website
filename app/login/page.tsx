@@ -315,9 +315,11 @@ export default function LoginPage() {
             {!isMentor && (
               <div className="mt-6">
                 <div className="grid gap-2">
-                  <OAuthButton label="Continue with Google" onClick={() => handleOAuth("google")} icon={<GoogleIcon />} />
+                  {/* Google & LinkedIn hidden until their providers are enabled in Supabase.
+                      Re-enable by uncommenting once configured (see PAYMENTS-SETUP / auth setup). */}
+                  {/* <OAuthButton label="Continue with Google" onClick={() => handleOAuth("google")} icon={<GoogleIcon />} /> */}
                   <OAuthButton label="Continue with GitHub" onClick={() => handleOAuth("github")} icon={<Github className="h-4 w-4" />} />
-                  <OAuthButton label="Continue with LinkedIn" onClick={() => handleOAuth("linkedin_oidc")} icon={<Linkedin className="h-4 w-4" />} />
+                  {/* <OAuthButton label="Continue with LinkedIn" onClick={() => handleOAuth("linkedin_oidc")} icon={<Linkedin className="h-4 w-4" />} /> */}
                 </div>
                 <div className="my-5 flex items-center gap-3">
                   <span className="h-px flex-1 bg-white/10" />
