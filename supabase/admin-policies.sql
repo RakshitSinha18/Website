@@ -5,10 +5,14 @@
 -- Safe to re-run.
 -- ============================================================================
 
--- Who counts as the mentor/admin (change the email if needed).
+-- Who counts as the mentor/admin. Rakshit uses two accounts — both are admin.
+-- (Keep in sync with supabase/admin-emails.sql and lib/config.ts → ADMIN_EMAILS.)
 create or replace function public.is_mentor()
 returns boolean language sql stable as $$
-  select coalesce(lower(auth.jwt() ->> 'email') = 'rsinha1369@gmail.com', false);
+  select coalesce(
+    lower(auth.jwt() ->> 'email') in ('rsinha1369@gmail.com', 'sinharakshit1988@gmail.com'),
+    false
+  );
 $$;
 
 -- --- Read everything the mentor needs ---------------------------------------

@@ -137,7 +137,10 @@ create policy "students update own class bookings"
 -- ---------------------------------------------------------------------------
 create or replace function public.is_mentor()
 returns boolean language sql stable as $$
-  select coalesce(lower(auth.jwt() ->> 'email') = 'rsinha1369@gmail.com', false);
+  select coalesce(
+    lower(auth.jwt() ->> 'email') in ('rsinha1369@gmail.com', 'sinharakshit1988@gmail.com'),
+    false
+  );
 $$;
 
 drop policy if exists "mentor reads all class bookings" on public.class_bookings;

@@ -13,9 +13,13 @@
 -- ============================================================================
 
 -- Who is the mentor/admin (Rakshit). Everyone else is a student.
+-- Rakshit uses two accounts — both are admin. (See supabase/admin-emails.sql.)
 create or replace function public.is_mentor()
 returns boolean language sql stable as $$
-  select coalesce(lower(auth.jwt() ->> 'email') = 'rsinha1369@gmail.com', false);
+  select coalesce(
+    lower(auth.jwt() ->> 'email') in ('rsinha1369@gmail.com', 'sinharakshit1988@gmail.com'),
+    false
+  );
 $$;
 
 -- ============================================================================
