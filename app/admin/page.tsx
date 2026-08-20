@@ -67,6 +67,14 @@ interface BatchRow {
   capacity: number
   active: boolean
 }
+interface ArticleRow {
+  id: string
+  slug: string
+  title: string
+  excerpt: string
+  body: string
+  published: boolean
+}
 
 export default function AdminPage() {
   const router = useRouter()
@@ -79,8 +87,10 @@ export default function AdminPage() {
   const [newBatch, setNewBatch] = useState({
     class_id: "", title: "", subject: "", schedule: "", start_date: "", end_date: "", price: "", capacity: "",
   })
+  const [articles, setArticles] = useState<ArticleRow[]>([])
+  const [newArticle, setNewArticle] = useState({ title: "", excerpt: "", body: "" })
   // Tabbed admin navigation.
-  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "batches" | "roadmap" | "payments">("bookings")
+  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "batches" | "articles" | "roadmap" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -169,6 +179,9 @@ export default function AdminPage() {
 
     const { data: bt } = await supabase.from("batches").select("*").order("created_at", { ascending: true })
     if (bt) setBatches(bt as BatchRow[])
+
+    const { data: art } = await supabase.from("articles").select("*").order("created_at", { ascending: false })
+    if (art) setArticles(art as ArticleRow[])
 
     const { data: mats } = await supabase
       .from("class_materials")
@@ -379,6 +392,35 @@ export default function AdminPage() {
     if (!error) load()
   }
 
+  // --- Articles ---
+  const slugify = (s: string) =>
+    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60)
+  const addArticle = async () => {
+    if (!supabase || !newArticle.title.trim()) { setMsg("Give the article a title."); return }
+    const slug = `${slugify(newArticle.title)}-${Date.now().toString(36).slice(-4)}`
+    const { error } = await supabase.from("articles").insert({
+      slug, title: newArticle.title.trim(), excerpt: newArticle.excerpt, body: newArticle.body, published: false,
+    })
+    setMsg(error ? error.message : `Draft "${newArticle.title}" created.`)
+    if (!error) { setNewArticle({ title: "", excerpt: "", body: "" }); load() }
+  }
+  const saveArticle = async (a: ArticleRow) => {
+    if (!supabase) return
+    setBusyId(a.id)
+    const { error } = await supabase.from("articles").update({
+      title: a.title, excerpt: a.excerpt, body: a.body, published: a.published, updated_at: new Date().toISOString(),
+    }).eq("id", a.id)
+    setBusyId(null)
+    setMsg(error ? error.message : `Saved "${a.title}".`)
+    if (!error) load()
+  }
+  const removeArticle = async (id: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("articles").delete().eq("id", id)
+    setMsg(error ? error.message : "Article removed.")
+    if (!error) load()
+  }
+
   // --- Class catalog editing ---
   const addClass = async () => {
     if (!supabase || !newClass.title.trim()) return
@@ -514,6 +556,7 @@ export default function AdminPage() {
             { id: "availability", label: "Availability", icon: CalendarClock },
             { id: "courses", label: "Courses", icon: BookOpen },
             { id: "batches", label: "Batches", icon: BookOpen },
+            { id: "articles", label: "Articles", icon: FileText },
             { id: "roadmap", label: "Roadmap", icon: Map },
             { id: "payments", label: "Payments", icon: IndianRupee },
           ].map((t) => {
@@ -1054,6 +1097,28 @@ export default function AdminPage() {
         </>
         )}
 
+        {/* ── ARTICLES TAB ─────────────────────────────────────── */}
+        {tab === "articles" && (
+        <>
+        <Card>
+          <CardTitle icon={<FileText className="h-4 w-4" />} title="Articles" hint="Write BI articles. Drafts are private; publish to show them on /articles." />
+          <ul className="mb-4 space-y-2">
+            {articles.map((a) => (
+              <ArticleEditor key={a.id} article={a} busy={busyId === a.id} onSave={saveArticle} onRemove={removeArticle} />
+            ))}
+            {articles.length === 0 && <EmptyRow label="No articles yet — write one below." />}
+          </ul>
+          <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+            <p className="font-mono text-[11px] text-foreground/50">New article</p>
+            <input value={newArticle.title} onChange={(e) => setNewArticle({ ...newArticle, title: e.target.value })} placeholder="Title" className={fieldClass} />
+            <input value={newArticle.excerpt} onChange={(e) => setNewArticle({ ...newArticle, excerpt: e.target.value })} placeholder="Short excerpt (shown in the list)" className={fieldClass} />
+            <textarea rows={5} value={newArticle.body} onChange={(e) => setNewArticle({ ...newArticle, body: e.target.value })} placeholder="Body — one paragraph per line…" className={fieldClass} />
+            <Button onClick={addArticle} className="w-full"><Plus className="h-3.5 w-3.5" /> Create draft</Button>
+          </div>
+        </Card>
+        </>
+        )}
+
         {/* ── ROADMAP TAB ──────────────────────────────────────── */}
         {tab === "roadmap" && (
         <Card>
@@ -1264,6 +1329,52 @@ function BatchEditor({
             <Button onClick={() => onSave(d)} disabled={busy}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}{busy ? "Saving…" : "Save batch"}
             </Button>
+            <button onClick={() => onRemove(d.id)} className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 hover:bg-red-500/10">
+              <Trash2 className="h-3 w-3" /> Remove
+            </button>
+          </div>
+        </div>
+      )}
+    </li>
+  )
+}
+
+// Editable row for one article.
+function ArticleEditor({
+  article, busy, onSave, onRemove,
+}: {
+  article: ArticleRow
+  busy: boolean
+  onSave: (a: ArticleRow) => void
+  onRemove: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [d, setD] = useState<ArticleRow>(article)
+  useEffect(() => setD(article), [article])
+  const set = (patch: Partial<ArticleRow>) => setD((p) => ({ ...p, ...patch }))
+
+  return (
+    <li className="rounded-xl border border-white/10 bg-white/[0.03]">
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
+        <span className="min-w-0">
+          <span className="text-sm text-foreground">{article.title}</span>
+          <span className={`ml-2 rounded-full px-2 py-0.5 font-mono text-[10px] ${article.published ? "bg-emerald-500/20 text-emerald-200" : "bg-white/10 text-foreground/50"}`}>
+            {article.published ? "published" : "draft"}
+          </span>
+        </span>
+        <span className="font-mono text-[11px] text-foreground/50">{open ? "close" : "edit"}</span>
+      </button>
+      {open && (
+        <div className="space-y-2 border-t border-white/10 p-4">
+          <input value={d.title} onChange={(e) => set({ title: e.target.value })} placeholder="Title" className={inputCls} />
+          <input value={d.excerpt} onChange={(e) => set({ excerpt: e.target.value })} placeholder="Excerpt" className={inputCls} />
+          <textarea rows={8} value={d.body} onChange={(e) => set({ body: e.target.value })} placeholder="Body — one paragraph per line" className={inputCls} />
+          <label className="flex items-center gap-2 text-sm text-foreground/80">
+            <input type="checkbox" checked={d.published} onChange={(e) => set({ published: e.target.checked })} className="h-4 w-4 accent-sky-500" />
+            Published (visible on /articles)
+          </label>
+          <div className="flex gap-2">
+            <Button onClick={() => onSave(d)} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{busy ? "Saving…" : "Save"}</Button>
             <button onClick={() => onRemove(d.id)} className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 hover:bg-red-500/10">
               <Trash2 className="h-3 w-3" /> Remove
             </button>

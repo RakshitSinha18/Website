@@ -71,6 +71,7 @@ export function ContactSection() {
       <footer className="mx-auto mt-10 flex w-full max-w-5xl flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-foreground/10 pt-6 text-center font-mono text-xs text-foreground/45">
         <span className="text-foreground/70">Rakshit Sinha</span>
         <span className="hidden sm:inline text-foreground/30">·</span>
+        <a href="/articles/" className="transition-colors hover:text-foreground">Articles</a>
         <a href="/terms/" className="transition-colors hover:text-foreground">Terms</a>
         <a href="/privacy/" className="transition-colors hover:text-foreground">Privacy</a>
         <a href="/refund/" className="transition-colors hover:text-foreground">Refunds</a>
