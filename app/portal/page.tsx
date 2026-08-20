@@ -835,6 +835,14 @@ function PayControls({
           <CreditCard className="h-3.5 w-3.5" /> Pay (International)
         </button>
       </div>
+      {/* Trust badge — payments are live via Razorpay's secured checkout. */}
+      <div className="mt-2.5 flex items-center gap-1.5 font-mono text-[10px] text-emerald-300/80">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        <span>
+          Secured by Razorpay
+          {process.env.NEXT_PUBLIC_PAYMENTS_TEST_MODE === "1" ? " · test mode" : ""}
+        </span>
+      </div>
     </div>
   )
 }

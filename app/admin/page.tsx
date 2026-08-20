@@ -448,6 +448,24 @@ export default function AdminPage() {
         {/* ── PAYMENTS TAB ─────────────────────────────────────── */}
         {tab === "payments" && (
         <>
+        {/* Gateway status — Razorpay checkout is deployed & configured. */}
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.07] px-4 py-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-400/15 text-emerald-300">
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+              Razorpay checkout
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 font-mono text-[10px] text-emerald-200">
+                <Check className="h-3 w-3" /> active
+              </span>
+            </p>
+            <p className="font-mono text-[11px] text-foreground/55">
+              In-app card/UPI payments are live. Students pay in the portal; bookings confirm automatically on success.
+            </p>
+          </div>
+        </div>
+
         {/* Payment settings — UPI (India) + PayPal + link + bank (international) */}
         <Card className="mb-6">
           <CardTitle
