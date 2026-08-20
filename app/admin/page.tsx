@@ -54,6 +54,19 @@ interface RoadmapRow {
   title: string
   description: string
 }
+interface BatchRow {
+  id: string
+  class_id?: string | null
+  title: string
+  subject: string
+  description: string
+  schedule: string
+  start_date?: string | null
+  end_date?: string | null
+  price_paise: number
+  capacity: number
+  active: boolean
+}
 
 export default function AdminPage() {
   const router = useRouter()
@@ -62,8 +75,12 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<SessionRequest[]>([])
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [roadmap, setRoadmap] = useState<RoadmapRow[]>([])
+  const [batches, setBatches] = useState<BatchRow[]>([])
+  const [newBatch, setNewBatch] = useState({
+    class_id: "", title: "", subject: "", schedule: "", start_date: "", end_date: "", price: "", capacity: "",
+  })
   // Tabbed admin navigation.
-  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "roadmap" | "payments">("bookings")
+  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "batches" | "roadmap" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -77,13 +94,14 @@ export default function AdminPage() {
   const [newClass, setNewClass] = useState({ title: "", description: "", duration: "1–2 hours" })
   const [newTask, setNewTask] = useState({ track: "Data Analytics", day: "", title: "", description: "" })
 
-  // Course materials (PPT/notes) management
+  // Course materials (PPT/notes/transcript) management
   const [materials, setMaterials] = useState<
-    { id: string; class_id: string; title: string; kind: string; file_url: string }[]
+    { id: string; class_id: string | null; batch_id: string | null; title: string; kind: string; file_url: string }[]
   >([])
   const [matClass, setMatClass] = useState("")
+  const [matBatch, setMatBatch] = useState("") // optional: attach material to a batch
   const [matTitle, setMatTitle] = useState("")
-  const [matKind, setMatKind] = useState<"ppt" | "notes">("ppt")
+  const [matKind, setMatKind] = useState<"ppt" | "notes" | "transcript">("ppt")
   const [uploadingMat, setUploadingMat] = useState(false)
 
   // Payment settings (UPI + PayPal + link + bank)
@@ -145,9 +163,12 @@ export default function AdminPage() {
     }
     if (rm) setRoadmap(rm as RoadmapRow[])
 
+    const { data: bt } = await supabase.from("batches").select("*").order("created_at", { ascending: true })
+    if (bt) setBatches(bt as BatchRow[])
+
     const { data: mats } = await supabase
       .from("class_materials")
-      .select("id,class_id,title,kind,file_url")
+      .select("id,class_id,batch_id,title,kind,file_url")
       .order("created_at", { ascending: true })
     if (mats) setMaterials(mats as typeof materials)
 
@@ -248,14 +269,15 @@ export default function AdminPage() {
     setMsg("QR code uploaded.")
   }
 
-  // --- Course materials (PPT / notes) ---
+  // --- Course materials (PPT / notes / transcript), attachable to a class and/or batch ---
   const uploadMaterial = async (file: File) => {
-    if (!supabase || !matClass) {
-      setMsg("Pick a course first.")
+    if (!supabase || (!matClass && !matBatch)) {
+      setMsg("Pick a course or a batch first.")
       return
     }
     setUploadingMat(true)
-    const path = `${matClass}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`
+    const folder = matBatch ? `batch-${matBatch}` : matClass
+    const path = `${folder}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`
     const { error: upErr } = await supabase.storage.from("materials").upload(path, file, { upsert: true })
     if (upErr) {
       setUploadingMat(false)
@@ -268,7 +290,8 @@ export default function AdminPage() {
     }
     const { data: pub } = supabase.storage.from("materials").getPublicUrl(path)
     const { error } = await supabase.from("class_materials").insert({
-      class_id: matClass,
+      class_id: matClass || null,
+      batch_id: matBatch || null,
       title: matTitle.trim() || file.name,
       kind: matKind,
       file_url: pub.publicUrl,
@@ -287,6 +310,59 @@ export default function AdminPage() {
     if (!supabase) return
     const { error } = await supabase.from("class_materials").delete().eq("id", id)
     setMsg(error ? error.message : "Material removed.")
+    if (!error) load()
+  }
+
+  // --- Batch (scheduled cohort) editing ---
+  const addBatch = async () => {
+    if (!supabase || !newBatch.title.trim()) {
+      setMsg("Give the batch a title.")
+      return
+    }
+    const subject = newBatch.subject || classes.find((c) => c.id === newBatch.class_id)?.title || ""
+    const { error } = await supabase.from("batches").insert({
+      class_id: newBatch.class_id || null,
+      title: newBatch.title.trim(),
+      subject,
+      schedule: newBatch.schedule,
+      start_date: newBatch.start_date || null,
+      end_date: newBatch.end_date || null,
+      price_paise: Math.round(Number(newBatch.price) * 100) || 0,
+      capacity: Number(newBatch.capacity) || 0,
+      active: true,
+    })
+    setMsg(error ? error.message : `Added batch “${newBatch.title}”.`)
+    if (!error) {
+      setNewBatch({ class_id: "", title: "", subject: "", schedule: "", start_date: "", end_date: "", price: "", capacity: "" })
+      load()
+    }
+  }
+  const saveBatch = async (b: BatchRow) => {
+    if (!supabase) return
+    setBusyId(b.id)
+    const { error } = await supabase
+      .from("batches")
+      .update({
+        class_id: b.class_id || null,
+        title: b.title,
+        subject: b.subject,
+        description: b.description,
+        schedule: b.schedule,
+        start_date: b.start_date || null,
+        end_date: b.end_date || null,
+        price_paise: b.price_paise ?? 0,
+        capacity: b.capacity ?? 0,
+        active: b.active,
+      })
+      .eq("id", b.id)
+    setBusyId(null)
+    setMsg(error ? error.message : `Saved batch “${b.title}”.`)
+    if (!error) load()
+  }
+  const removeBatch = async (id: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("batches").delete().eq("id", id)
+    setMsg(error ? error.message : "Batch removed.")
     if (!error) load()
   }
 
@@ -424,6 +500,7 @@ export default function AdminPage() {
             { id: "bookings", label: "Bookings", icon: CalendarClock },
             { id: "availability", label: "Availability", icon: CalendarClock },
             { id: "courses", label: "Courses", icon: BookOpen },
+            { id: "batches", label: "Batches", icon: BookOpen },
             { id: "roadmap", label: "Roadmap", icon: Map },
             { id: "payments", label: "Payments", icon: IndianRupee },
           ].map((t) => {
@@ -863,17 +940,27 @@ export default function AdminPage() {
             {materials.length === 0 && <EmptyRow label="No materials uploaded yet." />}
           </ul>
 
-          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+          <div className="grid gap-2 md:grid-cols-2">
             <select
               value={matClass}
               onChange={(e) => setMatClass(e.target.value)}
               aria-label="Course for material"
               className={fieldClass}
             >
+              <option value="">— Course (optional) —</option>
               {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+            <select
+              value={matBatch}
+              onChange={(e) => setMatBatch(e.target.value)}
+              aria-label="Batch for material"
+              className={fieldClass}
+            >
+              <option value="">— Batch (optional) —</option>
+              {batches.map((b) => (
+                <option key={b.id} value={b.id}>{b.title}</option>
               ))}
             </select>
             <input
@@ -885,14 +972,18 @@ export default function AdminPage() {
             />
             <select
               value={matKind}
-              onChange={(e) => setMatKind(e.target.value as "ppt" | "notes")}
+              onChange={(e) => setMatKind(e.target.value as "ppt" | "notes" | "transcript")}
               aria-label="Material type"
               className={fieldClass}
             >
               <option value="ppt">PPT / slides</option>
               <option value="notes">Notes</option>
+              <option value="transcript">Transcript</option>
             </select>
           </div>
+          <p className="mt-1 font-mono text-[10px] text-foreground/40">
+            Attach to a course, a batch, or both. Transcripts show in a readable view for students.
+          </p>
           <label className="mt-2 flex cursor-pointer items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 font-mono text-xs text-[#0b0f19] transition-colors hover:bg-white/90">
               {uploadingMat ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
@@ -906,6 +997,43 @@ export default function AdminPage() {
               disabled={uploadingMat}
             />
           </label>
+        </Card>
+        </>
+        )}
+
+        {/* ── BATCHES TAB (scheduled cohorts of a subject) ─────── */}
+        {tab === "batches" && (
+        <>
+        <Card>
+          <CardTitle
+            icon={<BookOpen className="h-4 w-4" />}
+            title="Batches"
+            hint="Scheduled cohorts of a subject — students enroll in a batch and pay to join. Attach materials/transcripts to a batch in the Courses tab."
+          />
+
+          <ul className="mb-4 space-y-2">
+            {batches.map((b) => (
+              <BatchEditor key={b.id} batch={b} classes={classes} busy={busyId === b.id} onSave={saveBatch} onRemove={removeBatch} />
+            ))}
+            {batches.length === 0 && <EmptyRow label="No batches yet — create one below." />}
+          </ul>
+
+          <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+            <p className="font-mono text-[11px] text-foreground/50">New batch</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <input value={newBatch.title} onChange={(e) => setNewBatch({ ...newBatch, title: e.target.value })} placeholder="Title — e.g. SQL Foundations · Sep 2026" className={fieldClass} />
+              <select value={newBatch.class_id} onChange={(e) => setNewBatch({ ...newBatch, class_id: e.target.value })} className={fieldClass}>
+                <option value="">Subject (link a course, optional)</option>
+                {classes.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+              <input value={newBatch.schedule} onChange={(e) => setNewBatch({ ...newBatch, schedule: e.target.value })} placeholder="Schedule — e.g. Tue & Thu 7–8:30pm IST" className={fieldClass} />
+              <input value={newBatch.price} onChange={(e) => setNewBatch({ ...newBatch, price: e.target.value })} placeholder="Price ₹ (whole rupees)" type="number" className={fieldClass} />
+              <label className="flex flex-col gap-1"><span className="font-mono text-[10px] text-foreground/45">Start date</span><input type="date" value={newBatch.start_date} onChange={(e) => setNewBatch({ ...newBatch, start_date: e.target.value })} className={fieldClass} /></label>
+              <label className="flex flex-col gap-1"><span className="font-mono text-[10px] text-foreground/45">End date</span><input type="date" value={newBatch.end_date} onChange={(e) => setNewBatch({ ...newBatch, end_date: e.target.value })} className={fieldClass} /></label>
+              <input value={newBatch.capacity} onChange={(e) => setNewBatch({ ...newBatch, capacity: e.target.value })} placeholder="Capacity (0 = unlimited)" type="number" className={fieldClass} />
+            </div>
+            <Button onClick={addBatch} className="w-full"><Plus className="h-3.5 w-3.5" /> Add batch</Button>
+          </div>
         </Card>
         </>
         )}
@@ -1063,6 +1191,70 @@ function CurriculumEditor({
         </div>
       )}
     </div>
+  )
+}
+
+// Editable row for one batch (scheduled cohort).
+function BatchEditor({
+  batch,
+  classes,
+  busy,
+  onSave,
+  onRemove,
+}: {
+  batch: BatchRow
+  classes: ClassRow[]
+  busy: boolean
+  onSave: (b: BatchRow) => void
+  onRemove: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [d, setD] = useState<BatchRow>(batch)
+  useEffect(() => setD(batch), [batch])
+  const set = (patch: Partial<BatchRow>) => setD((p) => ({ ...p, ...patch }))
+
+  return (
+    <li className="rounded-xl border border-white/10 bg-white/[0.03]">
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
+        <span className="min-w-0">
+          <span className="text-sm text-foreground">{batch.title}</span>
+          <span className="ml-2 font-mono text-[11px] text-foreground/45">
+            {batch.price_paise > 0 ? `₹${(batch.price_paise / 100).toFixed(0)}` : "on request"}
+            {batch.active ? "" : " · inactive"}
+          </span>
+        </span>
+        <span className="font-mono text-[11px] text-foreground/50">{open ? "close" : "edit"}</span>
+      </button>
+      {open && (
+        <div className="space-y-2 border-t border-white/10 p-4">
+          <div className="grid gap-2 md:grid-cols-2">
+            <input value={d.title} onChange={(e) => set({ title: e.target.value })} placeholder="Title" className={inputCls} />
+            <select value={d.class_id ?? ""} onChange={(e) => set({ class_id: e.target.value || null })} className={inputCls}>
+              <option value="">Subject (link a course)</option>
+              {classes.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+            <input value={d.schedule} onChange={(e) => set({ schedule: e.target.value })} placeholder="Schedule" className={inputCls} />
+            <input type="number" value={d.price_paise ? d.price_paise / 100 : ""} onChange={(e) => set({ price_paise: Math.round(Number(e.target.value) * 100) || 0 })} placeholder="Price ₹" className={inputCls} />
+            <label className="flex flex-col gap-1"><span className="font-mono text-[10px] text-foreground/45">Start</span><input type="date" value={d.start_date ?? ""} onChange={(e) => set({ start_date: e.target.value || null })} className={inputCls} /></label>
+            <label className="flex flex-col gap-1"><span className="font-mono text-[10px] text-foreground/45">End</span><input type="date" value={d.end_date ?? ""} onChange={(e) => set({ end_date: e.target.value || null })} className={inputCls} /></label>
+            <input type="number" value={d.capacity || ""} onChange={(e) => set({ capacity: Number(e.target.value) || 0 })} placeholder="Capacity (0 = unlimited)" className={inputCls} />
+          </div>
+          <textarea rows={2} value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={inputCls} />
+          <label className="flex items-center gap-2 text-sm text-foreground/80">
+            <input type="checkbox" checked={d.active} onChange={(e) => set({ active: e.target.checked })} className="h-4 w-4 accent-sky-500" />
+            Active (visible to students)
+          </label>
+          <div className="flex gap-2">
+            <Button onClick={() => onSave(d)} disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}{busy ? "Saving…" : "Save batch"}
+            </Button>
+            <button onClick={() => onRemove(d.id)} className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 hover:bg-red-500/10">
+              <Trash2 className="h-3 w-3" /> Remove
+            </button>
+          </div>
+        </div>
+      )}
+    </li>
   )
 }
 
