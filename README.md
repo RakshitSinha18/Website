@@ -1,87 +1,114 @@
-# Rakshit Sinha — Portfolio & Mentoring Site
+<div align="center">
 
-Personal site for **Rakshit Sinha** — Senior Business Intelligence professional
-at **IBM** and an after-hours mentor for aspiring data professionals.
+# Rakshit Sinha — Mentoring & Classes Platform
 
-Live site: **https://RakshitSinha18.github.io/Website/**
-GitHub: **https://github.com/RakshitSinha18**
+**Portfolio + full booking, payments, and learning platform** for Rakshit Sinha —
+Senior Business Intelligence professional at IBM and after-hours mentor.
 
-Built with **Next.js 14 + TypeScript + Tailwind CSS**, exported as a fully
-static site and hosted free on **GitHub Pages**. Session sign-ups are stored in
-**Supabase**. The layout is **phone-optimized** (vertical scroll + hamburger menu
-on mobile, horizontal "slide" experience on desktop).
+[![Live](https://img.shields.io/badge/live-sinharakshit.com-38bdf8?style=flat)](https://sinharakshit.com)
+[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=flat&logo=nextdotjs)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?style=flat&logo=supabase&logoColor=white)](https://supabase.com)
+[![License](https://img.shields.io/badge/license-Proprietary-red?style=flat)](./LICENSE)
 
-Sections: **Home → Experience → Skills → About → Contact (Book a Session)**.
+**⚠️ Proprietary — All Rights Reserved. Not open source.** See [LICENSE](./LICENSE).
+
+</div>
 
 ---
 
-## Tech at a glance
+## Overview
 
-| Area | Choice |
+A production site that combines a personal portfolio with a complete **classes &
+mentoring business**: students sign up, book sessions or enroll in batches, pay
+online, and access materials — while the mentor manages everything from an admin
+dashboard. Built as a **static Next.js export** on GitHub Pages, with all secure
+server logic running in **Supabase Edge Functions** and **Postgres (RLS)**.
+
+**Live:** https://sinharakshit.com
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
 | --- | --- |
-| Framework | Next.js 14 (static export, `output: "export"`) |
-| Styling | Tailwind CSS, animated CSS gradient + floating orbs |
-| Hosting | GitHub Pages (via GitHub Actions) |
-| Auth & database | Supabase (Postgres, Auth, browser client + RLS) |
-| Student portal | Login, class booking, learning roadmap, profile |
-| Email notifications | Resend (via Supabase Edge Function) |
-| Fonts | Inter (sans) + JetBrains Mono (mono) |
+| **Framework** | Next.js 14 (App Router, `output: "export"` static site) |
+| **Language** | TypeScript 5 |
+| **Styling** | Tailwind CSS 3 · custom dark-navy + sky→amber design system |
+| **Animation** | Framer Motion (reduced-motion aware) |
+| **3D / visuals** | React Three Fiber · three.js · OGL (spotlight hero) |
+| **Icons** | lucide-react |
+| **Backend** | Supabase — Postgres, Auth, Storage, Edge Functions (Deno) |
+| **Auth** | Supabase Auth — email/password (verified) + GitHub OAuth (Google planned) |
+| **Payments** | Razorpay Standard Checkout (server order + signature verification + webhook) |
+| **Email** | Resend (SMTP for auth + transactional notifications) |
+| **Hosting / CI** | GitHub Pages via GitHub Actions |
 
 ---
 
-## Booking / sign-ups (Supabase)
+## Features
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. In the dashboard → **SQL Editor**, run the script in
-   [`supabase/schema.sql`](supabase/schema.sql). It creates the
-   `session_bookings` table and a Row Level Security policy that lets visitors
-   **insert** a booking but **not read** anyone else's data.
-3. Copy your **Project URL** and **anon public key**
-   (Settings → API) into `.env.local` (local) and into GitHub Actions secrets
-   (deploy — see below).
-4. Rakshit reviews sign-ups directly in the Supabase dashboard
-   (**Table Editor → session_bookings**).
+### For students
+- Email/password (with verification) or **GitHub** sign-in
+- Browse & **book classes** into the mentor's real availability
+- Enroll in **batches** (scheduled cohorts)
+- **Pay online** via Razorpay (card/UPI) — booking auto-confirms on success
+- **Reschedule** or **RSVP** (attending / can't make it) for sessions
+- Access **materials, slides & transcripts** for confirmed sessions
+- Track a **learning roadmap**, post to the **ideas/discussion board**,
+  read **articles**, and leave **comments & feedback**
 
-The anon key is safe to expose in the browser — RLS controls what it can do.
-
----
-
-## Deploy to GitHub Pages
-
-Deployment is automated by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml):
-every push to `main` builds the static site and publishes it.
-
-**One-time setup:**
-
-1. On GitHub: **Settings → Pages → Build and deployment → Source = GitHub Actions**.
-2. On GitHub: **Settings → Secrets and variables → Actions → New repository secret**, add:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Push to `main`. The site goes live at
-   `https://RakshitSinha18.github.io/Website/`.
-
-> The workflow sets `NEXT_PUBLIC_BASE_PATH=/Website` so assets resolve under the
-> repo sub-path. If you later use a custom domain (see below), remove that env
-> line so the base path is empty.
+### For the mentor (admin)
+- Dashboard for **bookings, courses, batches, articles, roadmap, availability, payments**
+- Set prices, upload materials/transcripts (per course or batch)
+- **Weekly availability** + holiday blocking; editable **class policy**
+- **Email alerts** on new requests and paid bookings
+- Moderate community content
 
 ---
 
-## Custom domain (Hostinger)
+## Architecture & Security
 
-Want `rakshitsinha.com` instead of the github.io URL? See
-[`DEPLOY-HOSTINGER.md`](DEPLOY-HOSTINGER.md) for pointing a Hostinger domain at
-GitHub Pages.
+- **Static frontend** (no server) — secrets never ship to the browser.
+- **Supabase Edge Functions** handle order creation, signature verification, the
+  payment webhook, and email notifications.
+- **Row-Level Security** on every table. Students can only ever create their own
+  `requested` rows; a `paid`/`confirmed` status can only originate from the
+  signature-verified webhook or the mentor (enforced by RLS + a guard trigger).
+- **Content-Security-Policy** and referrer policy shipped as `<meta>` (whitelists
+  Supabase + Razorpay only).
 
 ---
 
-## Project structure
+## Project Structure
 
 ```
-app/            # Next.js App Router (layout, page, global styles)
-components/     # Cursor, grain overlay, magnetic button
-  sections/     # Experience, Skills, About, Contact sections
-hooks/          # useReveal (scroll animations), useMediaQuery (responsive)
-lib/            # supabase client, utils
-supabase/       # schema.sql (run once in Supabase)
-.github/        # Pages deploy workflow
+app/            Next.js routes (home, portal, admin, login, articles, policy, legal)
+components/     UI, sections, motion primitives, comment/ideas widgets
+lib/            Supabase client, payments, config
+supabase/       SQL migrations + Edge Functions (create-payment, verify-payment,
+                payment-webhook, notify)
+public/brand/   Brand kit — favicon, OG image, wordmark
+scripts/        Secret-setup helpers (hidden-input; never commit secrets)
 ```
+
+---
+
+## Deployment
+
+Every push to `main` triggers `.github/workflows/deploy.yml`, which builds the
+static export and publishes it to GitHub Pages (custom domain `sinharakshit.com`).
+Frontend env (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) is
+injected from GitHub Actions secrets. Server secrets (Razorpay, Resend) live only
+in Supabase Edge Function secrets.
+
+---
+
+## License
+
+**Proprietary — © 2026 Rakshit Sinha. All Rights Reserved.**
+This code is published for viewing only. No copying, reuse, modification, or
+redistribution is permitted without written consent. See [LICENSE](./LICENSE).
+
+Enquiries: **rsinha1369@gmail.com**
