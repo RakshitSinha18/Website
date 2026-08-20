@@ -63,6 +63,7 @@ interface Booking {
   status: string
   notes: string
   payment_status?: string
+  attendance?: string
 }
 interface RoadmapTask {
   id: string
@@ -126,7 +127,7 @@ export default function PortalPage() {
       const [{ data: cls }, { data: bks }, { data: prof }, { data: tasks }, { data: prog }, { data: st }] =
         await Promise.all([
           supabase.from("classes").select("id,title,description,duration,price_paise").eq("active", true),
-          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status").order("scheduled_at", { ascending: true }),
+          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status,attendance").order("scheduled_at", { ascending: true }),
           supabase.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
           supabase.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
           supabase.from("task_progress").select("task_id,completed").eq("user_id", user.id),
@@ -238,7 +239,7 @@ export default function PortalPage() {
     setNotes("")
     const { data: bks } = await supabase
       .from("class_bookings")
-      .select("id,class_title,scheduled_at,status,notes,payment_status")
+      .select("id,class_title,scheduled_at,status,notes,payment_status,attendance")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
     // Take the student straight to their bookings, where the payment button lives.
@@ -332,9 +333,26 @@ export default function PortalPage() {
     } catch { /* best-effort */ }
     const { data: bks } = await supabase
       .from("class_bookings")
-      .select("id,class_title,scheduled_at,status,notes,payment_status")
+      .select("id,class_title,scheduled_at,status,notes,payment_status,attendance")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
+  }
+
+  // RSVP: student confirms they'll attend, or opts out for that day.
+  const setAttendance = async (b: Booking, attendance: "attending" | "opted_out") => {
+    if (!supabase) return
+    const { error } = await supabase.from("class_bookings").update({ attendance }).eq("id", b.id)
+    if (error) { toast(error.message, "error"); return }
+    toast(attendance === "attending" ? "See you there! Marked as attending." : "Marked as can't-make-it — Rakshit is notified.", "success")
+    setBookings((prev) => prev.map((x) => (x.id === b.id ? { ...x, attendance } : x)))
+    if (attendance === "opted_out") {
+      try {
+        void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: "class_bookings", record: { name: profile.full_name || user?.email, email: user?.email, class_title: `${b.class_title} (CAN'T ATTEND)`, scheduled_at: b.scheduled_at, notes: "Student opted out — may want to reschedule" } }),
+        }).catch(() => {})
+      } catch { /* best-effort */ }
+    }
   }
 
   // Meeting invite: download an .ics so a confirmed session lands in any calendar.
@@ -644,6 +662,22 @@ export default function PortalPage() {
                               className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 font-mono text-[11px] text-foreground/80 transition-colors hover:bg-white/10"
                             >
                               <CalendarClock className="h-3.5 w-3.5" /> {reschedulingId === b.id ? "Cancel" : "Reschedule"}
+                            </button>
+                          </div>
+                          {/* RSVP — confirm attendance or opt out for the day. */}
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="font-mono text-[10px] text-foreground/45">Attending?</span>
+                            <button
+                              onClick={() => setAttendance(b, "attending")}
+                              className={`rounded-full px-2.5 py-1 font-mono text-[10px] transition-colors ${b.attendance === "attending" ? "bg-emerald-500/25 text-emerald-200" : "border border-white/15 text-foreground/60 hover:bg-white/10"}`}
+                            >
+                              Yes, I'll be there
+                            </button>
+                            <button
+                              onClick={() => setAttendance(b, "opted_out")}
+                              className={`rounded-full px-2.5 py-1 font-mono text-[10px] transition-colors ${b.attendance === "opted_out" ? "bg-amber-500/25 text-amber-200" : "border border-white/15 text-foreground/60 hover:bg-white/10"}`}
+                            >
+                              Can't make it
                             </button>
                           </div>
                           {reschedulingId === b.id && (
