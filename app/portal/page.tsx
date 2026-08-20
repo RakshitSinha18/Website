@@ -490,6 +490,7 @@ export default function PortalPage() {
                           booking={b}
                           amountPaise={classPrice(classes, b.class_title)}
                           email={user.email ?? undefined}
+                          payInfo={payInfo}
                         />
                       )}
                     </li>
@@ -778,19 +779,28 @@ function SessionMaterials({
   )
 }
 
-// Per-booking payment controls: require T&C acceptance, then pay via provider.
+// Per-booking payment controls: student picks a method, accepts T&C, then pays.
+// UPI (manual) is offered only if the mentor configured a UPI ID/QR; otherwise the
+// flow defaults to Razorpay (the in-app gateway) until those settings are added.
 function PayControls({
   booking,
   amountPaise,
   email,
+  payInfo,
 }: {
   booking: Booking
   amountPaise: number
   email?: string
+  payInfo?: Record<string, any> | null
 }) {
   const { toast } = useToast()
   const [agree, setAgree] = useState(false)
   const [busy, setBusy] = useState(false)
+
+  // Is manual UPI available? (mentor added a UPI id or QR and enabled it)
+  const upiAvailable = Boolean(payInfo?.upi_enabled && (payInfo?.upi_id || payInfo?.upi_qr_url))
+  // Razorpay is the default method until the mentor changes payment settings.
+  const [method, setMethod] = useState<"razorpay" | "upi">("razorpay")
 
   if (!amountPaise) {
     return (
@@ -850,30 +860,65 @@ function PayControls({
           <a href="/refund/" target="_blank" className="text-sky-300 underline">Refund policy</a>.
         </span>
       </label>
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => pay("razorpay")}
-          disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-3 py-1.5 font-mono text-[11px] font-medium text-white transition-colors hover:bg-sky-400 disabled:opacity-50"
-        >
-          <CreditCard className="h-3.5 w-3.5" /> Pay (India · UPI/Card)
-        </button>
-        <button
-          onClick={() => pay("stripe")}
-          disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 font-mono text-[11px] text-foreground transition-colors hover:bg-white/10 disabled:opacity-50"
-        >
-          <CreditCard className="h-3.5 w-3.5" /> Pay (International)
-        </button>
-      </div>
-      {/* Trust badge — payments are live via Razorpay's secured checkout. */}
-      <div className="mt-2.5 flex items-center gap-1.5 font-mono text-[10px] text-emerald-300/80">
-        <ShieldCheck className="h-3.5 w-3.5" />
-        <span>
-          Secured by Razorpay
-          {process.env.NEXT_PUBLIC_PAYMENTS_TEST_MODE === "1" ? " · test mode" : ""}
-        </span>
-      </div>
+      {/* Method chooser — only shown if UPI is also available; else Razorpay only. */}
+      {upiAvailable && (
+        <div className="mb-3">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground/45">Choose how to pay</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMethod("razorpay")}
+              aria-pressed={method === "razorpay"}
+              className={`flex-1 rounded-lg border px-3 py-2 text-left transition-all ${method === "razorpay" ? "border-sky-400/50 bg-sky-400/[0.08]" : "border-white/10 bg-white/[0.03] hover:border-white/25"}`}
+            >
+              <span className="flex items-center gap-1.5 text-xs text-foreground"><CreditCard className="h-3.5 w-3.5" /> Card / UPI (instant)</span>
+              <span className="font-mono text-[10px] text-foreground/45">Auto-confirms · Razorpay</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMethod("upi")}
+              aria-pressed={method === "upi"}
+              className={`flex-1 rounded-lg border px-3 py-2 text-left transition-all ${method === "upi" ? "border-sky-400/50 bg-sky-400/[0.08]" : "border-white/10 bg-white/[0.03] hover:border-white/25"}`}
+            >
+              <span className="text-xs text-foreground">Pay via UPI</span>
+              <span className="block font-mono text-[10px] text-foreground/45">Manual · mentor confirms</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Manual UPI details, shown when UPI method is chosen. */}
+      {upiAvailable && method === "upi" ? (
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <div className="flex items-center gap-3">
+            {payInfo?.upi_qr_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={payInfo.upi_qr_url} alt="UPI QR" className="h-16 w-16 rounded-lg border border-white/15 bg-white object-contain p-1" />
+            )}
+            <div>
+              <p className="font-mono text-[10px] text-foreground/45">Pay ₹{(amountPaise / 100).toFixed(0)} to this UPI ID</p>
+              {payInfo?.upi_id && <p className="select-all text-sm text-foreground">{payInfo.upi_id}</p>}
+              {payInfo?.pay_instructions && <p className="mt-1 text-[11px] text-foreground/55">{payInfo.pay_instructions}</p>}
+            </div>
+          </div>
+          <p className="mt-2 font-mono text-[10px] text-amber-200/80">After paying, Rakshit confirms your booking manually.</p>
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={() => pay("razorpay")}
+            disabled={busy}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-sky-500 px-3 py-2 font-mono text-xs font-medium text-white transition-colors hover:bg-sky-400 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
+            Pay ₹{(amountPaise / 100).toFixed(0)} with Card / UPI
+          </button>
+          <div className="mt-2.5 flex items-center gap-1.5 font-mono text-[10px] text-emerald-300/80">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Secured by Razorpay{process.env.NEXT_PUBLIC_PAYMENTS_TEST_MODE === "1" ? " · test mode" : ""}</span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
