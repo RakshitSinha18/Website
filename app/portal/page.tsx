@@ -233,13 +233,15 @@ export default function PortalPage() {
     } catch {
       /* notification is best-effort */
     }
-    toast("Class requested! Pay to confirm your slot, or Rakshit will reach out.", "success")
+    toast("Class requested! Complete payment to confirm your slot.", "success")
     setNotes("")
     const { data: bks } = await supabase
       .from("class_bookings")
       .select("id,class_title,scheduled_at,status,notes,payment_status")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
+    // Take the student straight to their bookings, where the payment button lives.
+    setTab("classes")
   }
 
   // Enroll in a batch (creates a 'requested' enrollment; payment confirms it).
