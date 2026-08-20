@@ -29,7 +29,8 @@ import { useToast } from "@/components/toast"
 import { QuoteOfDay } from "@/components/quote-of-day"
 import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@/components/ui/shell"
 import { startPayment, openRazorpay, type Provider } from "@/lib/payments"
-import { CreditCard, FileText, Paperclip } from "lucide-react"
+import { CreditCard, FileText, Paperclip, Lightbulb } from "lucide-react"
+import { IdeasBoard } from "@/components/ideas-board"
 
 interface ClassItem {
   id: string
@@ -97,7 +98,7 @@ export default function PortalPage() {
   const [booking, setBooking] = useState(false)
 
   // Which tab/view is active (tabbed portal).
-  const [tab, setTab] = useState<"book" | "classes" | "roadmap" | "settings">("book")
+  const [tab, setTab] = useState<"book" | "classes" | "ideas" | "roadmap" | "settings">("book")
 
   // Redirect out if not logged in.
   useEffect(() => {
@@ -417,6 +418,7 @@ export default function PortalPage() {
           {[
             { id: "book", label: "Book", icon: CalendarClock },
             { id: "classes", label: "My Classes", icon: BookOpen },
+            { id: "ideas", label: "Ideas", icon: Lightbulb },
             { id: "roadmap", label: "Roadmap", icon: Map },
             { id: "settings", label: "Settings", icon: Settings },
           ].map((t) => {
@@ -586,6 +588,13 @@ export default function PortalPage() {
               </div>
             </Card>
           )}
+        </div>
+        )}
+
+        {/* ── IDEAS TAB ────────────────────────────────────────── */}
+        {tab === "ideas" && (
+        <div className="stagger">
+          <Card><IdeasBoard /></Card>
         </div>
         )}
 
