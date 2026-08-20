@@ -38,6 +38,23 @@ interface ClassItem {
   duration: string
   price_paise?: number
 }
+interface BatchItem {
+  id: string
+  title: string
+  subject: string
+  description: string
+  schedule: string
+  start_date?: string | null
+  end_date?: string | null
+  price_paise: number
+  capacity: number
+}
+interface Enrollment {
+  id: string
+  batch_id: string
+  status: string
+  payment_status: string
+}
 interface Booking {
   id: string
   class_title: string
@@ -59,6 +76,8 @@ export default function PortalPage() {
   const { user, loading } = useAuth()
 
   const [classes, setClasses] = useState<ClassItem[]>([])
+  const [batches, setBatches] = useState<BatchItem[]>([])
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [profile, setProfile] = useState({ full_name: "", experience: "", goals: "" })
   const [roadmap, setRoadmap] = useState<RoadmapTask[]>([])
@@ -66,7 +85,7 @@ export default function PortalPage() {
   const [payInfo, setPayInfo] = useState<Record<string, any> | null>(null)
   // Materials (PPT/notes) keyed by class_id, visible for confirmed bookings.
   const [materials, setMaterials] = useState<
-    { id: string; class_id: string; title: string; kind: string; file_url: string }[]
+    { id: string; class_id: string | null; batch_id: string | null; title: string; kind: string; file_url: string }[]
   >([])
 
   const [selectedClass, setSelectedClass] = useState("")
@@ -122,10 +141,18 @@ export default function PortalPage() {
       if (tasks) setRoadmap(tasks as RoadmapTask[])
       if (prog) setDone(new Set(prog.filter((p: { completed: boolean }) => p.completed).map((p: { task_id: string }) => p.task_id)))
 
+      // Batches (active cohorts) + this student's enrollments.
+      const [{ data: bt }, { data: enr }] = await Promise.all([
+        supabase.from("batches").select("*").eq("active", true).order("start_date", { ascending: true }),
+        supabase.from("batch_enrollments").select("id,batch_id,status,payment_status").eq("user_id", user.id),
+      ])
+      if (bt) setBatches(bt as BatchItem[])
+      if (enr) setEnrollments(enr as Enrollment[])
+
       // Materials for classes the student can access (RLS returns only permitted rows).
       const { data: mats } = await supabase
         .from("class_materials")
-        .select("id,class_id,title,kind,file_url")
+        .select("id,class_id,batch_id,title,kind,file_url")
         .order("created_at", { ascending: true })
       if (mats) setMaterials(mats as typeof materials)
     }
@@ -213,6 +240,34 @@ export default function PortalPage() {
       .select("id,class_title,scheduled_at,status,notes,payment_status")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
+  }
+
+  // Enroll in a batch (creates a 'requested' enrollment; payment confirms it).
+  const enrollBatch = async (batch: BatchItem) => {
+    if (!supabase || !user) return
+    const { error } = await supabase.from("batch_enrollments").insert({
+      user_id: user.id,
+      batch_id: batch.id,
+      status: "requested",
+    })
+    if (error) {
+      toast(/duplicate|unique/i.test(error.message) ? "You've already requested this batch." : error.message, "error")
+      return
+    }
+    toast(`Requested "${batch.title}". Pay to confirm your seat.`, "success")
+    // Notify the mentor (best-effort).
+    try {
+      void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "class_bookings",
+          record: { name: profile.full_name || user.email, email: user.email, class_title: `Batch: ${batch.title}`, scheduled_at: batch.start_date, notes: "Batch enrollment request" },
+        }),
+      }).catch(() => {})
+    } catch { /* best-effort */ }
+    const { data: enr } = await supabase.from("batch_enrollments").select("id,batch_id,status,payment_status").eq("user_id", user.id)
+    if (enr) setEnrollments(enr as Enrollment[])
   }
 
   const handleSaveProfile = async () => {
@@ -456,6 +511,46 @@ export default function PortalPage() {
               })}
             </div>
           </Card>
+
+          {/* Batches — scheduled cohorts to enroll in. */}
+          {batches.length > 0 && (
+            <Card className="md:col-span-2">
+              <CardTitle icon={<BookOpen className="h-4 w-4" />} title="Batches (group cohorts)" hint="Join a scheduled batch — pay to reserve your seat." />
+              <div className="grid gap-3 md:grid-cols-2">
+                {batches.map((b) => {
+                  const enr = enrollments.find((e) => e.batch_id === b.id)
+                  const confirmed = enr?.status === "confirmed"
+                  return (
+                    <div key={b.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-medium text-foreground">{b.title}</h3>
+                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] text-foreground/80">
+                          {b.price_paise > 0 ? `₹${(b.price_paise / 100).toFixed(0)}` : "on request"}
+                        </span>
+                      </div>
+                      {b.subject && <p className="font-mono text-[10px] text-foreground/45">{b.subject}</p>}
+                      {b.description && <p className="mt-1 text-xs leading-relaxed text-foreground/60">{b.description}</p>}
+                      {b.schedule && <p className="mt-1.5 font-mono text-[11px] text-sky-300/80">{b.schedule}</p>}
+                      {(b.start_date || b.end_date) && (
+                        <p className="font-mono text-[10px] text-foreground/45">
+                          {b.start_date ?? "?"}{b.end_date ? ` → ${b.end_date}` : ""}
+                        </p>
+                      )}
+                      <div className="mt-3">
+                        {confirmed ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 font-mono text-[10px] text-emerald-200">✓ enrolled</span>
+                        ) : enr ? (
+                          <span className="font-mono text-[11px] text-amber-200/80">Requested — pay to confirm (My classes)</span>
+                        ) : (
+                          <Button onClick={() => enrollBatch(b)} variant="secondary" className="w-full">Request seat</Button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
         </div>
         )}
 
@@ -775,26 +870,54 @@ function SessionMaterials({
   materials: { id: string; title: string; kind: string; file_url: string }[]
 }) {
   if (materials.length === 0) return null
+  const transcripts = materials.filter((m) => m.kind === "transcript")
+  const others = materials.filter((m) => m.kind !== "transcript")
   return (
-    <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-2.5">
-      <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground/40">
-        Class materials
-      </p>
-      <ul className="space-y-1">
-        {materials.map((m) => (
-          <li key={m.id}>
-            <a
-              href={m.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-sky-300 hover:underline"
-            >
-              {m.kind === "ppt" ? <FileText className="h-3.5 w-3.5" /> : <Paperclip className="h-3.5 w-3.5" />}
-              {m.title}
-            </a>
-          </li>
-        ))}
-      </ul>
+    <div className="mt-3 space-y-3">
+      {/* Transcripts — surfaced separately so they're easy to read. */}
+      {transcripts.length > 0 && (
+        <div className="rounded-lg border border-sky-400/20 bg-sky-400/[0.05] p-2.5">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-sky-300/70">
+            Transcripts
+          </p>
+          <ul className="space-y-1">
+            {transcripts.map((m) => (
+              <li key={m.id}>
+                <a
+                  href={m.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-sky-200 hover:underline"
+                >
+                  <BookOpen className="h-3.5 w-3.5" /> Read: {m.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {others.length > 0 && (
+        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-2.5">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground/40">
+            Class materials
+          </p>
+          <ul className="space-y-1">
+            {others.map((m) => (
+              <li key={m.id}>
+                <a
+                  href={m.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-sky-300 hover:underline"
+                >
+                  {m.kind === "ppt" ? <FileText className="h-3.5 w-3.5" /> : <Paperclip className="h-3.5 w-3.5" />}
+                  {m.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
