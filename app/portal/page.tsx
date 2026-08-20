@@ -1001,8 +1001,9 @@ function PayControls({
         />
         <span>
           I accept the{" "}
-          <a href="/terms/" target="_blank" className="text-sky-300 underline">Terms</a> and{" "}
-          <a href="/refund/" target="_blank" className="text-sky-300 underline">Refund policy</a>.
+          <a href="/terms/" target="_blank" className="text-sky-300 underline">Terms</a>,{" "}
+          <a href="/refund/" target="_blank" className="text-sky-300 underline">Refund policy</a> and{" "}
+          <a href="/policy/" target="_blank" className="text-sky-300 underline">Class policy</a>.
         </span>
       </label>
       {/* Method chooser — only shown if UPI is also available; else Razorpay only. */}

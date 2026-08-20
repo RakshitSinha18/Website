@@ -74,6 +74,7 @@ export function ContactSection() {
         <a href="/terms/" className="transition-colors hover:text-foreground">Terms</a>
         <a href="/privacy/" className="transition-colors hover:text-foreground">Privacy</a>
         <a href="/refund/" className="transition-colors hover:text-foreground">Refunds</a>
+        <a href="/policy/" className="transition-colors hover:text-foreground">Class policy</a>
         <span className="hidden sm:inline text-foreground/30">·</span>
         {/* Social icons */}
         <a

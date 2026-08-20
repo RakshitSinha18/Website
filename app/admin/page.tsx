@@ -122,6 +122,10 @@ export default function AdminPage() {
   })
   const [savingPay, setSavingPay] = useState(false)
 
+  // Editable class/session policy (shown to students at booking + on /policy).
+  const [classPolicy, setClassPolicy] = useState("")
+  const [savingPolicy, setSavingPolicy] = useState(false)
+
   // Weekly recurring availability (0=Sun … 6=Sat → array of "HH:MM"), holiday
   // blocking, and a student-facing note. Drives the booking calendar.
   const [weekly, setWeekly] = useState<Record<string, string[]>>({})
@@ -193,7 +197,16 @@ export default function AdminPage() {
       setWeekly((st.weekly_availability as Record<string, string[]>) || {})
       setBlockedDates((st.blocked_dates as string[]) || [])
       setAvailNote(st.availability_note || "")
+      setClassPolicy(st.class_policy || "")
     }
+  }
+
+  const saveClassPolicy = async () => {
+    if (!supabase) return
+    setSavingPolicy(true)
+    const { error } = await supabase.from("settings").update({ class_policy: classPolicy, updated_at: new Date().toISOString() }).eq("id", 1)
+    setSavingPolicy(false)
+    setMsg(error ? error.message : "Class policy saved.")
   }
 
   // Persist the weekly schedule + blocked dates to the settings row.
@@ -714,6 +727,26 @@ export default function AdminPage() {
           <Button onClick={saveAvailability} disabled={savingAvail} className="mt-4 w-full">
             {savingAvail && <Loader2 className="h-4 w-4 animate-spin" />}
             {savingAvail ? "Saving…" : "Save availability"}
+          </Button>
+        </Card>
+
+        {/* Class / session policy — plain language, shown to students. */}
+        <Card className="mb-6">
+          <CardTitle
+            icon={<FileText className="h-4 w-4" />}
+            title="Class & session policy"
+            hint="Clear rules students see at booking and on the /policy page — attendance, reschedule, cancellation, refunds. One line per rule."
+          />
+          <textarea
+            rows={7}
+            value={classPolicy}
+            onChange={(e) => setClassPolicy(e.target.value)}
+            placeholder="One policy point per line…"
+            className={inputCls}
+          />
+          <Button onClick={saveClassPolicy} disabled={savingPolicy} className="mt-3 w-full">
+            {savingPolicy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {savingPolicy ? "Saving…" : "Save policy"}
           </Button>
         </Card>
         </>
