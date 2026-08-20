@@ -303,6 +303,39 @@ export default function PortalPage() {
     )
   }
 
+  // Reschedule: student picks a new date+slot for a booking they can't make.
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null)
+  const rescheduleBooking = async (b: Booking, newDate: string, newSlot: string) => {
+    if (!supabase || !user) return
+    const scheduled_at = new Date(`${newDate}T${newSlot}:00`).toISOString()
+    const { error } = await supabase
+      .from("class_bookings")
+      .update({ scheduled_at })
+      .eq("id", b.id)
+    if (error) {
+      toast(error.message, "error")
+      return
+    }
+    toast("Rescheduled — your new time is saved.", "success")
+    setReschedulingId(null)
+    // Notify the mentor of the change (best-effort).
+    try {
+      void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "class_bookings",
+          record: { name: profile.full_name || user.email, email: user.email, class_title: `${b.class_title} (RESCHEDULED)`, scheduled_at, notes: "Student rescheduled" },
+        }),
+      }).catch(() => {})
+    } catch { /* best-effort */ }
+    const { data: bks } = await supabase
+      .from("class_bookings")
+      .select("id,class_title,scheduled_at,status,notes,payment_status")
+      .order("scheduled_at", { ascending: true })
+    if (bks) setBookings(bks as Booking[])
+  }
+
   // Meeting invite: download an .ics so a confirmed session lands in any calendar.
   const addToCalendar = (b: Booking) => {
     const start = new Date(b.scheduled_at)
@@ -590,12 +623,31 @@ export default function PortalPage() {
                       {/* Meeting invite + materials for confirmed sessions. */}
                       {confirmed ? (
                         <>
-                          <button
-                            onClick={() => addToCalendar(b)}
-                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 font-mono text-[11px] text-sky-200 transition-colors hover:bg-sky-400/20"
-                          >
-                            <CalendarPlus className="h-3.5 w-3.5" /> Add to calendar
-                          </button>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => addToCalendar(b)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 font-mono text-[11px] text-sky-200 transition-colors hover:bg-sky-400/20"
+                            >
+                              <CalendarPlus className="h-3.5 w-3.5" /> Add to calendar
+                            </button>
+                            <button
+                              onClick={() => setReschedulingId(reschedulingId === b.id ? null : b.id)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 font-mono text-[11px] text-foreground/80 transition-colors hover:bg-white/10"
+                            >
+                              <CalendarClock className="h-3.5 w-3.5" /> {reschedulingId === b.id ? "Cancel" : "Reschedule"}
+                            </button>
+                          </div>
+                          {reschedulingId === b.id && (
+                            <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <p className="mb-2 font-mono text-[11px] text-foreground/60">Pick a new date &amp; slot</p>
+                              <BookingCalendar
+                                takenSlots={takenSlots}
+                                weeklyAvailability={payInfo?.weekly_availability ?? undefined}
+                                blockedDates={payInfo?.blocked_dates ?? []}
+                                onChange={(d, s) => { if (d && s) rescheduleBooking(b, d, s) }}
+                              />
+                            </div>
+                          )}
                           <SessionMaterials
                             materials={materials.filter(
                               (m) => m.class_id === classId(classes, b.class_title),
