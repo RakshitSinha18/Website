@@ -1,0 +1,40 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rakshit Sinha — Business Intelligence and Mentoring">
+  <defs>
+    <linearGradient id="og-accent" x1="80" y1="0" x2="1120" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <radialGradient id="og-glow" cx="0.3" cy="0.25" r="0.9">
+      <stop offset="0" stop-color="#1b2740"/>
+      <stop offset="1" stop-color="#0b0f19"/>
+    </radialGradient>
+    <linearGradient id="og-tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#141a2b"/>
+      <stop offset="1" stop-color="#0b0f19"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#og-glow)"/>
+  <!-- Accent hairline top -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#og-accent)"/>
+
+  <!-- Monogram tile -->
+  <rect x="96" y="180" width="180" height="180" rx="42" fill="url(#og-tile)"/>
+  <rect x="97" y="181" width="178" height="178" rx="41" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
+  <text x="186" y="278" text-anchor="middle" dominant-baseline="central"
+        font-family="Georgia, 'Times New Roman', serif" font-size="88" font-weight="700"
+        letter-spacing="-3" fill="url(#og-accent)">RS</text>
+
+  <!-- Name + tagline -->
+  <text x="330" y="250" font-family="'Helvetica Neue', Arial, sans-serif" font-size="76"
+        font-weight="700" letter-spacing="-2" fill="#f5f7fa">Rakshit Sinha</text>
+  <text x="334" y="312" font-family="'Helvetica Neue', Arial, sans-serif" font-size="34"
+        font-weight="400" fill="#aab6c6">Senior Business Intelligence · Mentor</text>
+
+  <!-- Bottom row: skills + url -->
+  <text x="96" y="470" font-family="'SF Mono', ui-monospace, monospace" font-size="26"
+        letter-spacing="0.5" fill="url(#og-accent)">SQL · Tableau · Power BI · Advanced Excel · SAS</text>
+  <text x="96" y="540" font-family="'SF Mono', ui-monospace, monospace" font-size="24"
+        letter-spacing="1" fill="#8b97a8">sinharakshit.com · 1-on-1 evening classes</text>
+</svg>

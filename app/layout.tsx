@@ -27,17 +27,28 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Rakshit Sinha" }],
   alternates: { canonical: SITE_URL },
+  icons: {
+    icon: [
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+  },
   openGraph: {
     type: "website",
     url: SITE_URL,
     title: "Rakshit Sinha — Senior BI Consultant & Mentor",
     description: DESCRIPTION,
     siteName: "Rakshit Sinha",
+    images: [
+      { url: "/brand/og-image.png", width: 1200, height: 630, alt: "Rakshit Sinha — Business Intelligence and Mentoring" },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rakshit Sinha — Senior BI Consultant & Mentor",
     description: DESCRIPTION,
+    images: ["/brand/og-image.png"],
   },
   generator: "Next.js",
 }
@@ -56,6 +67,33 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Security hardening. GitHub Pages can't set HTTP headers on a static
+            export, so these ship as <meta> equivalents. The CSP whitelists only
+            the services actually used: Supabase (auth/db/functions), Razorpay
+            checkout, and self. Keep this in sync if a new external service is added. */}
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content={[
+            "default-src 'self'",
+            // Next.js needs inline/eval for hydration; Razorpay checkout script.
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob: https:",
+            "font-src 'self' data:",
+            // XHR/fetch: Supabase API + functions, Razorpay API.
+            "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com",
+            // Razorpay opens its checkout in an iframe.
+            "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "upgrade-insecure-requests",
+          ].join("; ")}
+        />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+      </head>
       <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
         {/* Skip link for keyboard & screen-reader users (WCAG 2.4.1). */}
         <a
