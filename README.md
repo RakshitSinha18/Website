@@ -40,7 +40,7 @@ server logic running in **Supabase Edge Functions** and **Postgres (RLS)**.
 | **3D / visuals** | React Three Fiber · three.js · OGL (spotlight hero) |
 | **Icons** | lucide-react |
 | **Backend** | Supabase — Postgres, Auth, Storage, Edge Functions (Deno) |
-| **Auth** | Supabase Auth — email/password (verified) + GitHub OAuth (Google planned) |
+| **Auth** | Supabase Auth — email/password (verified) + GitHub OAuth · **Google OAuth — pending / upcoming** |
 | **Payments** | Razorpay Standard Checkout (server order + signature verification + webhook) |
 | **Email** | Resend (SMTP for auth + transactional notifications) |
 | **Hosting / CI** | GitHub Pages via GitHub Actions |

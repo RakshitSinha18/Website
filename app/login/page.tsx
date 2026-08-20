@@ -317,10 +317,22 @@ export default function LoginPage() {
             {!isMentor && (
               <div className="mt-6">
                 <div className="grid gap-2">
-                  {/* Google & LinkedIn hidden until their providers are enabled in Supabase.
-                      Re-enable by uncommenting once configured (see PAYMENTS-SETUP / auth setup). */}
-                  {/* <OAuthButton label="Continue with Google" onClick={() => handleOAuth("google")} icon={<GoogleIcon />} /> */}
                   <OAuthButton label="Continue with GitHub" onClick={() => handleOAuth("github")} icon={<Github className="h-4 w-4" />} />
+                  {/* Google OAuth — PENDING / UPCOMING. Provider not yet enabled in
+                      Supabase. Shown disabled so users know it's coming. To activate:
+                      set up the Google OAuth client + enable the Supabase Google
+                      provider, then swap this for a live <OAuthButton>. */}
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    title="Google sign-in is coming soon"
+                    className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-4 py-2.5 text-sm text-foreground/40"
+                  >
+                    <GoogleIcon /> Continue with Google
+                    <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-foreground/45">soon</span>
+                  </button>
+                  {/* LinkedIn hidden until its provider is enabled in Supabase. */}
                   {/* <OAuthButton label="Continue with LinkedIn" onClick={() => handleOAuth("linkedin_oidc")} icon={<Linkedin className="h-4 w-4" />} /> */}
                 </div>
                 <div className="my-5 flex items-center gap-3">
