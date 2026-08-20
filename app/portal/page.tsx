@@ -389,20 +389,51 @@ export default function PortalPage() {
             {payInfo && <PaymentMethods p={payInfo} />}
           </Card>
 
-          {/* Available classes */}
+          {/* Available classes — click a card to select it in the booking form. */}
           <Card>
-            <CardTitle title="Available classes" />
+            <CardTitle title="Available classes" hint="Tap a class to select it, then pick a date above." />
             <div className="grid gap-3 sm:grid-cols-1">
-              {classes.map((c) => (
-                <div
-                  key={c.id}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
-                >
-                  <h3 className="mb-1 text-sm font-medium text-foreground">{c.title}</h3>
-                  <p className="mb-2 text-xs leading-relaxed text-foreground/60">{c.description}</p>
-                  <span className="font-mono text-[11px] text-foreground/45">{c.duration}</span>
-                </div>
-              ))}
+              {classes.map((c) => {
+                const selected = selectedClass === c.id
+                const priced = (c.price_paise ?? 0) > 0
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedClass(c.id)
+                      // Bring the booking form (with the calendar) into view.
+                      document.getElementById("class-select")?.scrollIntoView({ behavior: "smooth", block: "center" })
+                    }}
+                    aria-pressed={selected}
+                    className={`w-full rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 ${
+                      selected
+                        ? "border-sky-400/50 bg-sky-400/[0.08] ring-1 ring-inset ring-sky-400/40"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/25"
+                    }`}
+                  >
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-medium text-foreground">{c.title}</h3>
+                      {priced ? (
+                        <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] text-foreground/80">
+                          ₹{((c.price_paise ?? 0) / 100).toFixed(0)}
+                        </span>
+                      ) : (
+                        <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 font-mono text-[10px] text-foreground/45">
+                          on request
+                        </span>
+                      )}
+                    </div>
+                    <p className="mb-2 text-xs leading-relaxed text-foreground/60">{c.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[11px] text-foreground/45">{c.duration}</span>
+                      <span className={`font-mono text-[11px] ${selected ? "text-sky-300" : "text-foreground/40"}`}>
+                        {selected ? "✓ selected" : "select →"}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </Card>
         </div>
