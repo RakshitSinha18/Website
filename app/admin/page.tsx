@@ -598,25 +598,8 @@ export default function AdminPage() {
               />
             </PayBlock>
 
-            {/* Payment link (Stripe / Razorpay / Wise) */}
-            <PayBlock
-              label="Payment link (Stripe / Razorpay / Wise)"
-              enabled={pay.link_enabled}
-              onToggle={(v) => setPay({ ...pay, link_enabled: v })}
-            >
-              <input
-                value={pay.payment_link}
-                onChange={(e) => setPay({ ...pay, payment_link: e.target.value })}
-                placeholder="https://buy.stripe.com/…"
-                className={inputCls}
-              />
-              <input
-                value={pay.payment_link_label}
-                onChange={(e) => setPay({ ...pay, payment_link_label: e.target.value })}
-                placeholder="Button label (e.g. Pay with card)"
-                className={`${inputCls} mt-2`}
-              />
-            </PayBlock>
+            {/* Legacy external "Payment link" removed — the built-in Razorpay
+                gateway (see the 'active' card above) replaces it. */}
 
             {/* Bank / wire */}
             <PayBlock
@@ -779,7 +762,7 @@ export default function AdminPage() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-amber-500/20 px-2.5 py-1 font-mono text-[10px] text-amber-200">
-                        awaiting UPI payment
+                        awaiting payment
                       </span>
                       <button
                         onClick={() => confirmPaid(b)}
