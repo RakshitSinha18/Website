@@ -67,6 +67,8 @@ Deno.serve(async (req: Request) => {
 
         // Notify both the student (confirmation) and the admin (new paid booking).
         if (booking) await notifyPaid(booking)
+        // Best-effort: create a Google Calendar event + Meet link if connected.
+        if (booking) await createMeet(pay.booking_id, booking)
       }
     }
 
@@ -127,6 +129,38 @@ async function notifyPaid(booking: any) {
           scheduled_at: when,
           notes: "Payment received — booking auto-confirmed.",
         },
+      }),
+    })
+  } catch (_e) {
+    /* best-effort */
+  }
+}
+
+// Best-effort: ask the google-calendar function to create an event + Meet link.
+// Silently no-ops if Google isn't connected. Never breaks payment verification.
+async function createMeet(bookingId: string, booking: any) {
+  try {
+    const start = new Date(booking.scheduled_at)
+    if (isNaN(start.getTime())) return
+    const end = new Date(start.getTime() + 60 * 60 * 1000)
+    let attendee = ""
+    if (booking.user_id) {
+      const { data: u } = await admin.auth.admin.getUserById(booking.user_id)
+      attendee = u?.user?.email ?? ""
+    }
+    await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/google-calendar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({
+        booking_id: bookingId,
+        title: `${booking.class_title} — Rakshit Sinha`,
+        description: "Your mentoring session. Join via the Meet link.",
+        start_iso: start.toISOString(),
+        end_iso: end.toISOString(),
+        attendee_email: attendee,
       }),
     })
   } catch (_e) {

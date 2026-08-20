@@ -65,6 +65,7 @@ interface Booking {
   notes: string
   payment_status?: string
   attendance?: string
+  meet_link?: string | null
 }
 interface RoadmapTask {
   id: string
@@ -129,7 +130,7 @@ export default function PortalPage() {
       const [{ data: cls }, { data: bks }, { data: prof }, { data: tasks }, { data: prog }, { data: st }] =
         await Promise.all([
           supabase.from("classes").select("id,title,description,duration,price_paise").eq("active", true),
-          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status,attendance").order("scheduled_at", { ascending: true }),
+          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status,attendance,meet_link").order("scheduled_at", { ascending: true }),
           supabase.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
           supabase.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
           supabase.from("task_progress").select("task_id,completed").eq("user_id", user.id),
@@ -241,7 +242,7 @@ export default function PortalPage() {
     setNotes("")
     const { data: bks } = await supabase
       .from("class_bookings")
-      .select("id,class_title,scheduled_at,status,notes,payment_status,attendance")
+      .select("id,class_title,scheduled_at,status,notes,payment_status,attendance,meet_link")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
     // Take the student straight to their bookings, where the payment button lives.
@@ -335,7 +336,7 @@ export default function PortalPage() {
     } catch { /* best-effort */ }
     const { data: bks } = await supabase
       .from("class_bookings")
-      .select("id,class_title,scheduled_at,status,notes,payment_status,attendance")
+      .select("id,class_title,scheduled_at,status,notes,payment_status,attendance,meet_link")
       .order("scheduled_at", { ascending: true })
     if (bks) setBookings(bks as Booking[])
   }
@@ -660,6 +661,16 @@ export default function PortalPage() {
                       {/* Meeting invite + materials for confirmed sessions. */}
                       {confirmed ? (
                         <>
+                          {b.meet_link && (
+                            <a
+                              href={b.meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-3 py-1.5 font-mono text-[11px] text-emerald-200 transition-colors hover:bg-emerald-500/30"
+                            >
+                              <CalendarClock className="h-3.5 w-3.5" /> Join Google Meet
+                            </a>
+                          )}
                           <div className="mt-2 flex flex-wrap gap-2">
                             <button
                               onClick={() => addToCalendar(b)}
