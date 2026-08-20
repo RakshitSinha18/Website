@@ -31,6 +31,7 @@ import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@
 import { startPayment, openRazorpay, type Provider } from "@/lib/payments"
 import { CreditCard, FileText, Paperclip, Lightbulb } from "lucide-react"
 import { IdeasBoard } from "@/components/ideas-board"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 interface ClassItem {
   id: string
@@ -95,6 +96,7 @@ export default function PortalPage() {
   const [slot, setSlot] = useState("")
   const [notes, setNotes] = useState("")
   const { toast } = useToast()
+  const reduceMotion = useReducedMotion()
   const [savingProfile, setSavingProfile] = useState(false)
   const [booking, setBooking] = useState(false)
 
@@ -460,6 +462,14 @@ export default function PortalPage() {
           })}
         </nav>
 
+        <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
         {tab === "book" && <QuoteOfDay className="mb-6" />}
 
         {/* ── BOOK TAB ─────────────────────────────────────────── */}
@@ -875,6 +885,8 @@ export default function PortalPage() {
           </Card>
         </div>
         )}
+        </motion.div>
+        </AnimatePresence>
       </div>
     </main>
   )
