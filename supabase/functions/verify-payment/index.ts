@@ -58,10 +58,15 @@ Deno.serve(async (req: Request) => {
         .update({ status: "paid", updated_at: new Date().toISOString() })
         .eq("id", pay.id)
       if (pay.booking_id) {
-        await admin
+        const { data: booking } = await admin
           .from("class_bookings")
           .update({ status: "confirmed", payment_status: "paid" })
           .eq("id", pay.booking_id)
+          .select("class_title, scheduled_at, session_link, user_id")
+          .single()
+
+        // Notify both the student (confirmation) and the admin (new paid booking).
+        if (booking) await notifyPaid(booking)
       }
     }
 
@@ -70,6 +75,64 @@ Deno.serve(async (req: Request) => {
     return json({ error: String(err) }, 500)
   }
 })
+
+// Email the student a confirmation and the admin a "new paid booking" alert.
+// Best-effort: never let a notification failure break payment verification.
+async function notifyPaid(booking: any) {
+  try {
+    const notifyUrl = Deno.env.get("NOTIFY_URL") ??
+      `${Deno.env.get("SUPABASE_URL")}/functions/v1/notify`
+
+    // Look up the student's email + name from auth + profiles.
+    let studentEmail = ""
+    let studentName = ""
+    if (booking.user_id) {
+      const { data: u } = await admin.auth.admin.getUserById(booking.user_id)
+      studentEmail = u?.user?.email ?? ""
+      const { data: prof } = await admin
+        .from("profiles").select("full_name").eq("id", booking.user_id).single()
+      studentName = prof?.full_name ?? ""
+    }
+
+    const when = booking.scheduled_at
+      ? new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+      : "the scheduled time"
+
+    // 1) Student confirmation (with session link if present).
+    if (studentEmail) {
+      await fetch(notifyUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "approve",
+          student_email: studentEmail,
+          student_name: studentName,
+          class_title: booking.class_title,
+          scheduled_at: when,
+          session_link: booking.session_link || "",
+        }),
+      })
+    }
+
+    // 2) Admin alert about the paid booking.
+    await fetch(notifyUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "class_bookings",
+        record: {
+          name: studentName || studentEmail,
+          email: studentEmail,
+          class_title: `${booking.class_title} (PAID ✅)`,
+          scheduled_at: when,
+          notes: "Payment received — booking auto-confirmed.",
+        },
+      }),
+    })
+  } catch (_e) {
+    /* best-effort */
+  }
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
