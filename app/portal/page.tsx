@@ -186,7 +186,27 @@ export default function PortalPage() {
       toast(error.message, "error")
       return
     }
-    toast("Class requested! Pay via UPI, then Rakshit confirms your evening slot.", "success")
+    // Notify the mentor about the new request (best-effort; don't block on it).
+    try {
+      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`
+      void fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "class_bookings",
+          record: {
+            name: profile.full_name || user.email,
+            email: user.email,
+            class_title: cls?.title || "Class",
+            scheduled_at,
+            notes,
+          },
+        }),
+      }).catch(() => {})
+    } catch {
+      /* notification is best-effort */
+    }
+    toast("Class requested! Pay to confirm your slot, or Rakshit will reach out.", "success")
     setNotes("")
     const { data: bks } = await supabase
       .from("class_bookings")
