@@ -76,23 +76,34 @@ export default function RootLayout({
           httpEquiv="Content-Security-Policy"
           content={[
             "default-src 'self'",
-            // Next.js needs inline/eval for hydration; Razorpay checkout script.
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
+            // Next.js needs inline/eval for hydration; Razorpay checkout; Google (upcoming OAuth).
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://accounts.google.com",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data:",
-            // XHR/fetch: Supabase API + functions, Razorpay API.
-            "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com",
-            // Razorpay opens its checkout in an iframe.
-            "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+            // XHR/fetch: Supabase API + functions, Razorpay API, Google identity.
+            "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://accounts.google.com",
+            // Razorpay + Google open in iframes.
+            "frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com",
+            "worker-src 'self' blob:",
+            "manifest-src 'self'",
+            "media-src 'self'",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'none'",
+            "block-all-mixed-content",
             "upgrade-insecure-requests",
           ].join("; ")}
         />
         <meta name="referrer" content="strict-origin-when-cross-origin" />
+        {/* Defence-in-depth. GitHub Pages can't send these as HTTP headers, so
+            they ship as meta equivalents where the browser honours them. */}
+        <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
+        <meta
+          httpEquiv="Permissions-Policy"
+          content="camera=(), microphone=(), geolocation=(), payment=(self)"
+        />
       </head>
       <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
         {/* Skip link for keyboard & screen-reader users (WCAG 2.4.1). */}
