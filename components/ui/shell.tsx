@@ -72,7 +72,7 @@ export function Card({
 }) {
   return (
     <Tag
-      className={`rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm md:p-6 ${className}`}
+      className={`rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-xl shadow-black/20 backdrop-blur-md transition-colors duration-300 md:p-6 ${className}`}
     >
       {children}
     </Tag>
@@ -107,10 +107,11 @@ export function CardTitle({
 type ButtonVariant = "primary" | "secondary" | "ghost"
 
 // Ghost-style action buttons site-wide: outlined/transparent at rest, fill on hover.
+// Premium feel: subtle lift + press, focus-visible ring for accessibility.
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    "border border-white/40 bg-transparent text-foreground hover:bg-white hover:text-[#0b0f19] hover:border-white",
-  secondary: "border border-white/15 bg-white/[0.04] text-foreground hover:bg-white/[0.08]",
+    "border border-white/40 bg-transparent text-foreground hover:bg-white hover:text-[#0b0f19] hover:border-white hover:shadow-lg hover:shadow-white/5",
+  secondary: "border border-white/15 bg-white/[0.04] text-foreground hover:bg-white/[0.08] hover:border-white/25",
   ghost: "text-foreground/60 hover:text-foreground",
 }
 
@@ -126,7 +127,7 @@ export function Button({
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-60 ${BUTTON_VARIANTS[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f19] disabled:pointer-events-none disabled:opacity-60 ${BUTTON_VARIANTS[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -134,9 +135,10 @@ export function Button({
   )
 }
 
-/** Shared input styling class — apply to <input>, <select>, <textarea>. */
+/** Shared input styling class — apply to <input>, <select>, <textarea>.
+ *  Premium focus: soft sky ring instead of a hard outline. */
 export const fieldClass =
-  "w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none [&>option]:text-black"
+  "w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground/35 transition-all duration-200 focus:border-sky-400/40 focus:bg-white/[0.05] focus:outline-none focus:ring-2 focus:ring-sky-400/15 [&>option]:text-black"
 
 /** Small mono label above a field. */
 export function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
