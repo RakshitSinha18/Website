@@ -16,6 +16,7 @@ import {
   Github,
   Linkedin,
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -300,16 +301,26 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <h1 className="text-2xl font-medium tracking-tight text-foreground">
-              {isMentor ? "Admin sign in" : mode === "signin" ? "Welcome back" : "Create your account"}
-            </h1>
-            <p className="mt-1.5 text-sm text-foreground/55">
-              {isMentor
-                ? "Manage bookings, courses, roadmap and payments."
-                : mode === "signin"
-                  ? "Sign in to book classes and track your roadmap."
-                  : "Join to book 1-on-1 evening classes with Rakshit."}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${isMentor}-${mode}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <h1 className="text-2xl font-medium tracking-tight text-foreground">
+                  {isMentor ? "Admin sign in" : mode === "signin" ? "Welcome back" : "Create your account"}
+                </h1>
+                <p className="mt-1.5 text-sm text-foreground/55">
+                  {isMentor
+                    ? "Manage bookings, courses, roadmap and payments."
+                    : mode === "signin"
+                      ? "Sign in to book classes and track your roadmap."
+                      : "Join to book 1-on-1 evening classes with Rakshit."}
+                </p>
+              </motion.div>
+            </AnimatePresence>
 
             {/* Social sign-in — students only. The mentor/admin signs in with
                 email + password (admin access is gated by email, and mixing in

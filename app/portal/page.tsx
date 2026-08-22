@@ -32,6 +32,7 @@ import { startPayment, openRazorpay, type Provider } from "@/lib/payments"
 import { CreditCard, FileText, Paperclip, Lightbulb } from "lucide-react"
 import { IdeasBoard } from "@/components/ideas-board"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion/reveal"
 
 interface ClassItem {
   id: string
@@ -633,17 +634,26 @@ export default function PortalPage() {
           <Card>
             <CardTitle icon={<BookOpen className="h-4 w-4" />} title="My classes" />
             {bookings.length === 0 ? (
-              <p className="text-sm text-foreground/50">
-                No classes booked yet. Head to the <strong>Book</strong> tab to request one.
-              </p>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/15 px-6 py-12 text-center">
+                <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-sky-400/15 to-amber-400/10 text-sky-300">
+                  <CalendarClock className="h-6 w-6" />
+                </span>
+                <p className="text-sm font-medium text-foreground">No classes yet</p>
+                <p className="mt-1 max-w-xs text-xs leading-relaxed text-foreground/50">
+                  Pick a class and an evening slot to get started — your booked sessions and materials will appear here.
+                </p>
+                <Button onClick={() => setTab("book")} variant="secondary" className="mt-4">
+                  <CalendarPlus className="h-4 w-4" /> Book your first class
+                </Button>
+              </div>
             ) : (
-              <ul className="space-y-3">
+              <RevealGroup className="space-y-3">
                 {bookings.map((b) => {
                   const confirmed = b.status === "confirmed"
                   return (
-                    <li
+                    <RevealItem
                       key={b.id}
-                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3"
+                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 transition-colors hover:border-white/20"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm text-foreground">{b.class_title}</span>
@@ -726,10 +736,10 @@ export default function PortalPage() {
                           payInfo={payInfo}
                         />
                       )}
-                    </li>
+                    </RevealItem>
                   )
                 })}
-              </ul>
+              </RevealGroup>
             )}
           </Card>
         </div>
