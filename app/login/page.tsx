@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent, useEffect } from "react"
+import { useState, useRef, type FormEvent, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -17,6 +17,7 @@ import {
   Linkedin,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -48,9 +49,11 @@ export default function LoginPage() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   // Set when sign-in fails because the email isn't confirmed yet.
   const [needsVerify, setNeedsVerify] = useState(false)
-  // Captcha token (set when the widget is configured/solved). Optional until
-  // captcha is enabled in Supabase — see SIGNUP-CAPTCHA.md.
-  const [captchaToken] = useState<string>("")
+  // Captcha token (set when the Turnstile widget is solved). The widget only
+  // renders when a site key is configured, so signup keeps working before
+  // captcha is turned on — see SIGNUP-CAPTCHA.md.
+  const [captchaToken, setCaptchaToken] = useState<string>("")
+  const turnstileRef = useRef<TurnstileInstance | null>(null)
 
   // Already logged in → go to the right place (admin vs student).
   useEffect(() => {
@@ -81,6 +84,11 @@ export default function LoginPage() {
       }
       if (!agreeTerms) {
         toast("Please accept the Terms & Privacy Policy to continue.", "error")
+        return
+      }
+      // If a captcha is configured, require a solved token before submitting.
+      if (TURNSTILE_SITE_KEY && !captchaToken) {
+        toast("Please complete the “I'm human” check.", "error")
         return
       }
     }
@@ -121,6 +129,11 @@ export default function LoginPage() {
         toast("Your email isn't verified yet. Check your inbox/spam, or resend below.", "error")
       } else {
         toast(msg, "error")
+      }
+      // Turnstile tokens are single-use; reset so the next attempt gets a fresh one.
+      if (mode === "signup") {
+        turnstileRef.current?.reset()
+        setCaptchaToken("")
       }
     } finally {
       setBusy(false)
@@ -443,6 +456,20 @@ export default function LoginPage() {
                 </label>
               )}
 
+              {/* Bot protection (signup only). Renders only when a site key is
+                  configured, so signup keeps working before captcha is enabled.
+                  See SIGNUP-CAPTCHA.md. */}
+              {mode === "signup" && !isMentor && TURNSTILE_SITE_KEY && (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  options={{ theme: "dark", size: "flexible" }}
+                  onSuccess={setCaptchaToken}
+                  onExpire={() => setCaptchaToken("")}
+                  onError={() => setCaptchaToken("")}
+                />
+              )}
+
               <button
                 type="submit"
                 disabled={busy}
@@ -503,6 +530,10 @@ export default function LoginPage() {
     </main>
   )
 }
+
+// Cloudflare Turnstile site key (public). When unset the captcha widget is
+// simply not rendered and signup proceeds without a token. See SIGNUP-CAPTCHA.md.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-foreground/35 transition-colors focus:border-white/25 focus:bg-white/[0.05] focus:outline-none"

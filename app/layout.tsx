@@ -76,15 +76,15 @@ export default function RootLayout({
           httpEquiv="Content-Security-Policy"
           content={[
             "default-src 'self'",
-            // Next.js needs inline/eval for hydration; Razorpay checkout; Google (upcoming OAuth).
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://accounts.google.com",
+            // Next.js needs inline/eval for hydration; Razorpay checkout; Google (upcoming OAuth); Cloudflare Turnstile captcha.
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://accounts.google.com https://challenges.cloudflare.com",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data:",
             // XHR/fetch: Supabase API + functions, Razorpay API, Google identity.
             "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://accounts.google.com",
-            // Razorpay + Google open in iframes.
-            "frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com",
+            // Razorpay + Google open in iframes; Turnstile renders its challenge in one.
+            "frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com https://challenges.cloudflare.com",
             "worker-src 'self' blob:",
             "manifest-src 'self'",
             "media-src 'self'",
