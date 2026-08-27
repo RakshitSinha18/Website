@@ -12,6 +12,8 @@ import { MagneticButton } from "@/components/magnetic-button"
 import { RotatingText } from "@/components/rotating-text"
 import { ProfilePhoto } from "@/components/profile-photo"
 import { HeroDashboard } from "@/components/hero-dashboard"
+import { HeroStats } from "@/components/hero-stats"
+import { HeroQueryBar } from "@/components/hero-query-bar"
 import { DownloadCV } from "@/components/download-cv"
 import { SpotlightHeroLazy } from "@/components/spotlight/spotlight-hero-lazy"
 import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, HelpCircle, Mail } from "lucide-react"
@@ -216,6 +218,8 @@ export default function Home() {
       >
         {/* Hero Section — interactive spotlight backdrop BEHIND always-rendered content */}
         <section className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden px-5 pb-20 pt-24 text-center md:px-12 md:pb-16">
+          {/* Aurora + data-grid wash for depth (sits at the very back). */}
+          <div className="hero-aurora" aria-hidden />
           {/* Spotlight backdrop (draggable lamp + switch on desktop; static beam otherwise). */}
           <SpotlightHeroLazy />
 
@@ -235,6 +239,7 @@ export default function Home() {
                 <h1 className="mb-3 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.03] tracking-tight duration-1000 md:mb-4 md:text-7xl lg:text-8xl">
                   <span className="shimmer-text text-balance">Rakshit Sinha</span>
                 </h1>
+                <HeroStats className="mb-5 animate-in fade-in slide-in-from-bottom-4 justify-center duration-1000 delay-100 lg:justify-start" />
                 <div className="mb-6 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 lg:justify-start md:mb-7 md:text-3xl">
                   <span className="text-foreground/45">I turn data into</span>
                   <RotatingText
@@ -242,12 +247,13 @@ export default function Home() {
                     className="bg-gradient-to-r from-sky-300 to-amber-300 bg-clip-text font-normal text-transparent"
                   />
                 </div>
-                <p className="mb-6 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/80 duration-1000 delay-200 md:mb-7 md:text-lg">
+                <p className="mb-5 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/80 duration-1000 delay-200 md:mb-6 md:text-lg">
                   <span className="text-pretty">
                     A Senior Business Intelligence professional who makes complex data make sense — and, after hours, a
                     mentor helping the next wave of analysts find their footing.
                   </span>
                 </p>
+                <HeroQueryBar className="mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300 md:mb-7" />
                 <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap justify-center gap-2 duration-1000 delay-200 lg:justify-start md:mb-8">
                   {["Tableau", "Power BI", "T-SQL", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
                     <span
