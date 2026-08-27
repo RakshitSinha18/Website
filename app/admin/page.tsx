@@ -4,7 +4,8 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart } from "lucide-react"
+import { Stars } from "@/components/testimonial-form"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -75,6 +76,15 @@ interface ArticleRow {
   body: string
   published: boolean
 }
+interface TestimonialRow {
+  id: string
+  author_name: string
+  author_role: string
+  body: string
+  rating: number | null
+  approved: boolean
+  created_at: string
+}
 
 export default function AdminPage() {
   const router = useRouter()
@@ -89,8 +99,9 @@ export default function AdminPage() {
   })
   const [articles, setArticles] = useState<ArticleRow[]>([])
   const [newArticle, setNewArticle] = useState({ title: "", excerpt: "", body: "" })
+  const [testimonials, setTestimonials] = useState<TestimonialRow[]>([])
   // Tabbed admin navigation.
-  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "batches" | "articles" | "roadmap" | "payments">("bookings")
+  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "batches" | "articles" | "reviews" | "roadmap" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -182,6 +193,9 @@ export default function AdminPage() {
 
     const { data: art } = await supabase.from("articles").select("*").order("created_at", { ascending: false })
     if (art) setArticles(art as ArticleRow[])
+
+    const { data: tst } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false })
+    if (tst) setTestimonials(tst as TestimonialRow[])
 
     const { data: mats } = await supabase
       .from("class_materials")
@@ -421,6 +435,22 @@ export default function AdminPage() {
     if (!error) load()
   }
 
+  // --- Testimonials (student reviews) ---
+  const setTestimonialApproved = async (t: TestimonialRow, approved: boolean) => {
+    if (!supabase) return
+    setBusyId(t.id)
+    const { error } = await supabase.from("testimonials").update({ approved }).eq("id", t.id)
+    setBusyId(null)
+    setMsg(error ? error.message : approved ? "Approved — now live on the homepage." : "Hidden from the homepage.")
+    if (!error) setTestimonials((prev) => prev.map((x) => (x.id === t.id ? { ...x, approved } : x)))
+  }
+  const removeTestimonial = async (id: string) => {
+    if (!supabase) return
+    const { error } = await supabase.from("testimonials").delete().eq("id", id)
+    setMsg(error ? error.message : "Testimonial removed.")
+    if (!error) setTestimonials((prev) => prev.filter((x) => x.id !== id))
+  }
+
   // --- Class catalog editing ---
   const addClass = async () => {
     if (!supabase || !newClass.title.trim()) return
@@ -557,6 +587,7 @@ export default function AdminPage() {
             { id: "courses", label: "Courses", icon: BookOpen },
             { id: "batches", label: "Batches", icon: BookOpen },
             { id: "articles", label: "Articles", icon: FileText },
+            { id: "reviews", label: "Reviews", icon: MessageSquareHeart },
             { id: "roadmap", label: "Roadmap", icon: Map },
             { id: "payments", label: "Payments", icon: IndianRupee },
           ].map((t) => {
@@ -1117,6 +1148,64 @@ export default function AdminPage() {
           </div>
         </Card>
         </>
+        )}
+
+        {/* ── REVIEWS TAB (student testimonials) ───────────────── */}
+        {tab === "reviews" && (
+        <Card>
+          <CardTitle
+            icon={<MessageSquareHeart className="h-4 w-4" />}
+            title="Student testimonials"
+            hint="Students write these in the portal. Approve the ones you want on the homepage — nothing shows publicly until you do. Student edits automatically un-approve."
+          />
+          <ul className="space-y-2">
+            {testimonials.map((t) => (
+              <li key={t.id} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-sm text-foreground">{t.author_name}</span>
+                    {t.author_role && (
+                      <span className="font-mono text-[11px] text-foreground/50">· {t.author_role}</span>
+                    )}
+                    <Stars value={t.rating ?? 0} />
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] ${
+                      t.approved ? "bg-emerald-500/20 text-emerald-200" : "bg-amber-500/20 text-amber-200"
+                    }`}
+                  >
+                    {t.approved ? "live" : "pending"}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-foreground/70">&ldquo;{t.body}&rdquo;</p>
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setTestimonialApproved(t, !t.approved)}
+                    disabled={busyId === t.id}
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 font-mono text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                      t.approved
+                        ? "border border-white/15 text-foreground/70 hover:bg-white/10"
+                        : "bg-sky-500 text-white hover:bg-sky-400"
+                    }`}
+                  >
+                    {busyId === t.id && <Loader2 className="h-3 w-3 animate-spin" />}
+                    {t.approved ? "Hide from site" : "Approve & publish"}
+                  </button>
+                  <button
+                    onClick={() => removeTestimonial(t.id)}
+                    className="flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-1.5 font-mono text-[10px] text-red-300/90 transition-colors hover:bg-red-500/10"
+                  >
+                    <Trash2 className="h-3 w-3" /> Remove
+                  </button>
+                  <span className="ml-auto font-mono text-[10px] text-foreground/40">
+                    {new Date(t.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </li>
+            ))}
+            {testimonials.length === 0 && <EmptyRow label="No testimonials yet — students can write one from My Classes once a session is confirmed." />}
+          </ul>
+        </Card>
         )}
 
         {/* ── ROADMAP TAB ──────────────────────────────────────── */}

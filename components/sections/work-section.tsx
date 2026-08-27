@@ -5,7 +5,23 @@ import { ChevronDown } from "lucide-react"
 import { motion, useScroll, useTransform, useReducedMotion, useInView } from "framer-motion"
 import { SectionKicker } from "@/components/section-kicker"
 
-const EXPERIENCE = [
+// Case notes (challenge → approach → outcome) stay qualitative on purpose —
+// EDIT: swap in real numbers (users, refresh times, adoption) where you can share them.
+interface CaseStudy {
+  challenge: string
+  approach: string
+  outcome: string
+}
+
+const EXPERIENCE: {
+  number: string
+  role: string
+  company: string
+  detail: string
+  year: string
+  tags: string[]
+  caseStudy?: CaseStudy
+}[] = [
   {
     number: "01",
     role: "Senior Business Intelligence Consultant",
@@ -21,6 +37,14 @@ const EXPERIENCE = [
     detail: "Built and supported Tableau dashboards for CSAT, NPS, resolution time & ticket volume; led a team of 4+ consultants and upheld regulatory-grade data accuracy.",
     year: "2024",
     tags: ["Tableau", "Team Lead", "Banking"],
+    caseStudy: {
+      challenge:
+        "A retail bank needed daily visibility into customer-service health — CSAT, NPS, resolution time and ticket volume — with numbers accurate enough to stand up to regulatory scrutiny.",
+      approach:
+        "Standardised metric definitions across teams, built the dashboards on governed Tableau extracts, and led a 4+ consultant delivery team with a review gate on every release.",
+      outcome:
+        "Service leaders read CSAT and NPS movements from the dashboard instead of waiting on analyst pulls — it became part of the daily operating review.",
+    },
   },
   {
     number: "03",
@@ -29,6 +53,14 @@ const EXPERIENCE = [
     detail: "Delivered Tableau & Power BI dashboards across Sales, HR and OTT — with row/user-level security, automated subscriptions and insight into engagement, CTR & churn.",
     year: "2021 — 2024",
     tags: ["Power BI", "Tableau", "OTT Analytics"],
+    caseStudy: {
+      challenge:
+        "Sales, HR and OTT teams each needed self-serve reporting on very different data — streaming engagement, CTR and churn on one side, targets and headcount on the other — without one team ever seeing another's numbers.",
+      approach:
+        "Delivered Tableau and Power BI dashboards with row- and user-level security baked into the model, plus automated subscriptions so the right slice landed in each inbox on schedule.",
+      outcome:
+        "Reporting shifted from ad-hoc analyst requests to subscribed, self-serve dashboards across three business functions.",
+    },
   },
   {
     number: "04",
@@ -37,6 +69,14 @@ const EXPERIENCE = [
     detail: "Built Tableau dashboards for marketing & sales KPIs including ROI and funnel metrics, surfacing business risks and opportunities through KPI monitoring.",
     year: "2020 — 2021",
     tags: ["Marketing KPIs", "ROI", "Funnels"],
+    caseStudy: {
+      challenge:
+        "Marketing spend was tracked channel by channel, with no single view of ROI or where the funnel actually leaked.",
+      approach:
+        "Built Tableau dashboards that put ROI, funnel-stage conversion and sales KPIs side by side, with monitoring that flagged KPI drift as it happened.",
+      outcome:
+        "Risks and opportunities surfaced from KPI movement week to week — not at quarter-end reviews.",
+    },
   },
   {
     number: "05",
@@ -113,7 +153,7 @@ function TimelineRole({
   onToggle,
   reduce,
 }: {
-  role: { number: string; role: string; company: string; detail: string; year: string; tags: string[] }
+  role: (typeof EXPERIENCE)[number]
   index: number
   open: boolean
   onToggle: () => void
@@ -171,6 +211,27 @@ function TimelineRole({
           <div className="overflow-hidden">
             <div className="px-4 pb-4 pl-11 md:px-5 md:pb-5 md:pl-16">
               <p className="max-w-2xl text-sm leading-relaxed text-foreground/75 md:text-base">{role.detail}</p>
+
+              {/* Case notes — how this engagement actually played out. */}
+              {role.caseStudy && (
+                <div className="mt-4 grid max-w-2xl gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3.5 md:grid-cols-3 md:gap-4">
+                  {(
+                    [
+                      ["Challenge", role.caseStudy.challenge],
+                      ["Approach", role.caseStudy.approach],
+                      ["Outcome", role.caseStudy.outcome],
+                    ] as const
+                  ).map(([label, text]) => (
+                    <div key={label}>
+                      <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-amber-300/70">
+                        {label}
+                      </p>
+                      <p className="text-xs leading-relaxed text-foreground/70">{text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {role.tags.map((t) => (
                   <span key={t} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 font-mono text-[10px] text-foreground/60">

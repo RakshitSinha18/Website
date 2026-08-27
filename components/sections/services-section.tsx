@@ -3,6 +3,7 @@
 import { useReveal } from "@/hooks/use-reveal"
 import { CourseExplorer } from "@/components/course-explorer"
 import { ToolsComparison } from "@/components/tools-comparison"
+import { TestimonialsRail } from "@/components/testimonials-rail"
 import { SectionKicker } from "@/components/section-kicker"
 
 export function ServicesSection() {
@@ -36,6 +37,13 @@ export function ServicesSection() {
         >
           <CourseExplorer />
         </div>
+
+        {/* Real student voices — hidden until an approved testimonial exists. */}
+        <TestimonialsRail
+          className={`mt-10 transition-all duration-700 md:mt-14 ${
+            isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+          }`}
+        />
 
         {/* Practitioner's tool comparison — shows judgment, not just skills. */}
         <div

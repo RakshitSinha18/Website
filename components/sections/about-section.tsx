@@ -5,6 +5,7 @@ import { useReveal } from "@/hooks/use-reveal"
 import { useCountUp } from "@/hooks/use-count-up"
 import { QuoteOfDay } from "@/components/quote-of-day"
 import { ResourceCard } from "@/components/resource-card"
+import { CertificationsCard } from "@/components/certifications-card"
 import { SectionKicker } from "@/components/section-kicker"
 
 const STATS = [
@@ -177,6 +178,8 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
               <QuoteOfDay className="mt-5 max-w-md" />
               <div className="max-w-md">
                 <SkillMatrix active={isVisible} />
+                {/* Auto-appears once lib/credentials.ts has real entries. */}
+                <CertificationsCard className="mt-4" />
               </div>
             </div>
           </div>
