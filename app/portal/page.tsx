@@ -31,6 +31,7 @@ import { PageBackdrop, Card, CardTitle, Button, fieldClass, FieldLabel } from "@
 import { startPayment, openRazorpay, type Provider } from "@/lib/payments"
 import { CreditCard, FileText, Paperclip, Lightbulb } from "lucide-react"
 import { IdeasBoard } from "@/components/ideas-board"
+import { CourseLearn } from "@/components/course-learn"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/reveal"
 
@@ -103,7 +104,7 @@ export default function PortalPage() {
   const [booking, setBooking] = useState(false)
 
   // Which tab/view is active (tabbed portal).
-  const [tab, setTab] = useState<"book" | "classes" | "ideas" | "roadmap" | "settings">("book")
+  const [tab, setTab] = useState<"book" | "classes" | "learn" | "ideas" | "roadmap" | "settings">("book")
 
   // Redirect out if not logged in.
   useEffect(() => {
@@ -440,6 +441,7 @@ export default function PortalPage() {
           {[
             { id: "book", label: "Book", icon: CalendarClock },
             { id: "classes", label: "My Classes", icon: BookOpen },
+            { id: "learn", label: "Learn", icon: GraduationCap },
             { id: "ideas", label: "Ideas", icon: Lightbulb },
             { id: "roadmap", label: "Roadmap", icon: Map },
             { id: "settings", label: "Settings", icon: Settings },
@@ -618,6 +620,20 @@ export default function PortalPage() {
               </div>
             </Card>
           )}
+        </div>
+        )}
+
+        {/* ── LEARN TAB ────────────────────────────────────────── */}
+        {tab === "learn" && (
+        <div className="stagger">
+          <Card>
+            <CardTitle
+              icon={<GraduationCap className="h-4 w-4" />}
+              title="Learn"
+              hint="Self-paced course lessons — concept, key idea, a walk-through and a hands-on exercise. Progress saves automatically."
+            />
+            <CourseLearn />
+          </Card>
         </div>
         )}
 
