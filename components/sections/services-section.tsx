@@ -2,6 +2,8 @@
 
 import { useReveal } from "@/hooks/use-reveal"
 import { CourseExplorer } from "@/components/course-explorer"
+import { ToolsComparison } from "@/components/tools-comparison"
+import { SectionKicker } from "@/components/section-kicker"
 
 export function ServicesSection() {
   const { ref, isVisible } = useReveal(0.15)
@@ -17,6 +19,7 @@ export function ServicesSection() {
             isVisible ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0"
           }`}
         >
+          <SectionKicker number="05" label="Learn with me" />
           <h2 className="mb-2 font-sans text-5xl font-light tracking-tight text-foreground md:text-6xl lg:text-7xl">
             Courses I teach
           </h2>
@@ -32,6 +35,16 @@ export function ServicesSection() {
           style={{ transitionDelay: "150ms" }}
         >
           <CourseExplorer />
+        </div>
+
+        {/* Practitioner's tool comparison — shows judgment, not just skills. */}
+        <div
+          className={`mt-10 transition-all duration-700 md:mt-14 ${
+            isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+          }`}
+          style={{ transitionDelay: "300ms" }}
+        >
+          <ToolsComparison />
         </div>
       </div>
     </section>

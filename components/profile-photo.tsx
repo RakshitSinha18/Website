@@ -31,8 +31,8 @@ export function ProfilePhoto({ className = "" }: { className?: string }) {
           <span className="font-sans text-4xl font-light tracking-tight text-foreground md:text-5xl">RS</span>
         </div>
       )}
-      {/* subtle ring glow */}
-      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" />
+      {/* subtle ring glow — inherits the container's corner radius */}
+      <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/10" />
     </div>
   )
 }

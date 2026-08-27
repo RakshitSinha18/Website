@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react"
 import { PageBackdrop } from "@/components/ui/shell"
 import { supabase } from "@/lib/supabase"
 import { CommentThread } from "@/components/comment-thread"
+import { STARTER_ARTICLES } from "@/lib/starter-articles"
 
 interface Article {
   id: string
@@ -15,6 +16,13 @@ interface Article {
   body: string
   cover_url?: string | null
   created_at: string
+  starter?: boolean
+}
+
+function findStarter(slug: string): Article | null {
+  const a = STARTER_ARTICLES.find((s) => s.slug === slug)
+  if (!a) return null
+  return { id: `starter-${a.slug}`, slug: a.slug, title: a.title, body: a.body, created_at: a.created_at, starter: true }
 }
 
 function ArticleView() {
@@ -24,7 +32,11 @@ function ArticleView() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase || !slug) { setLoading(false); return }
+    if (!slug) { setLoading(false); return }
+    // Built-in concept articles resolve instantly, no DB round-trip.
+    const starter = findStarter(slug)
+    if (starter) { setArticle(starter); setLoading(false); return }
+    if (!supabase) { setLoading(false); return }
     supabase
       .from("articles")
       .select("id,slug,title,body,cover_url,created_at")
@@ -62,10 +74,12 @@ function ArticleView() {
               ))}
             </div>
 
-            {/* Discussion */}
-            <div className="mt-12 border-t border-white/10 pt-8">
-              <CommentThread targetType="article" targetId={article.id} />
-            </div>
+            {/* Discussion — only for real (DB) articles; starters have no row. */}
+            {!article.starter && (
+              <div className="mt-12 border-t border-white/10 pt-8">
+                <CommentThread targetType="article" targetId={article.id} />
+              </div>
+            )}
           </>
         )}
       </div>

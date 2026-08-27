@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, X, Check, ArrowRight } from "lucide-react"
-import { COURSES, type Course } from "@/lib/courses"
+import { COURSES, formatPrice, type Course } from "@/lib/courses"
 import Link from "next/link"
 
 /**
@@ -104,7 +104,7 @@ function CourseSlide({
 
       <div className="relative grid gap-6 md:grid-cols-[1.3fr_1fr] md:items-center">
         <div>
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <span
               className="inline-block h-2 w-2 rounded-full"
               style={{ background: course.accent[0] }}
@@ -112,6 +112,7 @@ function CourseSlide({
             <span className="font-mono text-[11px] uppercase tracking-wide text-foreground/60">
               {course.level} · {course.duration}
             </span>
+            <PriceBadge course={course} />
           </div>
           <h3 className="mb-1 font-sans text-3xl font-light text-foreground md:text-4xl">{course.title}</h3>
           <p
@@ -222,15 +223,38 @@ function DeepDive({ course, onClose }: { course: Course; onClose: () => void }) 
           <LearningPath steps={course.syllabus} accent={course.accent} />
         </Section>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-foreground/10 pt-5">
-          <Link
-            href="/login/"
-            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-black transition-all hover:scale-[1.03]"
-            style={{ background: `linear-gradient(135deg, ${course.accent[0]}, ${course.accent[1]})` }}
-          >
-            Enroll in this course <ArrowRight className="h-4 w-4" />
-          </Link>
-          <span className="font-mono text-xs text-foreground/50">Evening classes · after office hours</span>
+        <div className="mt-6 border-t border-foreground/10 pt-5">
+          <div className="mb-4 flex items-baseline gap-2">
+            {course.priceFrom != null ? (
+              <>
+                <span className="font-mono text-xs uppercase tracking-wide text-foreground/50">From</span>
+                <span className="font-sans text-2xl font-light text-foreground">
+                  {formatPrice(course.priceFrom)}
+                </span>
+                <span className="font-mono text-xs text-foreground/50">/ session</span>
+              </>
+            ) : (
+              <span className="font-sans text-xl font-light text-foreground">Pricing on request</span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/login/"
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-black transition-all hover:scale-[1.03]"
+              style={{ background: `linear-gradient(135deg, ${course.accent[0]}, ${course.accent[1]})` }}
+            >
+              Enroll in this course <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href={`mailto:rsinha1369@gmail.com?subject=${encodeURIComponent(`Enquiry: ${course.title}`)}`}
+              className="font-sans text-sm font-medium text-foreground/80 underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              Contact about pricing
+            </a>
+          </div>
+          <p className="mt-3 font-mono text-xs text-foreground/50">
+            Evening classes · after office hours · final quote depends on scope &amp; format
+          </p>
         </div>
       </div>
     </div>
@@ -272,6 +296,24 @@ function LearningPath({ steps, accent }: { steps: string[]; accent: [string, str
         </li>
       ))}
     </ol>
+  )
+}
+
+// Small pill showing the starting price (or "Pricing on request").
+function PriceBadge({ course }: { course: Course }) {
+  const label =
+    course.priceFrom != null ? `From ${formatPrice(course.priceFrom)} / session` : "Pricing on request"
+  return (
+    <span
+      className="rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wide"
+      style={{
+        borderColor: `${course.accent[0]}55`,
+        color: course.accent[0],
+        background: `${course.accent[0]}12`,
+      }}
+    >
+      {label}
+    </span>
   )
 }
 

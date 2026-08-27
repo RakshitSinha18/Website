@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, useScroll, useTransform, useReducedMotion, useInView } from "framer-motion"
+import { SectionKicker } from "@/components/section-kicker"
 
 const EXPERIENCE = [
   {
@@ -68,8 +69,9 @@ export function WorkSection() {
           transition={{ type: "spring", stiffness: 90, damping: 18 }}
           className="mb-10 md:mb-14"
         >
+          <SectionKicker number="01" label="Experience" />
           <h2 className="mb-2 font-sans text-5xl font-light tracking-tight text-foreground md:text-6xl lg:text-7xl">
-            Experience
+            Nine years, one craft
           </h2>
           <p className="font-mono text-sm text-foreground/60 md:text-base">
             / 9+ years across banking, media &amp; analytics · tap a role to expand

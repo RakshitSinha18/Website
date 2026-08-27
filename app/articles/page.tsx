@@ -6,6 +6,7 @@ import { ArrowLeft, FileText } from "lucide-react"
 import { PageBackdrop } from "@/components/ui/shell"
 import { supabase } from "@/lib/supabase"
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/reveal"
+import { STARTER_ARTICLES } from "@/lib/starter-articles"
 
 interface Article {
   id: string
@@ -14,21 +15,33 @@ interface Article {
   excerpt: string
   cover_url?: string | null
   created_at: string
+  starter?: boolean
 }
+
+// Built-in concept articles, shaped like DB rows so they render in the same list.
+const STARTERS: Article[] = STARTER_ARTICLES.map((a) => ({
+  id: `starter-${a.slug}`,
+  slug: a.slug,
+  title: a.title,
+  excerpt: a.excerpt,
+  created_at: a.created_at,
+  starter: true,
+}))
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase) { setLoading(false); return }
+    if (!supabase) { setArticles(STARTERS); setLoading(false); return }
     supabase
       .from("articles")
       .select("id,slug,title,excerpt,cover_url,created_at")
       .eq("published", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setArticles((data as Article[]) || [])
+        // Published DB articles first, then the built-in concept pieces.
+        setArticles([...((data as Article[]) || []), ...STARTERS])
         setLoading(false)
       })
   }, [])
@@ -64,6 +77,11 @@ export default function ArticlesPage() {
                   <div className="mb-1 flex items-center gap-2 font-mono text-[11px] text-foreground/45">
                     <FileText className="h-3.5 w-3.5" />
                     {new Date(a.created_at).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" })}
+                    {a.starter && (
+                      <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-sky-300">
+                        Concept
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-lg font-medium text-foreground">{a.title}</h2>
                   {a.excerpt && <p className="mt-1 text-sm leading-relaxed text-foreground/65">{a.excerpt}</p>}

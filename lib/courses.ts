@@ -11,6 +11,19 @@ export interface Course {
   outcomes: string[]
   syllabus: string[]
   tools: string[]
+  // Starting price per session, in INR. EDIT THESE to your real rates.
+  // Shown on the site as "From ₹X / session". Set to null to hide the price
+  // for a course and show "Pricing on request" instead.
+  priceFrom: number | null
+}
+
+// Currency formatter for the "From ₹X / session" labels.
+export function formatPrice(inr: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(inr)
 }
 
 export const COURSES: Course[] = [
@@ -41,6 +54,7 @@ export const COURSES: Course[] = [
       "Capstone: end-to-end analysis",
     ],
     tools: ["Excel", "SQL", "Tableau", "Storytelling"],
+    priceFrom: 1500, // EDIT: starting rate per session (INR)
   },
   {
     id: "tableau",
@@ -69,6 +83,36 @@ export const COURSES: Course[] = [
       "Dashboard design & performance",
     ],
     tools: ["Tableau Desktop", "Tableau Server", "SQL"],
+    priceFrom: 1500, // EDIT: starting rate per session (INR)
+  },
+  {
+    id: "power-bi",
+    title: "Power BI",
+    tagline: "From data model to a story that sells",
+    level: "Beginner → Advanced",
+    duration: "5–7 evening sessions",
+    accent: ["#f59e0b", "#eab308"],
+    summary:
+      "Build governed, fast Power BI reports end to end — shape data in Power Query, model it with a clean star schema, write DAX that actually performs, and publish to the Service with row-level security. The same craft behind the enterprise reporting I ship day to day.",
+    forWhom:
+      "Analysts and BI aspirants who want to move past drag-and-drop charts and build Power BI reports that are modelled correctly, perform well, and can be trusted in front of leadership.",
+    outcomes: [
+      "Shape and combine messy sources in Power Query (M)",
+      "Model a clean star schema — facts, dimensions & relationships",
+      "Write correct, performant DAX (measures over calculated columns)",
+      "Master filter context, CALCULATE & time-intelligence",
+      "Publish to the Power BI Service with row-level security & refresh",
+    ],
+    syllabus: [
+      "Power BI ecosystem: Desktop, Service & gateways",
+      "Power Query (M): extract, clean & combine data",
+      "Data modelling & star schema design",
+      "DAX foundations: measures, filter & row context",
+      "CALCULATE, time-intelligence & advanced DAX",
+      "Report design, RLS, publishing & scheduled refresh",
+    ],
+    tools: ["Power BI Desktop", "Power Query (M)", "DAX", "Power BI Service"],
+    priceFrom: 1500, // EDIT: starting rate per session (INR)
   },
   {
     id: "sql",
@@ -95,6 +139,7 @@ export const COURSES: Course[] = [
       "Indexing & query optimization",
     ],
     tools: ["SQL Server", "T-SQL", "Oracle"],
+    priceFrom: 1200, // EDIT: starting rate per session (INR)
   },
   {
     id: "excel",
@@ -120,6 +165,7 @@ export const COURSES: Course[] = [
       "Dashboards & conditional formatting",
     ],
     tools: ["Excel", "Power Query"],
+    priceFrom: 1000, // EDIT: starting rate per session (INR)
   },
   {
     id: "sas",
@@ -146,6 +192,7 @@ export const COURSES: Course[] = [
       "Reporting & certification prep",
     ],
     tools: ["Base SAS 9.4", "PROC SQL"],
+    priceFrom: 1500, // EDIT: starting rate per session (INR)
   },
   {
     id: "career",
@@ -171,5 +218,6 @@ export const COURSES: Course[] = [
       "Personalized learning roadmap",
     ],
     tools: ["Portfolio", "Interview prep", "Roadmap"],
+    priceFrom: null, // Personalized — shows "Pricing on request"
   },
 ]

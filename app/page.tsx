@@ -5,21 +5,41 @@ import { LiquidBackground } from "@/components/liquid-background"
 import { WorkSection } from "@/components/sections/work-section"
 import { ServicesSection } from "@/components/sections/services-section"
 import { AboutSection } from "@/components/sections/about-section"
+import { FaqSection } from "@/components/sections/faq-section"
 import { ContactSection } from "@/components/sections/contact-section"
+import { SiteFooter } from "@/components/sections/site-footer"
 import { MagneticButton } from "@/components/magnetic-button"
 import { RotatingText } from "@/components/rotating-text"
+import { ProfilePhoto } from "@/components/profile-photo"
+import { HeroDashboard } from "@/components/hero-dashboard"
+import { DownloadCV } from "@/components/download-cv"
 import { SpotlightHeroLazy } from "@/components/spotlight/spotlight-hero-lazy"
-import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, Mail } from "lucide-react"
+import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, HelpCircle, Mail } from "lucide-react"
 import Link from "next/link"
 import { useRef, useEffect, useState } from "react"
 
+// Portfolio-first order: lead with Rakshit's work, skills & story.
+// Courses/mentoring comes last (secondary to the portfolio).
 const NAV_ITEMS = [
   { label: "Home", Icon: HomeIcon },
   { label: "Experience", Icon: Briefcase },
-  { label: "Courses", Icon: GraduationCap },
   { label: "About", Icon: UserRound },
+  { label: "FAQ", Icon: HelpCircle },
   { label: "Contact", Icon: Mail },
+  { label: "Courses", Icon: GraduationCap },
 ]
+
+// Named section indices — keep these in sync with NAV_ITEMS + render order.
+// Using names (not magic numbers) so future reorders only touch this block.
+const SECTION = {
+  home: 0,
+  experience: 1,
+  about: 2,
+  faq: 3,
+  contact: 4,
+  courses: 5,
+} as const
+const LAST_INDEX = NAV_ITEMS.length - 1
 
 export default function Home() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -53,7 +73,7 @@ export default function Home() {
           return
         }
         const newSection = Math.round(container.scrollTop / container.offsetHeight)
-        if (newSection !== currentSection && newSection >= 0 && newSection <= 4) {
+        if (newSection !== currentSection && newSection >= 0 && newSection <= LAST_INDEX) {
           setCurrentSection(newSection)
         }
         scrollThrottleRef.current = undefined
@@ -74,10 +94,10 @@ export default function Home() {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return
       if (e.key === "Home") {
         e.preventDefault()
-        scrollToSection(0)
+        scrollToSection(SECTION.home)
       } else if (e.key === "End") {
         e.preventDefault()
-        scrollToSection(4)
+        scrollToSection(LAST_INDEX)
       }
     }
     window.addEventListener("keydown", onKey)
@@ -106,7 +126,7 @@ export default function Home() {
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
       >
-        <button onClick={() => scrollToSection(0)} className="flex items-center gap-2 transition-transform hover:scale-105">
+        <button onClick={() => scrollToSection(SECTION.home)} className="flex items-center gap-2 transition-transform hover:scale-105">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25 md:h-10 md:w-10">
             <span className="font-sans text-base font-bold text-foreground md:text-xl">RS</span>
           </div>
@@ -141,8 +161,8 @@ export default function Home() {
           >
             Login
           </Link>
-          <MagneticButton variant="ghost" onClick={() => scrollToSection(4)}>
-            Book a Session
+          <MagneticButton variant="ghost" onClick={() => scrollToSection(SECTION.contact)}>
+            Let&apos;s connect
           </MagneticButton>
         </div>
 
@@ -178,8 +198,8 @@ export default function Home() {
             Login
           </Link>
           <div className="mt-4">
-            <MagneticButton variant="ghost" onClick={() => scrollToSection(4)}>
-              Book a Session
+            <MagneticButton variant="ghost" onClick={() => scrollToSection(SECTION.contact)}>
+              Let&apos;s connect
             </MagneticButton>
           </div>
         </div>
@@ -201,31 +221,35 @@ export default function Home() {
 
           {/* Hero content — always rendered (server-side), sits above the backdrop. */}
           <div className="relative z-10 flex w-full items-center justify-center">
-              <div className="flex max-w-3xl flex-col items-center px-5 text-center">
-                <div className="mb-4 inline-block animate-in fade-in slide-in-from-bottom-4 rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1.5 backdrop-blur-md duration-700 md:px-4">
-                  <p className="font-mono text-[10px] text-foreground/90 md:text-xs">
-                    Senior BI Consultant · Mentor · Mumbai, India
+              <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
+              <div className="flex flex-col items-center px-5 text-center lg:items-start lg:text-left">
+                <ProfilePhoto className="mb-6 h-24 w-24 animate-in fade-in zoom-in-95 !rounded-full duration-1000 md:h-28 md:w-28" />
+                {/* Editorial kicker — letter-spaced label framed by thin rules. */}
+                <div className="mb-6 flex animate-in fade-in items-center gap-3 duration-700">
+                  <span className="h-px w-6 bg-foreground/25 md:w-10" />
+                  <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-foreground/60 md:text-xs">
+                    Business Intelligence · Mentor · Mumbai
                   </p>
+                  <span className="h-px w-6 bg-foreground/25 lg:hidden md:w-10" />
                 </div>
-                <h1 className="mb-2 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.05] tracking-tight duration-1000 md:mb-3 md:text-7xl lg:text-8xl">
+                <h1 className="mb-3 animate-in fade-in slide-in-from-bottom-8 font-sans text-5xl font-light leading-[1.03] tracking-tight duration-1000 md:mb-4 md:text-7xl lg:text-8xl">
                   <span className="shimmer-text text-balance">Rakshit Sinha</span>
                 </h1>
-                <div className="mb-5 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 md:mb-6 md:text-3xl">
-                  <span className="text-foreground/50">I do</span>
+                <div className="mb-6 flex animate-in fade-in slide-in-from-bottom-4 items-center justify-center gap-2 font-sans text-xl font-light text-foreground/90 duration-1000 delay-100 lg:justify-start md:mb-7 md:text-3xl">
+                  <span className="text-foreground/45">I turn data into</span>
                   <RotatingText
-                    words={["Data Analytics", "Tableau Dashboards", "SQL & BI", "Mentoring"]}
+                    words={["decisions", "dashboards", "Power BI reports", "clarity", "confident analysts"]}
                     className="bg-gradient-to-r from-sky-300 to-amber-300 bg-clip-text font-normal text-transparent"
                   />
                 </div>
-                <p className="mb-5 max-w-2xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/90 duration-1000 delay-200 md:mb-6 md:text-xl">
+                <p className="mb-6 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-base leading-relaxed text-foreground/80 duration-1000 delay-200 md:mb-7 md:text-lg">
                   <span className="text-pretty">
-                    Results-driven Senior Business Intelligence professional turning complex information into meaningful
-                    business insights — and an after-hours mentor helping aspiring professionals grow their skills and
-                    careers.
+                    A Senior Business Intelligence professional who makes complex data make sense — and, after hours, a
+                    mentor helping the next wave of analysts find their footing.
                   </span>
                 </p>
-                <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap justify-center gap-2 duration-1000 delay-200 md:mb-8">
-                  {["T-SQL", "Tableau", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
+                <div className="mb-7 flex animate-in fade-in slide-in-from-bottom-4 flex-wrap justify-center gap-2 duration-1000 delay-200 lg:justify-start md:mb-8">
+                  {["Tableau", "Power BI", "T-SQL", "Advanced Excel", "Base SAS 9.4"].map((skill) => (
                     <span
                       key={skill}
                       className="cursor-default rounded-full border border-foreground/20 bg-foreground/10 px-3 py-1 font-mono text-[11px] text-foreground/90 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/40 hover:bg-foreground/20 md:text-xs"
@@ -236,20 +260,28 @@ export default function Home() {
                 </div>
                 <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col items-center gap-4 duration-1000 delay-300 sm:flex-row">
                   {/* Ghost buttons — visible outline at rest, fill in on hover. */}
-                  <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection(4)}>
-                    Book a Session
+                  <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection(SECTION.experience)}>
+                    Explore my work →
                   </MagneticButton>
-                  <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection(1)}>
-                    View experience →
+                  <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection(SECTION.contact)}>
+                    Let&apos;s connect
                   </MagneticButton>
                 </div>
+                {/* Appears automatically once public/rakshit-sinha-cv.pdf is added. */}
+                <DownloadCV className="mt-4 animate-in fade-in duration-1000 delay-500" />
+              </div>
+
+              {/* Signature element — a live mini BI dashboard. */}
+              <div className="flex animate-in fade-in slide-in-from-bottom-8 justify-center px-5 duration-1000 delay-500 lg:justify-end lg:px-0">
+                <HeroDashboard />
+              </div>
               </div>
           </div>
 
           {currentSection === 0 && (
             <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 animate-in fade-in duration-1000 delay-500 md:block">
               <button
-                onClick={() => scrollToSection(1)}
+                onClick={() => scrollToSection(SECTION.experience)}
                 className="group flex items-center gap-2.5 rounded-full border border-foreground/20 bg-foreground/10 px-4 py-2 backdrop-blur-md transition-all hover:border-foreground/40 hover:bg-foreground/20"
               >
                 <span className="font-mono text-xs text-foreground/90">Scroll to explore</span>
@@ -262,9 +294,11 @@ export default function Home() {
         </section>
 
         <WorkSection />
-        <ServicesSection />
         <AboutSection scrollToSection={scrollToSection} />
+        <FaqSection />
         <ContactSection />
+        <ServicesSection />
+        <SiteFooter />
       </div>
 
       {/* Section progress indicator — always shows where you are & how many

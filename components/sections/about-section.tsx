@@ -4,6 +4,8 @@ import { MagneticButton } from "@/components/magnetic-button"
 import { useReveal } from "@/hooks/use-reveal"
 import { useCountUp } from "@/hooks/use-count-up"
 import { QuoteOfDay } from "@/components/quote-of-day"
+import { ResourceCard } from "@/components/resource-card"
+import { SectionKicker } from "@/components/section-kicker"
 
 const STATS = [
   { value: 9, suffix: "+", label: "Years", sublabel: "In business intelligence" },
@@ -21,10 +23,46 @@ const TIER_WIDTH: Record<string, string> = {
 const SKILLS = [
   { name: "Tableau", tier: "Expert" },
   { name: "SQL / T-SQL", tier: "Expert" },
+  { name: "Power BI (DAX · Power Query)", tier: "Advanced" },
   { name: "Advanced Excel", tier: "Advanced" },
-  { name: "Power BI", tier: "Advanced" },
   { name: "Base SAS 9.4", tier: "Proficient" },
 ]
+
+// "What matters most" — the craft behind the tools. This is what Rakshit
+// actually optimises for on every dashboard and every mentoring session.
+const FOCUS = [
+  {
+    title: "The right question first",
+    body: "A dashboard is only as good as the decision it drives. I start from the business question, not the chart.",
+  },
+  {
+    title: "Data models that hold up",
+    body: "Clean star schemas, correct grain, DAX and LOD that stay fast and honest as the data grows.",
+  },
+  {
+    title: "Clarity over decoration",
+    body: "Fewer, sharper visuals people trust and act on — not vanity metrics or dashboard clutter.",
+  },
+]
+
+function FocusGrid({ active }: { active: boolean }) {
+  return (
+    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+      {FOCUS.map((f, i) => (
+        <div
+          key={f.title}
+          className={`rounded-2xl border border-white/10 bg-[#0d1526]/60 p-4 backdrop-blur-md transition-all duration-700 ${
+            active ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+          }`}
+          style={{ transitionDelay: `${550 + i * 120}ms` }}
+        >
+          <p className="mb-1 font-sans text-sm font-light text-foreground md:text-base">{f.title}</p>
+          <p className="text-xs leading-relaxed text-foreground/65 md:text-sm">{f.body}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function SkillMatrix({ active }: { active: boolean }) {
   return (
@@ -111,6 +149,7 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
                 isVisible ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0"
               }`}
             >
+              <SectionKicker number="02" label="About" />
               <h2 className="mb-3 font-sans text-2xl font-light leading-[1.1] tracking-tight text-foreground md:mb-4 md:text-4xl lg:text-5xl">
                 Data by day,
                 <br />
@@ -128,7 +167,8 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
             >
               <p className="max-w-md text-sm leading-relaxed text-foreground/90 md:text-lg">
                 I&apos;m a Senior Business Intelligence professional who turns complex information into meaningful
-                insights that drive real business decisions.
+                insights that drive real business decisions — mostly in{" "}
+                <span className="text-foreground">Tableau and Power BI</span>, backed by solid SQL and data modelling.
               </p>
               <p className="max-w-md text-sm leading-relaxed text-foreground/90 md:text-lg">
                 Outside office hours, I mentor and coach aspiring professionals — helping them strengthen their skills,
@@ -149,6 +189,24 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
           </div>
         </div>
 
+        {/* What matters most — the craft behind the tools. */}
+        <div className="mt-10 md:mt-16">
+          <p
+            className={`mb-1 font-mono text-[11px] uppercase tracking-wider text-foreground/40 transition-all duration-700 ${
+              isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+            }`}
+            style={{ transitionDelay: "500ms" }}
+          >
+            What matters most
+          </p>
+          <FocusGrid active={isVisible} />
+          <ResourceCard
+            className={`mt-4 transition-all duration-700 ${
+              isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+            }`}
+          />
+        </div>
+
         <div
           className={`mt-8 flex flex-wrap gap-3 transition-all duration-700 md:mt-14 md:gap-4 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
@@ -156,10 +214,10 @@ export function AboutSection({ scrollToSection }: { scrollToSection?: (index: nu
           style={{ transitionDelay: "750ms" }}
         >
           <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection?.(4)}>
-            Book a Mentoring Session
+            Let&apos;s have a chat
           </MagneticButton>
-          <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection?.(1)}>
-            View Experience
+          <MagneticButton size="lg" variant="ghost" onClick={() => scrollToSection?.(5)}>
+            See what I teach
           </MagneticButton>
         </div>
       </div>
