@@ -4,8 +4,11 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart, Users, GraduationCap, Brain } from "lucide-react"
 import { Stars } from "@/components/testimonial-form"
+import { COURSES } from "@/lib/courses"
+import { lessonsForCourse } from "@/lib/course-lessons"
+import { PRACTICE_DECKS } from "@/lib/practice-decks"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -85,6 +88,18 @@ interface TestimonialRow {
   approved: boolean
   created_at: string
 }
+interface StudentRow {
+  id: string
+  full_name: string | null
+  email: string | null
+  experience: string | null
+  goals: string | null
+  updated_at: string
+}
+interface ProgressRow {
+  user_id: string
+  kind: string
+}
 
 export default function AdminPage() {
   const router = useRouter()
@@ -100,8 +115,11 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<ArticleRow[]>([])
   const [newArticle, setNewArticle] = useState({ title: "", excerpt: "", body: "" })
   const [testimonials, setTestimonials] = useState<TestimonialRow[]>([])
+  const [students, setStudents] = useState<StudentRow[]>([])
+  const [learnProgress, setLearnProgress] = useState<ProgressRow[]>([])
+  const [roadmapProgress, setRoadmapProgress] = useState<{ user_id: string; completed: boolean }[]>([])
   // Tabbed admin navigation.
-  const [tab, setTab] = useState<"bookings" | "availability" | "courses" | "batches" | "articles" | "reviews" | "roadmap" | "payments">("bookings")
+  const [tab, setTab] = useState<"bookings" | "students" | "availability" | "courses" | "batches" | "articles" | "reviews" | "roadmap" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -196,6 +214,16 @@ export default function AdminPage() {
 
     const { data: tst } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false })
     if (tst) setTestimonials(tst as TestimonialRow[])
+
+    // Student roster + Learn/Practice/roadmap progress (mentor-read RLS).
+    const [{ data: prof }, { data: lp }, { data: tp }] = await Promise.all([
+      supabase.from("profiles").select("id,full_name,email,experience,goals,updated_at").order("updated_at", { ascending: false }),
+      supabase.from("learning_progress").select("user_id,kind"),
+      supabase.from("task_progress").select("user_id,completed"),
+    ])
+    if (prof) setStudents(prof as StudentRow[])
+    if (lp) setLearnProgress(lp as ProgressRow[])
+    if (tp) setRoadmapProgress(tp as { user_id: string; completed: boolean }[])
 
     const { data: mats } = await supabase
       .from("class_materials")
@@ -583,6 +611,7 @@ export default function AdminPage() {
         >
           {[
             { id: "bookings", label: "Bookings", icon: CalendarClock },
+            { id: "students", label: "Students", icon: Users },
             { id: "availability", label: "Availability", icon: CalendarClock },
             { id: "courses", label: "Courses", icon: BookOpen },
             { id: "batches", label: "Batches", icon: BookOpen },
@@ -727,6 +756,77 @@ export default function AdminPage() {
           </div>
         </Card>
         </>
+        )}
+
+        {/* ── STUDENTS TAB (roster + learning progress) ────────── */}
+        {tab === "students" && (
+        <Card>
+          <CardTitle
+            icon={<Users className="h-4 w-4" />}
+            title="Students"
+            hint="Everyone with an account, their goals, and how far they've got in Learn, Practice and their roadmap — so you know where to pick up before a session."
+          />
+          <ul className="space-y-2">
+            {students.map((s) => {
+              const lessonsDone = learnProgress.filter((p) => p.user_id === s.id && p.kind === "lesson").length
+              const cardsDone = learnProgress.filter((p) => p.user_id === s.id && p.kind === "card").length
+              const totalLessons = COURSES.reduce((sum, c) => sum + lessonsForCourse(c.id).length, 0)
+              const totalCards = PRACTICE_DECKS.reduce((sum, d) => sum + d.cards.length, 0)
+              const roadmapDone = roadmapProgress.filter((p) => p.user_id === s.id && p.completed).length
+              const myBookings = classBookings.filter((b) => b.user_id === s.id)
+              const nextSession = myBookings
+                .filter((b) => b.status === "confirmed" && new Date(b.scheduled_at).getTime() > Date.now())
+                .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]
+              return (
+                <li key={s.id} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm text-foreground">
+                        {s.full_name || "(no name yet)"}
+                        {s.experience && (
+                          <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] text-foreground/60">
+                            {s.experience}
+                          </span>
+                        )}
+                      </p>
+                      {s.email && (
+                        <a
+                          href={`mailto:${s.email}`}
+                          className="flex items-center gap-1.5 font-mono text-[11px] text-sky-300 hover:underline"
+                        >
+                          <Mail className="h-3 w-3" /> {s.email}
+                        </a>
+                      )}
+                    </div>
+                    {nextSession && (
+                      <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 font-mono text-[10px] text-emerald-200">
+                        next: {new Date(nextSession.scheduled_at).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  {s.goals && <p className="mt-1 text-xs leading-relaxed text-foreground/60">Goal: {s.goals}</p>}
+                  <div className="mt-2 flex flex-wrap gap-2 font-mono text-[10px]">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-foreground/65">
+                      <GraduationCap className="h-3 w-3" /> {lessonsDone}/{totalLessons} lessons
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-foreground/65">
+                      <Brain className="h-3 w-3" /> {cardsDone}/{totalCards} cards
+                    </span>
+                    {roadmap.length > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-foreground/65">
+                        <Map className="h-3 w-3" /> {roadmapDone}/{roadmap.length} roadmap
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-foreground/65">
+                      <CalendarClock className="h-3 w-3" /> {myBookings.length} booking{myBookings.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+            {students.length === 0 && <EmptyRow label="No students have signed up yet." />}
+          </ul>
+        </Card>
         )}
 
         {/* ── AVAILABILITY TAB ─────────────────────────────────── */}

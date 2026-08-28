@@ -17,12 +17,15 @@ import {
 } from "lucide-react"
 import { COURSES } from "@/lib/courses"
 import { lessonsForCourse, AUTHORED_COURSE_IDS, type Lesson, type SelfCheck } from "@/lib/course-lessons"
+import { useAuth } from "@/hooks/use-auth"
+import { mergeProgress, pushProgress, removeProgress } from "@/lib/learning-sync"
 
 /**
  * Self-contained in-portal course learning experience — a real teaching tool,
- * no admin or database required. Students pick a course, work through detailed
- * lessons (concept · key idea · steps · hands-on exercise · resources), and
- * track completion. Progress persists in localStorage per user.
+ * no admin required. Students pick a course, work through detailed lessons
+ * (concept · key idea · steps · hands-on exercise · resources), and track
+ * completion. Progress persists in localStorage for instant UI and is
+ * mirrored (best-effort) to Supabase so it follows the student across devices.
  */
 
 const LS_KEY = "learn:progress:v1" // { [courseId]: string[] of completed lesson ids }
@@ -46,20 +49,35 @@ function saveProgress(p: Progress) {
 }
 
 export function CourseLearn() {
+  const { user } = useAuth()
   const [progress, setProgress] = useState<Progress>({})
   const [activeCourse, setActiveCourse] = useState<string | null>(null)
   const [openLesson, setOpenLesson] = useState<string | null>(null)
 
   useEffect(() => {
-    setProgress(loadProgress())
-  }, [])
+    const local = loadProgress()
+    setProgress(local)
+    // Pull progress from other devices and push anything only-local up.
+    if (user) {
+      mergeProgress(user.id, "lesson", local).then((merged) => {
+        saveProgress(merged)
+        setProgress(merged)
+      })
+    }
+  }, [user])
 
   const done = (courseId: string) => new Set(progress[courseId] || [])
 
   const toggle = (courseId: string, lessonId: string) => {
     setProgress((prev) => {
       const set = new Set(prev[courseId] || [])
-      set.has(lessonId) ? set.delete(lessonId) : set.add(lessonId)
+      const removing = set.has(lessonId)
+      removing ? set.delete(lessonId) : set.add(lessonId)
+      if (user) {
+        removing
+          ? void removeProgress(user.id, "lesson", courseId, lessonId)
+          : void pushProgress(user.id, "lesson", [{ group_id: courseId, item_id: lessonId }])
+      }
       const next = { ...prev, [courseId]: [...set] }
       saveProgress(next)
       return next

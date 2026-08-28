@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react"
 import { ChevronLeft, Check, RotateCcw, Trophy, Eye, Brain, ArrowRight } from "lucide-react"
 import { PRACTICE_DECKS, type PracticeDeck } from "@/lib/practice-decks"
+import { useAuth } from "@/hooks/use-auth"
+import { mergeProgress, pushProgress, removeGroupProgress } from "@/lib/learning-sync"
 
 /**
  * Practice tab — active-recall flashcards. Read the prompt, answer out loud
  * (or on paper), reveal, then grade yourself honestly. "Knew it" retires the
  * card; "Review again" keeps it in rotation. Progress persists per user in
- * localStorage, like the Learn tab.
+ * localStorage (instant UI) and mirrors to Supabase, like the Learn tab.
  */
 
 const LS_KEY = "practice:known:v1" // { [deckId]: string[] of mastered card ids }
@@ -32,16 +34,26 @@ function saveKnown(k: Known) {
 }
 
 export function PracticeDecks() {
+  const { user } = useAuth()
   const [known, setKnown] = useState<Known>({})
   const [activeDeck, setActiveDeck] = useState<string | null>(null)
 
   useEffect(() => {
-    setKnown(loadKnown())
-  }, [])
+    const local = loadKnown()
+    setKnown(local)
+    // Pull mastered cards from other devices; push anything only-local up.
+    if (user) {
+      mergeProgress(user.id, "card", local).then((merged) => {
+        saveKnown(merged)
+        setKnown(merged)
+      })
+    }
+  }, [user])
 
   const knownSet = (deckId: string) => new Set(known[deckId] || [])
 
   const markKnown = (deckId: string, cardId: string) => {
+    if (user) void pushProgress(user.id, "card", [{ group_id: deckId, item_id: cardId }])
     setKnown((prev) => {
       const set = new Set(prev[deckId] || [])
       set.add(cardId)
@@ -52,6 +64,7 @@ export function PracticeDecks() {
   }
 
   const resetDeck = (deckId: string) => {
+    if (user) void removeGroupProgress(user.id, "card", deckId)
     setKnown((prev) => {
       const next = { ...prev, [deckId]: [] }
       saveKnown(next)
