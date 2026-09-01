@@ -100,11 +100,17 @@ async function notifyPaid(booking: any) {
       ? new Date(booking.scheduled_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
       : "the scheduled time"
 
+    // notify requires the service-role key ("approve" emails an arbitrary address).
+    const notifyHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+    }
+
     // 1) Student confirmation (with session link if present).
     if (studentEmail) {
       await fetch(notifyUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: notifyHeaders,
         body: JSON.stringify({
           action: "approve",
           student_email: studentEmail,
@@ -119,7 +125,7 @@ async function notifyPaid(booking: any) {
     // 2) Admin alert about the paid booking.
     await fetch(notifyUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: notifyHeaders,
       body: JSON.stringify({
         table: "class_bookings",
         record: {

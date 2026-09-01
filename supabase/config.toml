@@ -2,3 +2,8 @@ project_id = "ipuwwhksolvkswsnseis"
 
 [functions.notify]
 verify_jwt = false
+
+# Providers (Stripe/Razorpay) call this without a Supabase JWT; it authenticates
+# requests itself via webhook signature verification.
+[functions.payment-webhook]
+verify_jwt = false

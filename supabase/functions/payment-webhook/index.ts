@@ -32,7 +32,9 @@ Deno.serve(async (req: Request) => {
     // --- Stripe ---
     const stripeSig = req.headers.get("stripe-signature")
     if (stripeSig) {
-      const secret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!
+      // Refuse (never fall through to a guessable key) if the secret is unset.
+      const secret = Deno.env.get("STRIPE_WEBHOOK_SECRET")
+      if (!secret) return new Response("stripe webhook not configured", { status: 400 })
       if (!(await verifyStripe(raw, stripeSig, secret))) {
         return new Response("bad signature", { status: 400 })
       }
@@ -44,7 +46,8 @@ Deno.serve(async (req: Request) => {
     // --- Razorpay ---
     const rzpSig = req.headers.get("x-razorpay-signature")
     if (rzpSig) {
-      const secret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET")!
+      const secret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET")
+      if (!secret) return new Response("razorpay webhook not configured", { status: 400 })
       if (!(await verifyHmac(raw, rzpSig, secret))) {
         return new Response("bad signature", { status: 400 })
       }
@@ -84,7 +87,11 @@ Deno.serve(async (req: Request) => {
       const { data: userRow } = await admin.auth.admin.getUserById(pay.user_id)
       await fetch(notifyUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // notify requires the service-role key for the "approve" action.
+          Authorization: `Bearer ${SERVICE_KEY}`,
+        },
         body: JSON.stringify({
           action: "approve",
           student_email: userRow?.user?.email,
@@ -127,6 +134,9 @@ async function verifyHmac(payload: string, signature: string, secret: string) {
 // Stripe signature: t=timestamp,v1=hmac(timestamp + "." + body).
 async function verifyStripe(payload: string, header: string, secret: string) {
   const parts = Object.fromEntries(header.split(",").map((p) => p.split("=")))
+  // Reject stale timestamps (replay protection; Stripe recommends 5 minutes).
+  const ts = Number(parts.t)
+  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) return false
   const signed = `${parts.t}.${payload}`
   const key = await crypto.subtle.importKey(
     "raw",

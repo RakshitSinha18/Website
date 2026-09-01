@@ -189,6 +189,24 @@ export default function PortalPage() {
 
   const minDate = useMemo(() => new Date().toISOString().split("T")[0], [])
 
+  // Best-effort mentor notification. The notify function now requires a
+  // signed-in user's JWT (it rejects anonymous calls to stop email abuse).
+  const notifyMentor = async (payload: Record<string, unknown>) => {
+    if (!supabase) return
+    try {
+      const { data } = await supabase.auth.getSession()
+      const token = data.session?.access_token
+      if (!token) return
+      void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      }).catch(() => {})
+    } catch {
+      /* notification is best-effort */
+    }
+  }
+
   // Which day+slot combos this student already has, so the calendar can grey them out.
   const takenSlots = useMemo(() => {
     const set = new Set<string>()
@@ -225,25 +243,16 @@ export default function PortalPage() {
       return
     }
     // Notify the mentor about the new request (best-effort; don't block on it).
-    try {
-      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`
-      void fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          table: "class_bookings",
-          record: {
-            name: profile.full_name || user.email,
-            email: user.email,
-            class_title: cls?.title || "Class",
-            scheduled_at,
-            notes,
-          },
-        }),
-      }).catch(() => {})
-    } catch {
-      /* notification is best-effort */
-    }
+    void notifyMentor({
+      table: "class_bookings",
+      record: {
+        name: profile.full_name || user.email,
+        email: user.email,
+        class_title: cls?.title || "Class",
+        scheduled_at,
+        notes,
+      },
+    })
     toast("Class requested! Complete payment to confirm your slot.", "success")
     setNotes("")
     const { data: bks } = await supabase
@@ -269,16 +278,10 @@ export default function PortalPage() {
     }
     toast(`Requested "${batch.title}". Pay to confirm your seat.`, "success")
     // Notify the mentor (best-effort).
-    try {
-      void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          table: "class_bookings",
-          record: { name: profile.full_name || user.email, email: user.email, class_title: `Batch: ${batch.title}`, scheduled_at: batch.start_date, notes: "Batch enrollment request" },
-        }),
-      }).catch(() => {})
-    } catch { /* best-effort */ }
+    void notifyMentor({
+      table: "class_bookings",
+      record: { name: profile.full_name || user.email, email: user.email, class_title: `Batch: ${batch.title}`, scheduled_at: batch.start_date, notes: "Batch enrollment request" },
+    })
     const { data: enr } = await supabase.from("batch_enrollments").select("id,batch_id,status,payment_status").eq("user_id", user.id)
     if (enr) setEnrollments(enr as Enrollment[])
   }
@@ -330,16 +333,10 @@ export default function PortalPage() {
     toast("Rescheduled — your new time is saved.", "success")
     setReschedulingId(null)
     // Notify the mentor of the change (best-effort).
-    try {
-      void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          table: "class_bookings",
-          record: { name: profile.full_name || user.email, email: user.email, class_title: `${b.class_title} (RESCHEDULED)`, scheduled_at, notes: "Student rescheduled" },
-        }),
-      }).catch(() => {})
-    } catch { /* best-effort */ }
+    void notifyMentor({
+      table: "class_bookings",
+      record: { name: profile.full_name || user.email, email: user.email, class_title: `${b.class_title} (RESCHEDULED)`, scheduled_at, notes: "Student rescheduled" },
+    })
     const { data: bks } = await supabase
       .from("class_bookings")
       .select("id,class_title,scheduled_at,status,notes,payment_status,attendance,meet_link")
@@ -355,12 +352,7 @@ export default function PortalPage() {
     toast(attendance === "attending" ? "See you there! Marked as attending." : "Marked as can't-make-it — Rakshit is notified.", "success")
     setBookings((prev) => prev.map((x) => (x.id === b.id ? { ...x, attendance } : x)))
     if (attendance === "opted_out") {
-      try {
-        void fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ table: "class_bookings", record: { name: profile.full_name || user?.email, email: user?.email, class_title: `${b.class_title} (CAN'T ATTEND)`, scheduled_at: b.scheduled_at, notes: "Student opted out — may want to reschedule" } }),
-        }).catch(() => {})
-      } catch { /* best-effort */ }
+      void notifyMentor({ table: "class_bookings", record: { name: profile.full_name || user?.email, email: user?.email, class_title: `${b.class_title} (CAN'T ATTEND)`, scheduled_at: b.scheduled_at, notes: "Student opted out — may want to reschedule" } })
     }
   }
 

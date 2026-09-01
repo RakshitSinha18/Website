@@ -27,6 +27,14 @@ const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors })
   try {
+    // Service-role callers only (verify-payment). The platform's JWT check
+    // accepts the public anon key, so without this anyone could create events
+    // on the mentor's real calendar and overwrite meet_link on bookings.
+    const callerToken = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "")
+    if (!callerToken || callerToken !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+      return json({ error: "Not authorized" }, 401)
+    }
+
     const { booking_id, title, description, start_iso, end_iso, attendee_email } = await req.json()
     if (!start_iso || !end_iso) return json({ error: "start_iso and end_iso are required." }, 400)
 
