@@ -15,6 +15,7 @@ import {
   Loader2,
   Github,
   Linkedin,
+  Sparkles,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
@@ -49,6 +50,8 @@ export default function LoginPage() {
   const [agreeTerms, setAgreeTerms] = useState(false)
   // Set when sign-in fails because the email isn't confirmed yet.
   const [needsVerify, setNeedsVerify] = useState(false)
+  // Magic-link button state; "sent" holds for Supabase's 60s resend window.
+  const [magicState, setMagicState] = useState<"idle" | "busy" | "sent">("idle")
   // Captcha token (set when the Turnstile widget is solved). The widget only
   // renders when a site key is configured, so signup keeps working before
   // captcha is turned on — see SIGNUP-CAPTCHA.md.
@@ -157,6 +160,41 @@ export default function LoginPage() {
     })
     if (error) toast(error.message, "error")
     else toast("Verification email resent — check your inbox (and spam).", "success")
+  }
+
+  // Passwordless sign-in: email a one-tap magic link. shouldCreateUser: false
+  // means it only works for existing accounts — signup (and its captcha) stays
+  // the only way to create one. The link lands back on /login/, where the
+  // useAuth effect routes the signed-in user by role.
+  const handleMagicLink = async () => {
+    if (!supabase) {
+      toast("Login isn't configured yet.", "error")
+      return
+    }
+    if (!email) {
+      toast("Enter your email above first.", "info")
+      return
+    }
+    setMagicState("busy")
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/login/` },
+    })
+    if (error) {
+      setMagicState("idle")
+      if (/signups not allowed/i.test(error.message)) {
+        toast("No account with this email yet — create one first.", "error")
+      } else if (/rate|frequency|second/i.test(error.message)) {
+        toast("A link was sent recently — give it a minute before requesting another.", "info")
+      } else {
+        toast(error.message, "error")
+      }
+      return
+    }
+    setMagicState("sent")
+    toast("Sign-in link sent — check your inbox (and spam).", "success")
+    // Supabase won't send another within 60s; re-enable after that window.
+    setTimeout(() => setMagicState("idle"), 60_000)
   }
 
   // Send a password-reset email (works for students AND Rakshit's owner account).
@@ -482,6 +520,25 @@ export default function LoginPage() {
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
               </button>
+
+              {/* Passwordless alternative — students signing in only. */}
+              {mode === "signin" && !isMentor && (
+                <button
+                  type="button"
+                  onClick={handleMagicLink}
+                  disabled={magicState !== "idle"}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.08] disabled:opacity-60"
+                >
+                  {magicState === "busy" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {magicState === "sent"
+                    ? "Link sent — check your email"
+                    : "Email me a sign-in link instead"}
+                </button>
+              )}
 
               {/* Shown when sign-in fails because the email isn't verified. */}
               {needsVerify && (
