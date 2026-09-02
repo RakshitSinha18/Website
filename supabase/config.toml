@@ -7,3 +7,7 @@ verify_jwt = false
 # requests itself via webhook signature verification.
 [functions.payment-webhook]
 verify_jwt = false
+
+# pg_cron calls this without a JWT; it authenticates via X-Reminders-Secret.
+[functions.reminders]
+verify_jwt = false

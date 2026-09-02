@@ -12,8 +12,6 @@
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.6.0",
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^8.18.0",
     "@supabase/supabase-js": "^2.45.4",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
@@ -22,8 +20,7 @@
     "ogl": "^1.0.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.5.5",
-    "three": "^0.160.1"
+    "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
     "@types/node": "^22",

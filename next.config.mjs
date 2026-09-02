@@ -19,6 +19,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Import only the icons/components actually used instead of whole barrels.
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion"],
+  },
 }
 
 export default nextConfig

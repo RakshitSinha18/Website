@@ -1236,7 +1236,9 @@ function PayControls({
   )
 }
 
-// Real, working preferences persisted to localStorage.
+// Preferences. Reduce-motion stays device-local; email reminders sync to the
+// profile (profiles.email_reminders) so the hourly reminders emailer honours
+// the choice — localStorage is just the instant-UI cache.
 function PreferenceToggles() {
   const [reducedMotion, setReducedMotion] = useState(false)
   const [emailReminders, setEmailReminders] = useState(true)
@@ -1244,6 +1246,22 @@ function PreferenceToggles() {
   useEffect(() => {
     setReducedMotion(localStorage.getItem("pref:reducedMotion") === "1")
     setEmailReminders(localStorage.getItem("pref:emailReminders") !== "0")
+    // The profile value wins over the local cache when reachable.
+    void (async () => {
+      if (!supabase) return
+      const { data } = await supabase.auth.getUser()
+      const uid = data.user?.id
+      if (!uid) return
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("email_reminders")
+        .eq("id", uid)
+        .single()
+      if (prof && typeof prof.email_reminders === "boolean") {
+        setEmailReminders(prof.email_reminders)
+        localStorage.setItem("pref:emailReminders", prof.email_reminders ? "1" : "0")
+      }
+    })()
   }, [])
 
   const toggleMotion = (v: boolean) => {
@@ -1254,6 +1272,12 @@ function PreferenceToggles() {
   const toggleEmail = (v: boolean) => {
     setEmailReminders(v)
     localStorage.setItem("pref:emailReminders", v ? "1" : "0")
+    void (async () => {
+      if (!supabase) return
+      const { data } = await supabase.auth.getUser()
+      const uid = data.user?.id
+      if (uid) await supabase.from("profiles").update({ email_reminders: v }).eq("id", uid)
+    })()
   }
 
   const Row = ({
@@ -1291,7 +1315,7 @@ function PreferenceToggles() {
       />
       <Row
         label="Email reminders"
-        hint="Get a note before a confirmed session (when enabled by Rakshit)."
+        hint="Get an email the day before each confirmed session."
         checked={emailReminders}
         onChange={toggleEmail}
       />
