@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarClock, GraduationCap, Brain, Map, Video } from "lucide-react"
+import { CalendarClock, GraduationCap, Brain, Map, Video, MessagesSquare } from "lucide-react"
 import { COURSES } from "@/lib/courses"
 import { lessonsForCourse } from "@/lib/course-lessons"
 import { PRACTICE_DECKS } from "@/lib/practice-decks"
@@ -35,11 +35,14 @@ export function PortalOverview({
   roadmapDone,
   roadmapTotal,
   onGoTo,
+  discordUrl,
 }: {
   bookings: OverviewBooking[]
   roadmapDone: number
   roadmapTotal: number
   onGoTo: (tab: "learn" | "practice" | "roadmap" | "classes") => void
+  // Set from admin Settings; the community banner renders only when non-empty.
+  discordUrl?: string
 }) {
   // Learn/Practice progress live in localStorage — read after mount.
   const [lessonsDone, setLessonsDone] = useState(0)
@@ -125,6 +128,31 @@ export function PortalOverview({
           </button>
         ))}
       </div>
+
+      {/* Student community — appears once the admin sets a Discord invite. */}
+      {discordUrl && /^https?:\/\//i.test(discordUrl) && (
+        <a
+          href={discordUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-400/25 bg-indigo-400/[0.07] px-4 py-3 transition-colors hover:border-indigo-400/50"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-400/15 text-indigo-300">
+              <MessagesSquare className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-foreground">Student community</p>
+              <p className="font-mono text-[11px] text-indigo-200/80">
+                Ask questions between sessions and share your work
+              </p>
+            </div>
+          </div>
+          <span className="rounded-lg bg-indigo-400/15 px-3.5 py-2 font-mono text-[11px] text-indigo-200">
+            Join on Discord →
+          </span>
+        </a>
+      )}
     </div>
   )
 }

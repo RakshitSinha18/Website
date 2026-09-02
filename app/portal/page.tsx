@@ -434,6 +434,7 @@ export default function PortalPage() {
           roadmapDone={done.size}
           roadmapTotal={roadmap.length}
           onGoTo={(t) => setTab(t)}
+          discordUrl={payInfo?.discord_invite_url || ""}
         />
 
         {/* Tab navigation */}

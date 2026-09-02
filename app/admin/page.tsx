@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart, Users, GraduationCap, Brain } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart, MessagesSquare, Users, GraduationCap, Brain } from "lucide-react"
 import { Stars } from "@/components/testimonial-form"
 import { COURSES } from "@/lib/courses"
 import { lessonsForCourse } from "@/lib/course-lessons"
@@ -163,6 +163,9 @@ export default function AdminPage() {
 
   // Editable class/session policy (shown to students at booking + on /policy).
   const [classPolicy, setClassPolicy] = useState("")
+  // Discord invite for the student community banner in the portal.
+  const [discordUrl, setDiscordUrl] = useState("")
+  const [savingDiscord, setSavingDiscord] = useState(false)
   const [savingPolicy, setSavingPolicy] = useState(false)
 
   // Weekly recurring availability (0=Sun … 6=Sat → array of "HH:MM"), holiday
@@ -253,6 +256,7 @@ export default function AdminPage() {
       setBlockedDates((st.blocked_dates as string[]) || [])
       setAvailNote(st.availability_note || "")
       setClassPolicy(st.class_policy || "")
+      setDiscordUrl(st.discord_invite_url || "")
     }
   }
 
@@ -262,6 +266,20 @@ export default function AdminPage() {
     const { error } = await supabase.from("settings").update({ class_policy: classPolicy, updated_at: new Date().toISOString() }).eq("id", 1)
     setSavingPolicy(false)
     setMsg(error ? error.message : "Class policy saved.")
+  }
+
+  // Save (or clear) the Discord invite that gates the portal community banner.
+  const saveDiscord = async () => {
+    if (!supabase) return
+    const url = discordUrl.trim()
+    if (url && !/^https:\/\/(discord\.gg|discord\.com\/invite)\//i.test(url)) {
+      setMsg("That doesn't look like a Discord invite (expected https://discord.gg/…).")
+      return
+    }
+    setSavingDiscord(true)
+    const { error } = await supabase.from("settings").update({ discord_invite_url: url, updated_at: new Date().toISOString() }).eq("id", 1)
+    setSavingDiscord(false)
+    setMsg(error ? error.message : url ? "Community link saved — students now see the Join banner." : "Community link cleared — banner hidden.")
   }
 
   // Persist the weekly schedule + blocked dates to the settings row.
@@ -921,6 +939,25 @@ export default function AdminPage() {
           <Button onClick={saveClassPolicy} disabled={savingPolicy} className="mt-3 w-full">
             {savingPolicy && <Loader2 className="h-4 w-4 animate-spin" />}
             {savingPolicy ? "Saving…" : "Save policy"}
+          </Button>
+        </Card>
+
+        {/* Student community — Discord invite gate for the portal banner. */}
+        <Card className="mb-6">
+          <CardTitle
+            icon={<MessagesSquare className="h-4 w-4" />}
+            title="Student community"
+            hint="Paste your Discord server invite (create one that never expires). Signed-in students see a Join banner in their portal. Leave empty to hide it."
+          />
+          <input
+            value={discordUrl}
+            onChange={(e) => setDiscordUrl(e.target.value)}
+            placeholder="https://discord.gg/…"
+            className={inputCls}
+          />
+          <Button onClick={saveDiscord} disabled={savingDiscord} className="mt-3 w-full">
+            {savingDiscord && <Loader2 className="h-4 w-4 animate-spin" />}
+            {savingDiscord ? "Saving…" : "Save community link"}
           </Button>
         </Card>
         </>
