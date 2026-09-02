@@ -4,6 +4,7 @@ import { useReveal } from "@/hooks/use-reveal"
 import { CourseExplorer } from "@/components/course-explorer"
 import { ToolsComparison } from "@/components/tools-comparison"
 import { TestimonialsRail } from "@/components/testimonials-rail"
+import { MentoringPath } from "@/components/mentoring-path"
 import { SectionKicker } from "@/components/section-kicker"
 
 export function ServicesSection() {
@@ -54,6 +55,13 @@ export function ServicesSection() {
         >
           <ToolsComparison />
         </div>
+
+        {/* Qualify the visitor + demystify the process, then the one repeated CTA. */}
+        <MentoringPath
+          className={`mt-10 transition-all duration-700 md:mt-14 ${
+            isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+          }`}
+        />
       </div>
     </section>
   )

@@ -167,7 +167,7 @@ export function TestimonialForm({ defaultName }: { defaultName?: string }) {
         rows={3}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="What did you learn? What changed for you?"
+        placeholder="Where were you before, and what changed after? e.g. 'Before: manual Excel reports every Monday. After: a Power BI dashboard my team uses daily.'"
         className={`${fieldClass} mb-4`}
       />
 

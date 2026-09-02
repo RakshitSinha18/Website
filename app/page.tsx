@@ -16,7 +16,7 @@ import { HeroStats } from "@/components/hero-stats"
 import { HeroQueryBar } from "@/components/hero-query-bar"
 import { DownloadCV } from "@/components/download-cv"
 import { SpotlightHeroLazy } from "@/components/spotlight/spotlight-hero-lazy"
-import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, HelpCircle, Mail } from "lucide-react"
+import { Menu, X, Home as HomeIcon, Briefcase, GraduationCap, UserRound, HelpCircle, Mail, Linkedin, Github } from "lucide-react"
 import Link from "next/link"
 import { useRef, useEffect, useState } from "react"
 
@@ -273,8 +273,28 @@ export default function Home() {
                     Let&apos;s connect
                   </MagneticButton>
                 </div>
-                {/* Appears automatically once public/rakshit-sinha-cv.pdf is added. */}
-                <DownloadCV className="mt-4 animate-in fade-in duration-1000 delay-500" />
+                {/* CV (appears once public/rakshit-sinha-cv.pdf is added) + pinned socials. */}
+                <div className="mt-4 flex animate-in fade-in items-center gap-3 duration-1000 delay-500">
+                  <DownloadCV />
+                  <a
+                    href="https://www.linkedin.com/in/rakshitsinha555/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Rakshit Sinha on LinkedIn"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-foreground/25 bg-foreground/10 text-foreground/80 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-foreground/50 hover:text-foreground"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="https://github.com/RakshitSinha18"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Rakshit Sinha on GitHub"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-foreground/25 bg-foreground/10 text-foreground/80 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-foreground/50 hover:text-foreground"
+                  >
+                    <Github className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
 
               {/* Signature element — a live mini BI dashboard. */}

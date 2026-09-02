@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { ToastProvider } from "@/components/toast"
+import { StructuredData } from "@/components/structured-data"
 import { AccessibilityButton } from "@/components/accessibility-button"
 import { RefreshButton } from "@/components/refresh-button"
 import { PageLoader } from "@/components/page-loader"
@@ -104,6 +105,7 @@ export default function RootLayout({
           httpEquiv="Permissions-Policy"
           content="camera=(), microphone=(), geolocation=(), payment=(self)"
         />
+        <StructuredData />
       </head>
       <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
         {/* Skip link for keyboard & screen-reader users (WCAG 2.4.1). */}
