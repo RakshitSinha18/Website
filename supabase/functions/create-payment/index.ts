@@ -45,6 +45,29 @@ Deno.serve(async (req: Request) => {
     const { provider, booking_id, amount, currency = "INR", title } = await req.json()
     if (!provider || !amount) return json({ error: "provider and amount are required" }, 400)
 
+    // Server-side price check — the class's stored price_paise is the source of
+    // truth. Without this, a tampered client could open a ₹1 checkout for any
+    // class and the signature-verified webhook would happily confirm it.
+    if (booking_id) {
+      const { data: bk } = await userClient
+        .from("class_bookings")
+        .select("class_id")
+        .eq("id", booking_id)
+        .single()
+      if (!bk) return json({ error: "Booking not found" }, 404)
+      if (bk.class_id) {
+        const { data: cls } = await userClient
+          .from("classes")
+          .select("price_paise")
+          .eq("id", bk.class_id)
+          .single()
+        const expected = cls?.price_paise ?? 0
+        if (expected > 0 && amount !== expected) {
+          return json({ error: "Amount does not match the class price." }, 400)
+        }
+      }
+    }
+
     // Record a 'created' payment row (RLS allows the student to insert this).
     const { data: payment, error: payErr } = await userClient
       .from("payments")
