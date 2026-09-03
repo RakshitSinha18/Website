@@ -15,14 +15,20 @@
 create table if not exists public.learning_progress (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users(id) on delete cascade,
-  kind         text not null check (kind in ('lesson','card')),
-  group_id     text not null,   -- course id (lessons) or deck id (cards)
-  item_id      text not null,   -- lesson id / card id within that group
+  kind         text not null check (kind in ('lesson','card','deck')),
+  group_id     text not null,   -- course id (lessons/decks) or deck id (cards)
+  item_id      text not null,   -- lesson / card / session-deck id within that group
   completed_at timestamptz not null default now(),
   unique (user_id, kind, group_id, item_id)
 );
 create index if not exists learning_progress_user_idx on public.learning_progress(user_id);
 alter table public.learning_progress enable row level security;
+
+-- Widen the kind check for pre-existing tables (idempotent): 'deck' tracks
+-- completed session decks in the portal's Learn tab.
+alter table public.learning_progress drop constraint if exists learning_progress_kind_check;
+alter table public.learning_progress
+  add constraint learning_progress_kind_check check (kind in ('lesson','card','deck'));
 
 drop policy if exists "students read own learning progress" on public.learning_progress;
 create policy "students read own learning progress"

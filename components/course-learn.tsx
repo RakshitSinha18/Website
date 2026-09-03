@@ -14,9 +14,11 @@ import {
   ArrowUpRight,
   GraduationCap,
   Trophy,
+  Presentation,
 } from "lucide-react"
 import { COURSES } from "@/lib/courses"
 import { lessonsForCourse, AUTHORED_COURSE_IDS, type Lesson, type SelfCheck } from "@/lib/course-lessons"
+import { CourseDecks } from "@/components/course-decks"
 import { useAuth } from "@/hooks/use-auth"
 import { mergeProgress, pushProgress, removeProgress } from "@/lib/learning-sync"
 
@@ -53,6 +55,9 @@ export function CourseLearn() {
   const [progress, setProgress] = useState<Progress>({})
   const [activeCourse, setActiveCourse] = useState<string | null>(null)
   const [openLesson, setOpenLesson] = useState<string | null>(null)
+  // Two ways through the same material: self-paced lessons, or the session
+  // decks used in live classes (slides + speaker notes + journey map).
+  const [mode, setMode] = useState<"lessons" | "decks">("lessons")
 
   useEffect(() => {
     const local = loadProgress()
@@ -104,6 +109,7 @@ export function CourseLearn() {
                 onClick={() => {
                   setActiveCourse(c.id)
                   setOpenLesson(null)
+                  setMode("lessons")
                 }}
                 className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-white/25"
               >
@@ -184,30 +190,57 @@ export function CourseLearn() {
         </div>
       </div>
 
-      {allDone && (
-        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3">
-          <Trophy className="h-4 w-4 text-emerald-300" />
-          <p className="text-xs text-emerald-100">
-            Course complete — every lesson done. Book a 1-on-1 to go deeper on anything that&apos;s still fuzzy.
-          </p>
-        </div>
-      )}
-
-      {/* Lessons */}
-      <ol className="space-y-2.5">
-        {lessons.map((lesson, i) => (
-          <LessonRow
-            key={lesson.id}
-            index={i}
-            lesson={lesson}
-            accent={course.accent}
-            complete={completedSet.has(lesson.id)}
-            open={openLesson === lesson.id}
-            onToggleOpen={() => setOpenLesson(openLesson === lesson.id ? null : lesson.id)}
-            onToggleComplete={() => toggle(activeCourse, lesson.id)}
-          />
+      {/* Lessons vs. session decks (slides + notes + journey map) */}
+      <div className="mb-4 inline-flex rounded-lg border border-white/10 bg-white/[0.03] p-1">
+        {(
+          [
+            { key: "lessons", label: "Lessons", Icon: BookOpen },
+            { key: "decks", label: "Session decks", Icon: Presentation },
+          ] as const
+        ).map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            onClick={() => setMode(key)}
+            aria-pressed={mode === key}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              mode === key ? "bg-white/10 text-foreground" : "text-foreground/55 hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" /> {label}
+          </button>
         ))}
-      </ol>
+      </div>
+
+      {mode === "decks" ? (
+        <CourseDecks courseId={activeCourse} />
+      ) : (
+        <>
+          {allDone && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3">
+              <Trophy className="h-4 w-4 text-emerald-300" />
+              <p className="text-xs text-emerald-100">
+                Course complete — every lesson done. Book a 1-on-1 to go deeper on anything that&apos;s still fuzzy.
+              </p>
+            </div>
+          )}
+
+          {/* Lessons */}
+          <ol className="space-y-2.5">
+            {lessons.map((lesson, i) => (
+              <LessonRow
+                key={lesson.id}
+                index={i}
+                lesson={lesson}
+                accent={course.accent}
+                complete={completedSet.has(lesson.id)}
+                open={openLesson === lesson.id}
+                onToggleOpen={() => setOpenLesson(openLesson === lesson.id ? null : lesson.id)}
+                onToggleComplete={() => toggle(activeCourse, lesson.id)}
+              />
+            ))}
+          </ol>
+        </>
+      )}
     </div>
   )
 }
