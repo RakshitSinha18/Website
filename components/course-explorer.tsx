@@ -155,7 +155,7 @@ function CourseSlide({
 
         {/* Outcomes preview */}
         <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-4">
-          <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-foreground/50">You'll be able to</p>
+          <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-foreground/50">You&apos;ll be able to</p>
           <ul className="space-y-1.5">
             {course.outcomes.slice(0, 4).map((o) => (
               <li key={o} className="flex items-start gap-2 text-sm text-foreground/80">

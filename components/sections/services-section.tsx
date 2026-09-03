@@ -26,7 +26,7 @@ export function ServicesSection() {
             Courses I teach
           </h2>
           <p className="font-mono text-sm text-foreground/60 md:text-base">
-            / Evening classes &amp; 1-on-1 mentoring · swipe or tap "Deep dive" to explore
+            / Evening classes &amp; 1-on-1 mentoring · swipe or tap &quot;Deep dive&quot; to explore
           </p>
         </div>
 

@@ -132,15 +132,17 @@ export default function PortalPage() {
   // Load classes, bookings and profile.
   useEffect(() => {
     if (!user || !supabase) return
+    // Capture in a const so TypeScript keeps the non-null narrowing inside the closure.
+    const sb = supabase
     const load = async () => {
       const [{ data: cls }, { data: bks }, { data: prof }, { data: tasks }, { data: prog }, { data: st }] =
         await Promise.all([
-          supabase.from("classes").select("id,title,description,duration,price_paise").eq("active", true),
-          supabase.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status,attendance,meet_link").order("scheduled_at", { ascending: true }),
-          supabase.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
-          supabase.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
-          supabase.from("task_progress").select("task_id,completed").eq("user_id", user.id),
-          supabase.from("settings").select("*").eq("id", 1).single(),
+          sb.from("classes").select("id,title,description,duration,price_paise").eq("active", true),
+          sb.from("class_bookings").select("id,class_title,scheduled_at,status,notes,payment_status,attendance,meet_link").order("scheduled_at", { ascending: true }),
+          sb.from("profiles").select("full_name,experience,goals").eq("id", user.id).single(),
+          sb.from("roadmap_tasks").select("id,track,day,title,description").order("day", { ascending: true }),
+          sb.from("task_progress").select("task_id,completed").eq("user_id", user.id),
+          sb.from("settings").select("*").eq("id", 1).single(),
         ])
       if (st) setPayInfo(st)
       if (cls) {
@@ -154,14 +156,14 @@ export default function PortalPage() {
 
       // Batches (active cohorts) + this student's enrollments.
       const [{ data: bt }, { data: enr }] = await Promise.all([
-        supabase.from("batches").select("*").eq("active", true).order("start_date", { ascending: true }),
-        supabase.from("batch_enrollments").select("id,batch_id,status,payment_status").eq("user_id", user.id),
+        sb.from("batches").select("*").eq("active", true).order("start_date", { ascending: true }),
+        sb.from("batch_enrollments").select("id,batch_id,status,payment_status").eq("user_id", user.id),
       ])
       if (bt) setBatches(bt as BatchItem[])
       if (enr) setEnrollments(enr as Enrollment[])
 
       // Materials for classes the student can access (RLS returns only permitted rows).
-      const { data: mats } = await supabase
+      const { data: mats } = await sb
         .from("class_materials")
         .select("id,class_id,batch_id,title,kind,file_url")
         .order("created_at", { ascending: true })
@@ -738,13 +740,13 @@ export default function PortalPage() {
                               onClick={() => setAttendance(b, "attending")}
                               className={`rounded-full px-2.5 py-1 font-mono text-[10px] transition-colors ${b.attendance === "attending" ? "bg-emerald-500/25 text-emerald-200" : "border border-white/15 text-foreground/60 hover:bg-white/10"}`}
                             >
-                              Yes, I'll be there
+                              Yes, I&apos;ll be there
                             </button>
                             <button
                               onClick={() => setAttendance(b, "opted_out")}
                               className={`rounded-full px-2.5 py-1 font-mono text-[10px] transition-colors ${b.attendance === "opted_out" ? "bg-amber-500/25 text-amber-200" : "border border-white/15 text-foreground/60 hover:bg-white/10"}`}
                             >
-                              Can't make it
+                              Can&apos;t make it
                             </button>
                           </div>
                           {reschedulingId === b.id && (

@@ -1566,7 +1566,7 @@ function CurriculumEditor({
             <textarea rows={2} value={draft.summary ?? ""} onChange={(e) => setField({ summary: e.target.value })} className={inputCls} />
           </div>
           <div>
-            <FieldLabel>Who it's for</FieldLabel>
+            <FieldLabel>Who it&apos;s for</FieldLabel>
             <textarea rows={2} value={draft.for_whom ?? ""} onChange={(e) => setField({ for_whom: e.target.value })} className={inputCls} />
           </div>
 
