@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { motion, useReducedMotion } from "framer-motion"
 import { ArrowRight, UserPlus, CreditCard, MonitorPlay } from "lucide-react"
 
 /**
@@ -8,6 +9,7 @@ import { ArrowRight, UserPlus, CreditCard, MonitorPlay } from "lucide-react"
  * trust sections high-converting mentor pages share. Everything here describes
  * real product behaviour (portal signup, Razorpay confirmation, Meet sessions,
  * materials/flashcards in the portal) — keep it that way when editing.
+ * Cards stagger in on scroll (framer-motion), matching the Experience section.
  */
 
 const AUDIENCES = [
@@ -46,7 +48,17 @@ const STEPS = [
   },
 ]
 
+// Shared card entrance: fade + rise with a slight stagger per column.
+const cardMotion = (reduce: boolean, i: number) => ({
+  initial: reduce ? false : { opacity: 0, y: 18 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.4 },
+  transition: { type: "spring" as const, stiffness: 90, damping: 16, delay: i * 0.08 },
+})
+
 export function MentoringPath({ className = "" }: { className?: string }) {
+  const reduce = useReducedMotion() ?? false
+
   return (
     <div className={className}>
       {/* Who this is for — the right visitor should feel seen. */}
@@ -54,14 +66,15 @@ export function MentoringPath({ className = "" }: { className?: string }) {
         Who this is for
       </p>
       <div className="grid gap-3 md:grid-cols-3">
-        {AUDIENCES.map((a) => (
-          <div
+        {AUDIENCES.map((a, i) => (
+          <motion.div
             key={a.label}
+            {...cardMotion(reduce, i)}
             className="rounded-2xl border border-foreground/15 bg-foreground/5 p-4 backdrop-blur-md transition-colors hover:border-foreground/30 md:p-5"
           >
             <h3 className="mb-1.5 font-sans text-base font-medium text-foreground">{a.label}</h3>
             <p className="text-sm leading-relaxed text-foreground/70">{a.detail}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
 
@@ -71,8 +84,9 @@ export function MentoringPath({ className = "" }: { className?: string }) {
       </p>
       <ol className="grid gap-3 md:grid-cols-3">
         {STEPS.map((s, i) => (
-          <li
+          <motion.li
             key={s.title}
+            {...cardMotion(reduce, i)}
             className="relative rounded-2xl border border-foreground/15 bg-foreground/5 p-4 backdrop-blur-md md:p-5"
           >
             <div className="mb-2 flex items-center gap-2.5">
@@ -83,12 +97,12 @@ export function MentoringPath({ className = "" }: { className?: string }) {
             </div>
             <h3 className="mb-1 font-sans text-base font-medium text-foreground">{s.title}</h3>
             <p className="text-sm leading-relaxed text-foreground/70">{s.detail}</p>
-          </li>
+          </motion.li>
         ))}
       </ol>
 
       {/* The one CTA this page repeats. */}
-      <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
+      <motion.div {...cardMotion(reduce, 1)} className="mt-8 flex flex-col items-center gap-2 md:mt-10">
         <Link
           href="/login/"
           className="inline-flex items-center gap-2 rounded-full bg-foreground/95 px-6 py-3 font-sans text-sm font-medium text-background transition-all hover:-translate-y-0.5 hover:bg-foreground"
@@ -98,7 +112,7 @@ export function MentoringPath({ className = "" }: { className?: string }) {
         <p className="font-mono text-[11px] text-foreground/50">
           Free account · evening slots · pay only when you book
         </p>
-      </div>
+      </motion.div>
     </div>
   )
 }

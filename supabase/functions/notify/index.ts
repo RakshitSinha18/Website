@@ -38,6 +38,42 @@ function safeLink(v: unknown): string {
   return /^https?:\/\//i.test(s) ? esc(s, 300) : ""
 }
 
+// Mirror an owner alert into whichever Discord/Slack webhooks the admin has
+// attached (notify_channels, mentor-managed). Best-effort: never blocks or
+// fails the email path. URLs are pattern-checked so a typo'd value can't make
+// us POST the alert to an arbitrary server.
+async function fanOutToChannels(text: string) {
+  try {
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
+    const { data } = await admin
+      .from("notify_channels")
+      .select("discord_webhook_url, slack_webhook_url")
+      .eq("id", 1)
+      .single()
+    if (!data) return
+    const posts: Promise<unknown>[] = []
+    const discord = data.discord_webhook_url ?? ""
+    const slack = data.slack_webhook_url ?? ""
+    if (/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(discord)) {
+      posts.push(fetch(discord, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text.slice(0, 1900) }),
+      }))
+    }
+    if (/^https:\/\/hooks\.slack\.com\//.test(slack)) {
+      posts.push(fetch(slack, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text.slice(0, 1900) }),
+      }))
+    }
+    if (posts.length) await Promise.allSettled(posts)
+  } catch {
+    /* channels are best-effort */
+  }
+}
+
 Deno.serve(async (req: Request) => {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")
   const OWNER_EMAIL = Deno.env.get("OWNER_EMAIL") ?? "rsinha1369@gmail.com"
@@ -127,6 +163,22 @@ Deno.serve(async (req: Request) => {
        </ul>
        <p>Review it in your Supabase dashboard.</p>`,
     )
+
+    // Same alert, as plain text, into any attached Discord/Slack channel.
+    const plain = [
+      `New ${table === "class_bookings" ? "class booking" : "session request"} — ${String(record?.name ?? record?.email ?? "student").slice(0, 100)}`,
+      record?.email ? `Email: ${String(record.email).slice(0, 100)}` : "",
+      record?.class_title
+        ? `Class: ${String(record.class_title).slice(0, 150)} @ ${String(record?.scheduled_at ?? "TBD").slice(0, 50)}`
+        : record?.topic
+          ? `Topic: ${String(record.topic).slice(0, 150)}`
+          : "",
+      record?.message ?? record?.notes ? `Notes: ${String(record.message ?? record.notes).slice(0, 300)}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n")
+    await fanOutToChannels(plain)
+
     return json({ ok: true, sent: "owner" })
   } catch (err) {
     return json({ error: String(err) }, 500)

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion, useReducedMotion } from "framer-motion"
 import { CalendarClock, GraduationCap, Brain, Map, Video, MessagesSquare } from "lucide-react"
 import { COURSES } from "@/lib/courses"
 import { lessonsForCourse } from "@/lib/course-lessons"
@@ -44,6 +45,7 @@ export function PortalOverview({
   // Set from admin Settings; the community banner renders only when non-empty.
   discordUrl?: string
 }) {
+  const reduce = useReducedMotion() ?? false
   // Learn/Practice progress live in localStorage — read after mount.
   const [lessonsDone, setLessonsDone] = useState(0)
   const [cardsMastered, setCardsMastered] = useState(0)
@@ -131,7 +133,10 @@ export function PortalOverview({
 
       {/* Student community — appears once the admin sets a Discord invite. */}
       {discordUrl && /^https?:\/\//i.test(discordUrl) && (
-        <a
+        <motion.a
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 90, damping: 16, delay: 0.15 }}
           href={discordUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -151,7 +156,7 @@ export function PortalOverview({
           <span className="rounded-lg bg-indigo-400/15 px-3.5 py-2 font-mono text-[11px] text-indigo-200">
             Join on Discord →
           </span>
-        </a>
+        </motion.a>
       )}
     </div>
   )

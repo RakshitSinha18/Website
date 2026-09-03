@@ -166,6 +166,11 @@ export default function AdminPage() {
   // Discord invite for the student community banner in the portal.
   const [discordUrl, setDiscordUrl] = useState("")
   const [savingDiscord, setSavingDiscord] = useState(false)
+  // Alert channels (mentor-only notify_channels table) — attach as needed.
+  const [discordHook, setDiscordHook] = useState("")
+  const [slackHook, setSlackHook] = useState("")
+  const [savingHooks, setSavingHooks] = useState(false)
+  const [testingHooks, setTestingHooks] = useState(false)
   const [savingPolicy, setSavingPolicy] = useState(false)
 
   // Weekly recurring availability (0=Sun … 6=Sat → array of "HH:MM"), holiday
@@ -258,6 +263,13 @@ export default function AdminPage() {
       setClassPolicy(st.class_policy || "")
       setDiscordUrl(st.discord_invite_url || "")
     }
+    // Alert channels live in their own mentor-only table (webhook URLs are
+    // secrets — settings is readable by students).
+    const { data: ch } = await supabase.from("notify_channels").select("*").eq("id", 1).single()
+    if (ch) {
+      setDiscordHook(ch.discord_webhook_url || "")
+      setSlackHook(ch.slack_webhook_url || "")
+    }
   }
 
   const saveClassPolicy = async () => {
@@ -266,6 +278,56 @@ export default function AdminPage() {
     const { error } = await supabase.from("settings").update({ class_policy: classPolicy, updated_at: new Date().toISOString() }).eq("id", 1)
     setSavingPolicy(false)
     setMsg(error ? error.message : "Class policy saved.")
+  }
+
+  // Attach/detach booking-alert channels. Empty field = detached.
+  const saveHooks = async () => {
+    if (!supabase) return
+    const d = discordHook.trim()
+    const s = slackHook.trim()
+    if (d && !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(d)) {
+      setMsg("Discord webhook should start with https://discord.com/api/webhooks/…")
+      return
+    }
+    if (s && !/^https:\/\/hooks\.slack\.com\//.test(s)) {
+      setMsg("Slack webhook should start with https://hooks.slack.com/…")
+      return
+    }
+    setSavingHooks(true)
+    const { error } = await supabase
+      .from("notify_channels")
+      .update({ discord_webhook_url: d, slack_webhook_url: s, updated_at: new Date().toISOString() })
+      .eq("id", 1)
+    setSavingHooks(false)
+    setMsg(error ? error.message : d || s ? "Alert channels saved." : "Alert channels detached — email alerts continue.")
+  }
+
+  // Fire a clearly-labelled alert through the real pipeline (email + channels).
+  const testHooks = async () => {
+    if (!supabase) return
+    setTestingHooks(true)
+    try {
+      const { data } = await supabase.auth.getSession()
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({
+          table: "class_bookings",
+          record: {
+            name: "Test alert from the admin panel",
+            notes: "If you can read this in Discord/Slack, the channel is attached. (Safe to ignore.)",
+          },
+        }),
+      })
+      setMsg(res.ok ? "Test alert sent — check your email and attached channels." : "Test failed — try re-saving the webhooks.")
+    } catch {
+      setMsg("Test failed — network error.")
+    } finally {
+      setTestingHooks(false)
+    }
   }
 
   // Save (or clear) the Discord invite that gates the portal community banner.
@@ -959,6 +1021,39 @@ export default function AdminPage() {
             {savingDiscord && <Loader2 className="h-4 w-4 animate-spin" />}
             {savingDiscord ? "Saving…" : "Save community link"}
           </Button>
+        </Card>
+
+        {/* Alert channels — attach your own Discord/Slack, detach anytime. */}
+        <Card className="mb-6">
+          <CardTitle
+            icon={<Inbox className="h-4 w-4" />}
+            title="Booking alert channels"
+            hint="Get every booking / reschedule / can't-attend alert in your own Discord or Slack, alongside email. Paste a webhook URL to attach; clear it to detach."
+          />
+          <label className="mb-1.5 block text-xs font-medium text-foreground/70">Discord webhook</label>
+          <input
+            value={discordHook}
+            onChange={(e) => setDiscordHook(e.target.value)}
+            placeholder="https://discord.com/api/webhooks/…"
+            className={`${inputCls} mb-3`}
+          />
+          <label className="mb-1.5 block text-xs font-medium text-foreground/70">Slack webhook</label>
+          <input
+            value={slackHook}
+            onChange={(e) => setSlackHook(e.target.value)}
+            placeholder="https://hooks.slack.com/services/…"
+            className={inputCls}
+          />
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Button onClick={saveHooks} disabled={savingHooks}>
+              {savingHooks && <Loader2 className="h-4 w-4 animate-spin" />}
+              {savingHooks ? "Saving…" : "Save channels"}
+            </Button>
+            <Button variant="secondary" onClick={testHooks} disabled={testingHooks}>
+              {testingHooks && <Loader2 className="h-4 w-4 animate-spin" />}
+              {testingHooks ? "Sending…" : "Send test alert"}
+            </Button>
+          </div>
         </Card>
         </>
         )}
