@@ -7,9 +7,14 @@ import { Github, Linkedin } from "lucide-react"
  * Contact) so section order can change without stranding the footer mid-page.
  */
 export function SiteFooter() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ""
   return (
     <footer className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-foreground/10 px-5 py-8 text-center font-mono text-xs text-foreground/45 md:px-12">
-      <span className="text-foreground/70">Rakshit Sinha</span>
+      <span className="inline-flex items-center gap-2 text-foreground/70">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`${basePath}/rs-logo.svg`} alt="" aria-hidden className="h-5 w-5 rounded" />
+        Rakshit Sinha
+      </span>
       <span className="hidden sm:inline text-foreground/30">·</span>
       <a href="/articles/" className="transition-colors hover:text-foreground">Articles</a>
       <a href="/terms/" className="transition-colors hover:text-foreground">Terms</a>

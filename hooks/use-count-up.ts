@@ -6,9 +6,13 @@ import { useEffect, useRef, useState } from "react"
  * Animates a number from 0 to `target` once `active` becomes true.
  * Respects prefers-reduced-motion (jumps straight to the value).
  * Returns the current animated value.
+ *
+ * Initialises at `target` (not 0) so the statically exported HTML — what
+ * search engines, link previews and the pre-hydration paint show — carries
+ * the real number. The 0 → target tally only plays client-side.
  */
 export function useCountUp(target: number, active: boolean, durationMs = 1400) {
-  const [value, setValue] = useState(0)
+  const [value, setValue] = useState(target)
   const started = useRef(false)
 
   useEffect(() => {

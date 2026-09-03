@@ -58,7 +58,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0a1220",
+  // Brand ink (BRAND.md) — keep in sync with the manifest + loader background.
+  themeColor: "#0b0f19",
 }
 
 export default function RootLayout({

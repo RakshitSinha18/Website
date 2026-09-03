@@ -374,12 +374,12 @@
     opacity: 1 !important;
   }
 
-  /* Royal page loader: gold shine sweeping across the monogram. */
+  /* Brand page loader: light shine sweeping across the monogram tile. */
   .page-loader-sweep {
     background: linear-gradient(
       110deg,
       transparent 30%,
-      rgba(245, 231, 184, 0.55) 50%,
+      rgba(226, 240, 253, 0.4) 50%,
       transparent 70%
     );
     transform: translateX(-100%);

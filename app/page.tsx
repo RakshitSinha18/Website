@@ -44,6 +44,7 @@ const SECTION = {
 const LAST_INDEX = NAV_ITEMS.length - 1
 
 export default function Home() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ""
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -65,6 +66,9 @@ export default function Home() {
   }
 
   // Keep the active nav item in sync with vertical scroll position.
+  // Sections are min-h-[100dvh] and can grow TALLER than the viewport (long
+  // content, mobile), so dividing scrollTop by viewport height drifts — walk
+  // the real section offsets instead.
   useEffect(() => {
     const handleScroll = () => {
       if (scrollThrottleRef.current) return
@@ -74,10 +78,13 @@ export default function Home() {
           scrollThrottleRef.current = undefined
           return
         }
-        const newSection = Math.round(container.scrollTop / container.offsetHeight)
-        if (newSection !== currentSection && newSection >= 0 && newSection <= LAST_INDEX) {
-          setCurrentSection(newSection)
+        const probe = container.scrollTop + container.offsetHeight * 0.5
+        let newSection = 0
+        const children = container.children
+        for (let i = 0; i <= LAST_INDEX && i < children.length; i++) {
+          if ((children[i] as HTMLElement).offsetTop <= probe) newSection = i
         }
+        if (newSection !== currentSection) setCurrentSection(newSection)
         scrollThrottleRef.current = undefined
       })
     }
@@ -128,10 +135,15 @@ export default function Home() {
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
       >
-        <button onClick={() => scrollToSection(SECTION.home)} className="flex items-center gap-2 transition-transform hover:scale-105">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25 md:h-10 md:w-10">
-            <span className="font-sans text-base font-bold text-foreground md:text-xl">RS</span>
-          </div>
+        <button onClick={() => scrollToSection(SECTION.home)} className="flex items-center gap-2.5 transition-transform hover:scale-105">
+          {/* Brand monogram tile — the real logo, not a lookalike text box. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${basePath}/rs-logo.svg`}
+            alt=""
+            aria-hidden
+            className="h-9 w-9 rounded-lg shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-110 md:h-10 md:w-10"
+          />
           <span className="font-sans text-base font-semibold tracking-tight text-foreground md:text-xl">Rakshit Sinha</span>
         </button>
 

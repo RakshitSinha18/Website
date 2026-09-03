@@ -15,9 +15,8 @@ export default function NotFound() {
       <PageBackdrop />
 
       <div className="relative z-10 flex flex-col items-center">
-        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
-          <span className="font-sans text-lg font-bold text-foreground">RS</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/rs-logo.svg" alt="" aria-hidden className="mb-6 h-12 w-12 rounded-xl shadow-lg shadow-black/30" />
 
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-foreground/50">Error 404</p>
         <h1 className="mb-3 font-sans text-4xl font-light tracking-tight text-foreground md:text-5xl">
