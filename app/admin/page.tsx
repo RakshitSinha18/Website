@@ -4,11 +4,13 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart, MessagesSquare, Users, GraduationCap, Brain } from "lucide-react"
+import { LogOut, Check, Mail, ShieldCheck, CalendarClock, Inbox, BookOpen, Plus, IndianRupee, ArrowLeft, Loader2, Trash2, Map, FileText, Upload, MessageSquareHeart, MessagesSquare, Users, GraduationCap, Brain, Presentation, Sprout } from "lucide-react"
 import { Stars } from "@/components/testimonial-form"
 import { COURSES } from "@/lib/courses"
-import { lessonsForCourse } from "@/lib/course-lessons"
+import { lessonsForCourse, ALL_LEARN_COURSES } from "@/lib/course-lessons"
+import { decksForCourse } from "@/lib/course-decks"
 import { PRACTICE_DECKS } from "@/lib/practice-decks"
+import { StudentJourneyMap, MentorGrowth } from "@/components/admin-learning"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
 import { isAdminEmail } from "@/lib/config"
@@ -99,6 +101,7 @@ interface StudentRow {
 interface ProgressRow {
   user_id: string
   kind: string
+  group_id: string
 }
 
 export default function AdminPage() {
@@ -119,7 +122,7 @@ export default function AdminPage() {
   const [learnProgress, setLearnProgress] = useState<ProgressRow[]>([])
   const [roadmapProgress, setRoadmapProgress] = useState<{ user_id: string; completed: boolean }[]>([])
   // Tabbed admin navigation.
-  const [tab, setTab] = useState<"bookings" | "students" | "availability" | "courses" | "batches" | "articles" | "reviews" | "roadmap" | "payments">("bookings")
+  const [tab, setTab] = useState<"bookings" | "students" | "availability" | "courses" | "batches" | "articles" | "reviews" | "roadmap" | "growth" | "payments">("bookings")
   const { toast } = useToast()
   // Small shim so existing setMsg(...) calls become toasts (error if it looks like one).
   const setMsg = (text: string) => {
@@ -226,7 +229,7 @@ export default function AdminPage() {
     // Student roster + Learn/Practice/roadmap progress (mentor-read RLS).
     const [{ data: prof }, { data: lp }, { data: tp }] = await Promise.all([
       supabase.from("profiles").select("id,full_name,email,experience,goals,updated_at").order("updated_at", { ascending: false }),
-      supabase.from("learning_progress").select("user_id,kind"),
+      supabase.from("learning_progress").select("user_id,kind,group_id"),
       supabase.from("task_progress").select("user_id,completed"),
     ])
     if (prof) setStudents(prof as StudentRow[])
@@ -698,6 +701,7 @@ export default function AdminPage() {
             { id: "articles", label: "Articles", icon: FileText },
             { id: "reviews", label: "Reviews", icon: MessageSquareHeart },
             { id: "roadmap", label: "Roadmap", icon: Map },
+            { id: "growth", label: "Growth", icon: Sprout },
             { id: "payments", label: "Payments", icon: IndianRupee },
           ].map((t) => {
             const active = tab === t.id
@@ -848,9 +852,12 @@ export default function AdminPage() {
           />
           <ul className="space-y-2">
             {students.map((s) => {
-              const lessonsDone = learnProgress.filter((p) => p.user_id === s.id && p.kind === "lesson").length
-              const cardsDone = learnProgress.filter((p) => p.user_id === s.id && p.kind === "card").length
-              const totalLessons = COURSES.reduce((sum, c) => sum + lessonsForCourse(c.id).length, 0)
+              const myProgress = learnProgress.filter((p) => p.user_id === s.id)
+              const lessonsDone = myProgress.filter((p) => p.kind === "lesson").length
+              const cardsDone = myProgress.filter((p) => p.kind === "card").length
+              const sessionsDone = myProgress.filter((p) => p.kind === "deck").length
+              const totalLessons = ALL_LEARN_COURSES.reduce((sum, c) => sum + lessonsForCourse(c.id).length, 0)
+              const totalSessions = ALL_LEARN_COURSES.reduce((sum, c) => sum + decksForCourse(c.id).length, 0)
               const totalCards = PRACTICE_DECKS.reduce((sum, d) => sum + d.cards.length, 0)
               const roadmapDone = roadmapProgress.filter((p) => p.user_id === s.id && p.completed).length
               const myBookings = classBookings.filter((b) => b.user_id === s.id)
@@ -890,6 +897,9 @@ export default function AdminPage() {
                       <GraduationCap className="h-3 w-3" /> {lessonsDone}/{totalLessons} lessons
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-foreground/65">
+                      <Presentation className="h-3 w-3" /> {sessionsDone}/{totalSessions} sessions
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-foreground/65">
                       <Brain className="h-3 w-3" /> {cardsDone}/{totalCards} cards
                     </span>
                     {roadmap.length > 0 && (
@@ -901,6 +911,8 @@ export default function AdminPage() {
                       <CalendarClock className="h-3 w-3" /> {myBookings.length} booking{myBookings.length === 1 ? "" : "s"}
                     </span>
                   </div>
+                  {/* Per-course journey: sessions done, current phase, tools. */}
+                  <StudentJourneyMap rows={myProgress} />
                 </li>
               )
             })}
@@ -908,6 +920,9 @@ export default function AdminPage() {
           </ul>
         </Card>
         )}
+
+        {/* ── GROWTH TAB (mentor's own learning journey) ────────── */}
+        {tab === "growth" && <MentorGrowth />}
 
         {/* ── AVAILABILITY TAB ─────────────────────────────────── */}
         {tab === "availability" && (

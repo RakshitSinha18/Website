@@ -361,6 +361,133 @@ const AUTHORED: Record<string, Lesson[]> = {
       resources: [R.dataset],
     },
   ],
+  toolkit: [
+    {
+      id: "tk-vscode",
+      title: "Set up VS Code for data work",
+      minutes: 15,
+      concept:
+        "VS Code is the free workbench that ties everything together — you'll edit SQL, CSVs, Markdown notes and scripts in one place instead of five apps. Ten minutes of setup pays back every single day.",
+      keyIdea: "One editor for everything: install VS Code, add three extensions, and keep your work in folders it can open.",
+      steps: [
+        "Download and install VS Code from code.visualstudio.com.",
+        "Install extensions: 'SQL Server (mssql)', 'Rainbow CSV', and 'Markdown All in One'.",
+        "Open a folder (File → Open Folder) — VS Code works on folders, not loose files.",
+        "Open the slice & dice CSV and see Rainbow CSV colour the columns.",
+      ],
+      exercise:
+        "Create a folder called data-practice, open it in VS Code, save the slice & dice CSV inside it, and open the file — columns should be colour-coded.",
+      resources: [
+        { label: "Download VS Code", href: "https://code.visualstudio.com", external: true },
+        R.dataset,
+      ],
+    },
+    {
+      id: "tk-git",
+      title: "Git & GitHub from zero",
+      minutes: 20,
+      concept:
+        "Version control is the analyst's safety net: every change saved, every version recoverable, and a public GitHub profile doubles as your portfolio. You need four commands to start — clone, add, commit, push.",
+      keyIdea: "Commit early, commit often. GitHub is both your backup and your public proof of work.",
+      steps: [
+        "Create a free github.com account and install Git (git-scm.com) or GitHub Desktop.",
+        "Create a repository called data-practice on GitHub.",
+        "Clone it locally, add your practice files, commit with a clear message.",
+        "Push — then refresh GitHub and see your work online.",
+      ],
+      exercise:
+        "Put your data-practice folder on GitHub: one repo, one commit titled 'first analysis files', pushed and visible in your profile.",
+      resources: [
+        { label: "Download Git", href: "https://git-scm.com", external: true },
+        { label: "GitHub Desktop (no command line)", href: "https://desktop.github.com", external: true },
+      ],
+      check: {
+        question: "What does 'commit' do in Git?",
+        options: [
+          "Uploads files to GitHub",
+          "Records a snapshot of your changes locally with a message",
+          "Deletes old versions",
+          "Creates a new repository",
+        ],
+        answer: 1,
+        why: "A commit is a local snapshot with a message. Pushing is what uploads your commits to GitHub.",
+      },
+    },
+    {
+      id: "tk-excel",
+      title: "A clean Excel workspace",
+      minutes: 15,
+      concept:
+        "Most Excel pain comes from loose ranges and mystery formulas. Two habits fix it: format data as Tables (so formulas auto-fill and ranges grow), and keep inputs, calculations and outputs on separate sheets.",
+      keyIdea: "Tables, not ranges. Separate sheets for input, calculation and output.",
+      steps: [
+        "Open the slice & dice CSV in Excel and press Ctrl+T to make it a Table.",
+        "Name the table (Table Design → Table Name) — formulas become readable.",
+        "Add a calculation sheet that references the table, never raw cell ranges.",
+        "Pin your five most-used buttons to the Quick Access Toolbar.",
+      ],
+      exercise:
+        "Convert the sample data to a named Table called SalesData, then write one SUMIFS on a separate sheet that references it by name.",
+      resources: [R.excelWorkbook, R.dataset],
+    },
+    {
+      id: "tk-sqltools",
+      title: "SQL tools: SSMS & Azure Data Studio",
+      minutes: 18,
+      concept:
+        "To practise SQL you need a place to run it. SQL Server Developer edition is free and full-featured; SSMS (Windows) or Azure Data Studio (Mac/Windows) is the cockpit you query it from.",
+      keyIdea: "Free stack: SQL Server Developer + SSMS or Azure Data Studio. Import a CSV and you have a practice database.",
+      steps: [
+        "Install SQL Server Developer edition (free) or use an existing server.",
+        "Install SSMS (Windows) or Azure Data Studio (cross-platform).",
+        "Connect: server name, authentication, database.",
+        "Import the slice & dice CSV via the Import Flat File wizard — now query it.",
+      ],
+      exercise:
+        "Import the sample CSV as a table called sales and run: SELECT Region, SUM(Revenue) FROM sales GROUP BY Region.",
+      resources: [
+        { label: "Azure Data Studio", href: "https://learn.microsoft.com/azure-data-studio/download-azure-data-studio", external: true },
+        R.dataset,
+      ],
+    },
+    {
+      id: "tk-bitools",
+      title: "Install Power BI Desktop & Tableau Public",
+      minutes: 12,
+      concept:
+        "Both flagship BI tools have free versions good enough to learn on: Power BI Desktop is fully free to build with, and Tableau Public is the free way to practise Tableau. Install both — comparing them teaches you more than either alone.",
+      keyIdea: "Power BI Desktop: free, full build environment. Tableau Public: free practice with a public portfolio built in.",
+      steps: [
+        "Install Power BI Desktop (Microsoft Store or powerbi.microsoft.com).",
+        "Create a free Tableau Public account and install the app.",
+        "Load the slice & dice CSV into each.",
+        "Build the same one-bar-chart in both and notice how each tool thinks.",
+      ],
+      exercise:
+        "Load the sample dataset into Power BI Desktop AND Tableau Public, and build 'Revenue by Region' in both. Note one thing each tool made easier.",
+      resources: [
+        { label: "Power BI Desktop", href: "https://powerbi.microsoft.com/desktop/", external: true },
+        { label: "Tableau Public", href: "https://public.tableau.com", external: true },
+        R.dataset,
+      ],
+    },
+    {
+      id: "tk-utilities",
+      title: "Everyday utilities & habits",
+      minutes: 12,
+      concept:
+        "The small stuff compounds: a consistent folder structure, ISO dates in file names, a clipboard manager, and knowing ten keyboard shortcuts will save you an hour a week — every week of your career.",
+      keyIdea: "Name files so they sort themselves: YYYY-MM-DD_project_thing. Learn shortcuts for the moves you make hourly.",
+      steps: [
+        "Set up a projects folder: one sub-folder per project, data/ and output/ inside.",
+        "Adopt the date-first naming convention for every file you save.",
+        "Enable your OS clipboard history (Win+V on Windows, a clipboard manager on Mac).",
+        "Learn the big five: Ctrl+C/V, Ctrl+Z, Ctrl+F, Alt+Tab, Ctrl+S — then add one per week.",
+      ],
+      exercise:
+        "Restructure one messy folder using the convention, and write down the three shortcuts you'll force yourself to use this week.",
+    },
+  ],
 }
 
 /** Turn a course's syllabus into lessons when no authored set exists. */
@@ -390,3 +517,44 @@ export function lessonsForCourse(courseId: string): Lesson[] {
 
 /** Courses that have hand-authored, in-depth lessons (badged in the UI). */
 export const AUTHORED_COURSE_IDS = new Set(Object.keys(AUTHORED))
+
+/**
+ * "Tools & Utilities" — a free workspace-setup track every student gets in the
+ * portal (VS Code, Git & GitHub, Excel workspace, SQL tools, BI installs,
+ * everyday habits). Lives here, NOT in COURSES, so it never appears among the
+ * paid offerings on the public homepage.
+ */
+export const TOOLKIT_COURSE: Course = {
+  id: "toolkit",
+  title: "Tools & Utilities",
+  tagline: "Set up a professional data workspace — VS Code, Git & GitHub, Excel, SQL tools and the habits that compound.",
+  level: "Everyone",
+  duration: "Self-paced",
+  accent: ["#a78bfa", "#22d3ee"],
+  summary:
+    "Every course goes faster when your workspace is ready. This free track walks through installing and configuring the tools every analyst uses — and the small utilities and habits that quietly save an hour a week.",
+  forWhom: "Every student, before or alongside any course. No prerequisites.",
+  outcomes: [
+    "A working editor, Git + GitHub, Excel, SQL and BI tool setup",
+    "A GitHub profile that doubles as a portfolio",
+    "File, folder and shortcut habits that compound",
+  ],
+  syllabus: [
+    "VS Code setup",
+    "Git & GitHub",
+    "Excel workspace",
+    "SQL tools",
+    "Power BI & Tableau installs",
+    "Everyday utilities",
+  ],
+  tools: ["VS Code", "Git & GitHub", "Excel", "SSMS / Azure Data Studio", "Power BI", "Tableau Public"],
+  priceFrom: null,
+}
+
+/** Every course learnable in the portal: the public offerings + the free toolkit track. */
+export const ALL_LEARN_COURSES: Course[] = [...COURSES, TOOLKIT_COURSE]
+
+/** Course lookup that also resolves the portal-only toolkit track. */
+export function courseById(courseId: string): Course | undefined {
+  return ALL_LEARN_COURSES.find((c) => c.id === courseId)
+}

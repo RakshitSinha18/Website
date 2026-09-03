@@ -433,3 +433,27 @@
     border-color: rgba(255, 255, 255, 0.45) !important;
   }
 }
+
+/* Session handout: when the handout overlay is open, print ONLY it — the
+   browser's "Save as PDF" becomes the student's take-home material. */
+@media print {
+  body.printing-handout * {
+    visibility: hidden;
+  }
+  body.printing-handout .handout-root,
+  body.printing-handout .handout-root * {
+    visibility: visible;
+  }
+  body.printing-handout .handout-root {
+    position: absolute !important;
+    inset: auto;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible !important;
+  }
+  body.printing-handout .handout-noprint {
+    display: none !important;
+  }
+}

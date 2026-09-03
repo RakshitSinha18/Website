@@ -6,13 +6,17 @@ import {
   ChevronRight,
   Check,
   Clock,
+  Download,
+  FileText,
   Lightbulb,
   MessageSquareText,
   Presentation,
+  Printer,
   Sparkles,
+  X,
   Map as MapIcon,
 } from "lucide-react"
-import { COURSES } from "@/lib/courses"
+import { courseById } from "@/lib/course-lessons"
 import { decksForCourse, JOURNEY_PHASES, PHASE_STORY, type SessionDeck, type DeckSlide } from "@/lib/course-decks"
 import { useAuth } from "@/hooks/use-auth"
 import { mergeProgress, pushProgress } from "@/lib/learning-sync"
@@ -50,7 +54,7 @@ function saveProgress(p: Progress) {
 
 export function CourseDecks({ courseId }: { courseId: string }) {
   const { user } = useAuth()
-  const course = COURSES.find((c) => c.id === courseId)!
+  const course = courseById(courseId)!
   const decks = useMemo(() => decksForCourse(courseId), [courseId])
   const [progress, setProgress] = useState<Progress>({})
   const [openDeck, setOpenDeck] = useState<string | null>(null)
@@ -173,6 +177,26 @@ export function CourseDecks({ courseId }: { courseId: string }) {
         </p>
       </div>
 
+      {/* ── Course materials — sample data every session uses ───── */}
+      {decks[0] && decks[0].materials.length > 0 && (
+        <div className="mb-5">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground/40">Course materials</p>
+          <div className="flex flex-wrap gap-2">
+            {decks[0].materials.map((m) => (
+              <a
+                key={m.href}
+                href={m.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] text-foreground/75 transition-colors hover:border-white/25 hover:text-foreground"
+              >
+                <Download className="h-3 w-3" /> {m.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Session list ────────────────────────────────────────── */}
       <ol className="space-y-2.5">
         {decks.map((d) => {
@@ -229,6 +253,7 @@ function DeckViewer({
 }) {
   const [idx, setIdx] = useState(0)
   const [showNotes, setShowNotes] = useState(false)
+  const [showHandout, setShowHandout] = useState(false)
   const slide = deck.slides[idx]
   const last = idx === deck.slides.length - 1
 
@@ -320,16 +345,25 @@ function DeckViewer({
         )}
       </div>
 
-      {/* Notes + thinking */}
-      <button
-        onClick={() => setShowNotes((v) => !v)}
-        aria-expanded={showNotes}
-        className={`mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-          showNotes ? "bg-white/10 text-foreground" : "border border-white/15 bg-white/[0.04] text-foreground/70 hover:bg-white/10"
-        }`}
-      >
-        <MessageSquareText className="h-3.5 w-3.5" /> {showNotes ? "Hide notes" : "Notes & thinking"}
-      </button>
+      {/* Notes + thinking, and the take-home handout */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={() => setShowNotes((v) => !v)}
+          aria-expanded={showNotes}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            showNotes ? "bg-white/10 text-foreground" : "border border-white/15 bg-white/[0.04] text-foreground/70 hover:bg-white/10"
+          }`}
+        >
+          <MessageSquareText className="h-3.5 w-3.5" /> {showNotes ? "Hide notes" : "Notes & thinking"}
+        </button>
+        <button
+          onClick={() => setShowHandout(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-foreground/70 transition-colors hover:bg-white/10"
+        >
+          <Printer className="h-3.5 w-3.5" /> Handout (PDF)
+        </button>
+      </div>
+      {showHandout && <HandoutView deck={deck} onClose={() => setShowHandout(false)} />}
       {showNotes && (
         <div className="mt-2.5 space-y-2.5">
           <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
@@ -349,6 +383,102 @@ function DeckViewer({
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * Take-home handout: the whole session — slides, notes, thinking, code and
+ * materials — in a clean print layout. "Save as PDF" in the browser's print
+ * dialog turns it into the PDF students keep (works on the static site with
+ * zero extra dependencies).
+ */
+function HandoutView({ deck, onClose }: { deck: SessionDeck; onClose: () => void }) {
+  useEffect(() => {
+    document.body.classList.add("printing-handout")
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => {
+      document.body.classList.remove("printing-handout")
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [onClose])
+
+  return (
+    <div className="handout-root fixed inset-0 z-[90] overflow-y-auto bg-white text-neutral-900">
+      {/* Toolbar — hidden in the printed/PDF output */}
+      <div className="handout-noprint sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-neutral-200 bg-white px-5 py-3">
+        <p className="text-sm font-medium">Session {deck.session} handout — {deck.title}</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-neutral-700"
+          >
+            <Printer className="h-3.5 w-3.5" /> Print / Save as PDF
+          </button>
+          <button
+            onClick={onClose}
+            aria-label="Close handout"
+            className="inline-flex items-center justify-center rounded-lg border border-neutral-300 p-1.5 text-neutral-600 transition-colors hover:bg-neutral-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-3xl px-6 py-8">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+          Session {deck.session} · {deck.phase} · ~{deck.minutes} min
+        </p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">{deck.title}</h1>
+        <p className="mt-2 text-sm text-neutral-600">Goal: {deck.objective}</p>
+
+        {deck.materials.length > 0 && (
+          <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+            <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-neutral-500">Materials</p>
+            <ul className="space-y-1 text-sm">
+              {deck.materials.map((m) => (
+                <li key={m.href}>
+                  {m.label} — <span className="font-mono text-xs text-neutral-500">sinharakshit.com{m.href}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {deck.slides.map((s, i) => (
+          <section key={i} className="mt-8 break-inside-avoid border-t border-neutral-200 pt-6">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">Slide {i + 1}</p>
+            <h2 className="mt-0.5 text-xl font-semibold tracking-tight">{s.title}</h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-neutral-800">
+              {s.bullets.map((b, bi) => (
+                <li key={bi}>{b}</li>
+              ))}
+            </ul>
+            {s.code && (
+              <pre className="mt-3 overflow-x-auto rounded-lg bg-neutral-100 p-3 font-mono text-xs leading-relaxed text-neutral-800">
+                {s.code}
+              </pre>
+            )}
+            <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+              <span className="font-semibold text-neutral-800">Notes: </span>
+              {s.notes}
+            </p>
+            {s.thinking && (
+              <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">
+                <span className="font-semibold text-neutral-800">How I think about it: </span>
+                {s.thinking}
+              </p>
+            )}
+          </section>
+        ))}
+
+        <p className="mt-10 border-t border-neutral-200 pt-4 text-xs text-neutral-400">
+          Rakshit Sinha · sinharakshit.com · Session {deck.session} of the course — questions? Bring them to the next class or the portal.
+        </p>
+      </div>
     </div>
   )
 }
@@ -382,6 +512,7 @@ function SlideCanvas({ slide, deck, accent }: { slide: DeckSlide; deck: SessionD
 
   const isExercise = slide.kind === "exercise"
   const isRecap = slide.kind === "recap"
+  const isCode = slide.kind === "code"
   const edge = isExercise ? "#fbbf24" : isRecap ? "#34d399" : accent[0]
 
   return (
@@ -389,6 +520,7 @@ function SlideCanvas({ slide, deck, accent }: { slide: DeckSlide; deck: SessionD
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${edge}, transparent)` }} />
       <div className="mb-4 flex items-center gap-2">
         {isExercise && <Sparkles className="h-4 w-4 text-amber-300" />}
+        {isCode && <FileText className="h-4 w-4" style={{ color: edge }} />}
         <h3 className="text-lg font-medium tracking-tight text-foreground md:text-2xl">{slide.title}</h3>
       </div>
       <ul className="space-y-2.5">
@@ -399,6 +531,11 @@ function SlideCanvas({ slide, deck, accent }: { slide: DeckSlide; deck: SessionD
           </li>
         ))}
       </ul>
+      {slide.code && (
+        <pre className="mt-4 overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-4 font-mono text-xs leading-relaxed text-foreground/90 md:text-sm">
+          {slide.code}
+        </pre>
+      )}
     </div>
   )
 }

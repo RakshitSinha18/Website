@@ -16,8 +16,7 @@ import {
   Trophy,
   Presentation,
 } from "lucide-react"
-import { COURSES } from "@/lib/courses"
-import { lessonsForCourse, AUTHORED_COURSE_IDS, type Lesson, type SelfCheck } from "@/lib/course-lessons"
+import { lessonsForCourse, AUTHORED_COURSE_IDS, ALL_LEARN_COURSES, courseById, type Lesson, type SelfCheck } from "@/lib/course-lessons"
 import { CourseDecks } from "@/components/course-decks"
 import { useAuth } from "@/hooks/use-auth"
 import { mergeProgress, pushProgress, removeProgress } from "@/lib/learning-sync"
@@ -98,7 +97,7 @@ export function CourseLearn() {
           and a &ldquo;try it yourself&rdquo; task on real data. Your progress is saved automatically.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          {COURSES.map((c) => {
+          {ALL_LEARN_COURSES.map((c) => {
             const lessons = lessonsForCourse(c.id)
             const completed = done(c.id).size
             const pct = lessons.length ? Math.round((completed / lessons.length) * 100) : 0
@@ -151,7 +150,7 @@ export function CourseLearn() {
   }
 
   // ── Lesson list for the chosen course ──────────────────────────
-  const course = COURSES.find((c) => c.id === activeCourse)!
+  const course = courseById(activeCourse)!
   const lessons = lessonsForCourse(activeCourse)
   const completedSet = done(activeCourse)
   const completed = completedSet.size
