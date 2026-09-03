@@ -54,7 +54,7 @@ export const COURSES: Course[] = [
       "Capstone: end-to-end analysis",
     ],
     tools: ["Excel", "SQL", "Tableau", "Storytelling"],
-    priceFrom: 1500, // EDIT: starting rate per session (INR)
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
     id: "tableau",
@@ -83,7 +83,7 @@ export const COURSES: Course[] = [
       "Dashboard design & performance",
     ],
     tools: ["Tableau Desktop", "Tableau Server", "SQL"],
-    priceFrom: 1500, // EDIT: starting rate per session (INR)
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
     id: "power-bi",
@@ -112,7 +112,7 @@ export const COURSES: Course[] = [
       "Report design, RLS, publishing & scheduled refresh",
     ],
     tools: ["Power BI Desktop", "Power Query (M)", "DAX", "Power BI Service"],
-    priceFrom: 1500, // EDIT: starting rate per session (INR)
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
     id: "sql",
@@ -139,7 +139,7 @@ export const COURSES: Course[] = [
       "Indexing & query optimization",
     ],
     tools: ["SQL Server", "T-SQL", "Oracle"],
-    priceFrom: 1200, // EDIT: starting rate per session (INR)
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
     id: "excel",
@@ -165,7 +165,7 @@ export const COURSES: Course[] = [
       "Dashboards & conditional formatting",
     ],
     tools: ["Excel", "Power Query"],
-    priceFrom: 1000, // EDIT: starting rate per session (INR)
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
     id: "sas",
@@ -192,7 +192,7 @@ export const COURSES: Course[] = [
       "Reporting & certification prep",
     ],
     tools: ["Base SAS 9.4", "PROC SQL"],
-    priceFrom: 1500, // EDIT: starting rate per session (INR)
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
     id: "career",
