@@ -361,6 +361,143 @@ const AUTHORED: Record<string, Lesson[]> = {
       resources: [R.dataset],
     },
   ],
+  fabric: [
+    {
+      id: "fab-fundamentals",
+      title: "Fabric fundamentals: OneLake, workspaces & capacities",
+      minutes: 15,
+      concept:
+        "Fabric is Microsoft's answer to the scattered data estate: one SaaS platform where ingestion, storage, engineering and Power BI share a single copy of the data. OneLake is the 'OneDrive for data' underneath everything; workspaces organise the work; capacities are the compute you pay for. If you know Power BI workspaces, you're already halfway oriented.",
+      keyIdea: "One platform, one copy of the data. OneLake stores it, workspaces organise it, capacities power it.",
+      steps: [
+        "Tour the Fabric portal: workloads (Data Factory, Data Engineering, Data Warehouse, Power BI) are lenses on the same platform.",
+        "See OneLake in the explorer — every workspace's data lives in one logical lake, stored as Delta tables.",
+        "Map the Power BI concepts you know (workspace, dataset, capacity) onto their Fabric equivalents.",
+        "Understand shortcuts: point at data in ADLS or S3 without copying it.",
+      ],
+      exercise:
+        "In a Fabric trial workspace, create a lakehouse, upload the slice & dice CSV, and find the same file through the OneLake explorer. One copy, many views.",
+      resources: [R.dataset],
+      check: {
+        question: "What is OneLake, in one sentence?",
+        options: [
+          "A rebranded SQL Server database",
+          "The single logical data lake every Fabric workspace stores into",
+          "A Power BI visual",
+          "Microsoft's name for Excel in the cloud",
+        ],
+        answer: 1,
+        why: "OneLake is the shared storage layer — every lakehouse, warehouse and semantic model reads and writes the same lake, so data isn't copied between tools.",
+      },
+    },
+    {
+      id: "fab-stores",
+      title: "Lakehouse vs warehouse — choosing your store",
+      minutes: 15,
+      concept:
+        "Fabric gives you two front doors to the same OneLake storage: the lakehouse (files + Delta tables, Spark-first, SQL endpoint read-only) and the warehouse (full T-SQL read-write, the familiar database experience). Both hold Delta tables underneath — the choice is about the engine and skills you want in front, not the storage.",
+      keyIdea: "Same Delta tables underneath. Choose by skills and workload: Spark-heavy engineering → lakehouse; T-SQL-first analytics → warehouse.",
+      steps: [
+        "Create both a lakehouse and a warehouse; load the same sample data into each.",
+        "Query the lakehouse through its SQL analytics endpoint — note it's read-only SQL.",
+        "Do full T-SQL DML in the warehouse (INSERT, UPDATE, stored procedures).",
+        "Write the decision rule for your team: who maintains it, and in what language?",
+      ],
+      exercise:
+        "A retail client has SQL-strong analysts and no Spark experience, ingesting nightly CSVs for Power BI. Lakehouse or warehouse? Write three sentences defending your pick.",
+      resources: [R.dataset],
+    },
+    {
+      id: "fab-ingest",
+      title: "Getting data in: pipelines & Dataflows Gen2",
+      minutes: 18,
+      concept:
+        "Data Factory in Fabric gives you two tools: pipelines for orchestration (copy data, schedule, chain steps, handle failures) and Dataflows Gen2 for transformation — which is exactly the Power Query you already know, landing results into OneLake. Analysts usually start with a dataflow; engineers wrap them in pipelines.",
+      keyIdea: "Dataflows Gen2 IS Power Query — your M skills transfer 1:1. Pipelines schedule and orchestrate around them.",
+      steps: [
+        "Build a Dataflow Gen2: connect to the sample CSV, clean it with familiar Power Query steps, set the destination to your lakehouse.",
+        "Build a pipeline with a Copy activity and a schedule.",
+        "Chain them: pipeline runs the dataflow, then a notebook or refresh step.",
+        "Check the monitoring hub to see runs, durations and failures.",
+      ],
+      exercise:
+        "Create a Dataflow Gen2 that loads the slice & dice CSV, removes rows with null Revenue, types the Date column, and lands it in your lakehouse as a table.",
+      resources: [R.dataset, R.datasetGuide],
+    },
+    {
+      id: "fab-medallion",
+      title: "Medallion architecture: bronze, silver, gold",
+      minutes: 18,
+      concept:
+        "The medallion pattern is how mature teams keep a lake trustworthy: bronze holds raw data exactly as it arrived, silver holds cleaned and conformed tables, gold holds business-ready models (star schemas, aggregates). Each layer answers a different question — 'what did the source say?', 'what is true?', 'what do we report?'.",
+      keyIdea: "Bronze = as received, silver = cleaned & conformed, gold = business-ready star schemas. Never report from bronze.",
+      steps: [
+        "Land the raw CSV untouched into a bronze folder/table.",
+        "Build silver: fix types, standardise names, remove duplicates — the 'one version of clean'.",
+        "Build gold: dimensional tables shaped for Power BI (fact + dimensions).",
+        "Trace one column end to end so the lineage is real to you.",
+      ],
+      exercise:
+        "Sketch the medallion flow for the slice & dice dataset: what belongs in bronze, what cleaning makes silver, and which fact/dimension tables form gold?",
+      resources: [R.dataset, R.tidyArticle],
+      check: {
+        question: "Why keep a bronze layer at all, instead of cleaning data on the way in?",
+        options: [
+          "Bronze is faster to query",
+          "It preserves the untouched source, so you can audit and rebuild silver/gold when logic changes",
+          "Power BI can only read bronze",
+          "It saves storage costs",
+        ],
+        answer: 1,
+        why: "Bronze is your evidence and your undo button — when cleaning rules change or a number is questioned, you can replay from exactly what the source sent.",
+      },
+    },
+    {
+      id: "fab-directlake",
+      title: "Direct Lake & semantic models for Power BI",
+      minutes: 18,
+      concept:
+        "Direct Lake is the Fabric payoff for BI: Power BI reads Delta tables straight from OneLake — near-Import speed without copies or scheduled refresh. The semantic model becomes the centre of gravity: measures, relationships and RLS defined once, used by every report — and, increasingly, by AI agents that sit on top of it.",
+      keyIdea: "Direct Lake = Import-class speed, no copies, no refresh dance. The semantic model is now the product — humans and AI both consume it.",
+      steps: [
+        "Create a semantic model over your gold lakehouse tables.",
+        "Define relationships and a few core measures (the DAX you know applies unchanged).",
+        "Build a report and note there's no scheduled refresh to configure — the lake IS the source.",
+        "Add row-level security the same way as classic Power BI.",
+      ],
+      exercise:
+        "Build a Direct Lake semantic model over your gold tables with Total Revenue and Profit Margin % measures, then a one-page report. Confirm updates in the lakehouse appear without a refresh.",
+      resources: [R.measuresArticle],
+    },
+    {
+      id: "fab-copilot",
+      title: "Copilot & AI skills: working with the agentic layer",
+      minutes: 15,
+      concept:
+        "Copilot in Fabric drafts dataflows, writes DAX, and answers natural-language questions against your data — and AI skills let you build Q&A agents grounded in OneLake. The catch every professional must internalise: AI inherits your semantic model's logic. On a clean model it looks brilliant; on a messy one it is confidently wrong. Your job shifts from typing the query to directing and verifying it.",
+      keyIdea: "AI drafts, you direct and verify. The quality ceiling of every Copilot answer is the quality of your model.",
+      steps: [
+        "Use Copilot to draft a measure, then read the DAX it wrote — is it right? How do you know?",
+        "Ask an AI skill a question and inspect the query it generated.",
+        "Break it on purpose: ask something ambiguous and watch how model naming drives the interpretation.",
+        "Write your team's verification habit: no AI-generated number ships unchecked.",
+      ],
+      exercise:
+        "Ask Copilot for 'revenue growth by region' against your model. Read the generated query, then verify the number independently with your own DAX or SQL. Note anything that differed and why.",
+      resources: [R.measuresArticle],
+      check: {
+        question: "Why does a clean star schema matter MORE, not less, once Copilot and AI agents are in play?",
+        options: [
+          "AI only supports star schemas",
+          "It doesn't — AI removes the need for modelling",
+          "AI systems inherit the model's logic and naming: a clean model makes them accurate, a messy one makes them confidently wrong",
+          "Star schemas use less storage",
+        ],
+        answer: 2,
+        why: "Agents query the semantic model as their source of truth. Good structure and naming become the interface AI depends on — modelling is now for machines as well as humans.",
+      },
+    },
+  ],
   toolkit: [
     {
       id: "tk-vscode",

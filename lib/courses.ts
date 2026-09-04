@@ -115,6 +115,36 @@ export const COURSES: Course[] = [
     priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
   },
   {
+    id: "fabric",
+    title: "Microsoft Fabric",
+    tagline: "The platform Power BI now lives in",
+    level: "Analyst → AI-era",
+    duration: "5–6 evening sessions",
+    accent: ["#2dd4bf", "#0ea5e9"],
+    summary:
+      "Get ahead of the platform shift. Fabric unifies the data estate Power BI sits on — OneLake, lakehouses and warehouses, pipelines, Direct Lake semantic models and Copilot. Taught from the analyst's seat, building directly on the Power BI and SQL craft you already have.",
+    forWhom:
+      "Power BI users and analysts whose organisations are moving to Fabric — or who want the platform skills that BI interviews increasingly probe in 2026.",
+    outcomes: [
+      "Navigate Fabric confidently: workspaces, capacities & OneLake",
+      "Choose lakehouse vs warehouse for a given workload — and defend it",
+      "Land and shape data with pipelines & Dataflows Gen2",
+      "Structure data with the medallion (bronze / silver / gold) pattern",
+      "Serve fast Power BI reports from Direct Lake semantic models",
+      "Use Copilot & AI skills productively — and verify their output",
+    ],
+    syllabus: [
+      "Fabric fundamentals: OneLake, workspaces & capacities",
+      "Lakehouse vs warehouse — choosing your store",
+      "Getting data in: pipelines & Dataflows Gen2",
+      "Medallion architecture: bronze, silver, gold",
+      "Direct Lake & semantic models for Power BI",
+      "Copilot & AI skills: working with the agentic layer",
+    ],
+    tools: ["Microsoft Fabric", "OneLake", "Dataflows Gen2", "Power BI", "Copilot"],
+    priceFrom: null, // Hidden until real rates are decided — shows "Pricing on request"
+  },
+  {
     id: "sql",
     title: "SQL & T-SQL",
     tagline: "Speak fluent data",

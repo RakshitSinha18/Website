@@ -80,6 +80,7 @@ const COURSE_MATERIALS: Record<string, DeckResource[]> = {
   "data-analytics": [CSV, CSV_GUIDE],
   tableau: [CSV, CSV_GUIDE],
   "power-bi": [CSV, CSV_GUIDE],
+  fabric: [CSV, CSV_GUIDE],
   sql: [CSV, CSV_GUIDE],
   excel: [XLSX, CSV, CSV_GUIDE],
   sas: [CSV, CSV_GUIDE],
@@ -106,6 +107,12 @@ const CONNECTORS: Record<string, string[]> = {
     "Get Data → SQL Server: Import vs DirectQuery, and when each wins",
     "Web/API sources land through Power Query (M) like everything else",
     "On-prem sources refresh in the Service through the data gateway",
+  ],
+  fabric: [
+    "Dataflows Gen2 — the Power Query you know, landing into OneLake",
+    "Data Factory pipelines for scheduled, orchestrated loads",
+    "OneLake shortcuts — point at ADLS/S3 data without copying it",
+    "Power BI reads via Direct Lake — no import copy, no refresh schedule",
   ],
   sql: [
     "SSMS / Azure Data Studio → server name + authentication + database",
@@ -218,6 +225,22 @@ Profit Ratio: [Profit] / [Revenue]
 { FIXED [Region] : SUM([Revenue]) }`,
     notes:
       "Put the LOD on a view already sliced by Product — the number stays fixed per region while everything else varies. Contrast is the teacher here.",
+  },
+  "fab-medallion": {
+    intro: "Bronze to silver in a Fabric notebook — and the T-SQL you already know still works in the warehouse:",
+    code: `# PySpark: clean bronze into a silver Delta table
+df = spark.read.csv("Files/bronze/sales.csv", header=True)
+(df.filter("Revenue IS NOT NULL")
+   .dropDuplicates(["OrderID"])
+   .write.format("delta").mode("overwrite")
+   .saveAsTable("silver_sales"))
+
+-- Warehouse endpoint: familiar T-SQL over the same lake
+SELECT Region, SUM(Revenue) AS TotalRevenue
+FROM   silver_sales
+GROUP  BY Region;`,
+    notes:
+      "Two languages, one copy of the data — that's the slide's real message. Run the notebook cell, then immediately query the same table from the SQL endpoint so the 'one lake, many engines' idea lands as a demo, not a diagram.",
   },
   "tk-git": {
     intro: "The four commands that cover ninety percent of Git:",
