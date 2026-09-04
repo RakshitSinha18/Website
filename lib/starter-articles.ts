@@ -86,4 +86,27 @@ Some habits that follow from this:
 
 Clarity beats decoration every time. A plain dashboard that drives a confident decision has done more than a beautiful one nobody trusts.`,
   },
+  {
+    slug: "ai-era-analyst",
+    title: "The AI-era analyst: what stays valuable when Copilot writes the query",
+    excerpt:
+      "AI can now draft your SQL and build your first chart. That doesn't make analysts obsolete — it changes which of your skills compound. Here's my honest read.",
+    created_at: "2026-09-03",
+    body: `Copilot can draft a DAX measure. Fabric's AI skills will answer questions straight off a dataset — and show you the query they used. Industry studies put 30–40% of the repetitive slice of analyst work inside what AI can already automate. So is learning SQL still worth it?
+
+Yes — and I'd argue harder than before. Here's the shift I actually see: AI compresses the typing, not the thinking. The analysts getting more valuable right now are the ones whose judgement was always the real product.
+
+What loses value: memorising syntax, click-path expertise in any one tool, being the person who "pulls the numbers". AI does the first draft of all of that now.
+
+What gains value:
+
+- The data model. AI agents sit on top of your semantic model — they inherit its logic, good or bad. A clean star schema with well-named measures makes Copilot look brilliant. A messy model makes it confidently wrong. Modelling has quietly become an interface for machines, not just humans.
+- Verification. When AI writes the query, someone has to know whether it's right. Reading SQL fluently matters more when you didn't write it yourself.
+- The question. Tools answer questions; they don't ask them. Knowing which comparison matters, what "good" looks like, and what a stakeholder will actually do with the answer — that's the job now.
+- The explanation. An insight that doesn't change a decision is trivia. Communicating what the numbers mean, to people who don't speak data, is the last mile AI hasn't touched.
+
+Practical advice if you're building a career in 2026: learn SQL until you can verify a query you didn't write. Learn dimensional modelling until star schemas are second nature. Then use AI daily — let it draft, while you direct and check. "Fundamentals plus AI fluency" beats either one alone.
+
+The role isn't disappearing. It's being promoted — from producing numbers to owning what they mean. Make sure your skills are the ones that got promoted with it.`,
+  },
 ]

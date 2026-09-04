@@ -12,7 +12,7 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What does it cost?",
-    a: "Every course shows a starting rate as \"From ₹X / session\". The final quote depends on the format (1-on-1 vs group), how many sessions you need, and your goals. 1-on-1 career coaching is priced per person. Message me and I'll give you a clear number for your case.",
+    a: "Pricing is on request while rates are being finalised. The quote depends on the format (1-on-1 vs group), how many sessions you need, and your goals — 1-on-1 career coaching is priced per person. Message me with what you're after and I'll give you a clear, no-obligation number for your case.",
   },
   {
     q: "Do I need prior experience?",
@@ -29,5 +29,9 @@ export const FAQS: { q: string; a: string }[] = [
   {
     q: "Which tools will I learn?",
     a: "Depends on the course — Tableau, Power BI, SQL / T-SQL, Advanced Excel, or Base SAS. Everything is taught the way it's used on real BI work: correct data models, performant queries, and dashboards a business will actually trust.",
+  },
+  {
+    q: "With AI tools like Copilot, is learning SQL and Power BI still worth it?",
+    a: "More than ever. AI now automates a chunk of the repetitive query-and-chart work — which makes the fundamentals MORE valuable, not less: clean data models, SQL you can verify, statistical judgement, and explaining what the numbers mean. Tools like Copilot in Microsoft Fabric sit on top of your semantic model; if the model is wrong, the AI is confidently wrong. My courses teach the durable skills first, then where AI genuinely helps an analyst move faster.",
   },
 ]

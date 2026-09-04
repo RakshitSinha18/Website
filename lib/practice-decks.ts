@@ -249,4 +249,72 @@ export const PRACTICE_DECKS: PracticeDeck[] = [
       },
     ],
   },
+  {
+    id: "interview",
+    title: "Interview prep — BI roles",
+    blurb: "What hiring managers actually probe in 2026: architecture, performance and judgement — not just syntax.",
+    accent: ["#fb7185", "#38bdf8"],
+    cards: [
+      {
+        id: "iv-1",
+        front: "Power BI Pro vs Premium — the one-line difference?",
+        back: "Pro is the per-user licence for creating and sharing with other Pro users. Premium buys capacity: bigger datasets, more frequent refreshes, and sharing with viewers who don't each need a paid licence. Small team → Pro; large audience or heavy models → Premium.",
+      },
+      {
+        id: "iv-2",
+        front: "What does the on-premises data gateway actually do?",
+        back: "It's the secure bridge that lets the Power BI Service refresh data living inside a company network (SQL Server, files on a share, Oracle). Reports build fine without it — scheduled refresh is what breaks if it's missing. Classic 'why won't it refresh' answer.",
+      },
+      {
+        id: "iv-3",
+        front: "Where do you clean data — Power Query or DAX?",
+        back: "Power Query (M), before it hits the model: fix types, remove junk rows, unpivot, merge. DAX is for business logic at query time: measures, ratios, time-intelligence. Rule of thumb — shape once upstream in M; calculate downstream in DAX. Cleaning in DAX is a smell.",
+      },
+      {
+        id: "iv-4",
+        front: "You're asked to design a SQL view to feed a Power BI report. What makes it BI-friendly?",
+        back: "Flattened to a clear grain, business rules already applied (no magic codes), only needed columns, indexed on join/filter keys, and shaped like a star — facts with dimension keys. The interviewer is checking you think about what happens BEFORE data reaches the tool.",
+      },
+      {
+        id: "iv-5",
+        front: "A Power BI report is slow. Walk through your diagnosis.",
+        back: "Measure first: Performance Analyzer to find which visuals are slow and whether time goes to the query or the visual. Then in order — trim columns/rows loaded, push filters to the source, check relationships and cardinality, simplify DAX (avoid iterating huge tables), consider aggregations. Never start by 'redesigning' blind.",
+      },
+      {
+        id: "iv-6",
+        front: "What makes a WHERE clause non-sargable, and why does it matter?",
+        back: "Wrapping the filtered column in a function — WHERE YEAR(OrderDate) = 2024 — stops the index being used, forcing a scan. Rewrite as a bare-column range: OrderDate >= '2024-01-01' AND OrderDate < '2025-01-01'. Same rows, index-friendly, often orders of magnitude faster.",
+      },
+      {
+        id: "iv-7",
+        front: "What is Row-Level Security (RLS) and when do you need it?",
+        back: "Filters applied per user identity inside the model — a regional manager opens the same report but only sees their region's rows. Needed whenever one report serves audiences who mustn't see each other's data. Define roles with DAX filters, map users in the Service.",
+      },
+      {
+        id: "iv-8",
+        front: "Correlation vs causation — why do interviewers keep asking?",
+        back: "Because acting on correlation as if it were causation is the most expensive analyst mistake. Ice cream sales correlate with drownings (both follow summer). A good answer names a confounder and proposes how you'd test causality: experiment, A/B test, or at least a natural comparison group.",
+      },
+      {
+        id: "iv-9",
+        front: "How do you validate that your dashboard's numbers are right?",
+        back: "Reconcile against a trusted source (finance report, source system total) at the same grain and filters; spot-check a handful of rows end to end; test edge cases (nulls, returns, timezone boundaries); and have the business owner sign off a baseline. 'It matched what I expected' is not validation.",
+      },
+      {
+        id: "iv-10",
+        front: "\"Walk me through a project\" — how do you structure the answer?",
+        back: "Challenge → approach → outcome, with a number at the end. One sentence of business context, the messy part you solved (data quality, stakeholders, scale), the choices you made and why, then the measurable result. Ninety seconds. Rambling chronology is the most common fail.",
+      },
+      {
+        id: "iv-11",
+        front: "How do you present a finding to a non-technical stakeholder?",
+        back: "Answer first: 'Revenue dipped 8% because of churn in one segment — here's the fix I'd test.' Then one supporting visual, then the caveat that matters. Keep the methodology in your back pocket for questions. Leading with the SQL is leading with the least interesting part.",
+      },
+      {
+        id: "iv-12",
+        front: "\"Will AI replace analysts?\" — what's a strong interview answer in 2026?",
+        back: "AI automates the repetitive draft work (first-cut queries, chart scaffolding), which raises the value of what it can't do: modelling data cleanly (AI agents inherit your semantic model's logic), verifying generated queries, asking the right business question, and landing the insight with stakeholders. Position yourself as the analyst who uses AI daily and checks its work.",
+      },
+    ],
+  },
 ]
