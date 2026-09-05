@@ -38,12 +38,11 @@ export function PageLoader() {
       <div className="pointer-events-none absolute left-1/2 top-0 h-[70%] w-[60%] -translate-x-1/2 bg-[radial-gradient(closest-side,rgba(56,189,248,0.14),transparent)]" />
 
       <div className="relative flex flex-col items-center gap-4">
-        {/* Brand monogram tile (matches /rs-logo.svg) with a sweeping shine */}
-        <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#141a2b] to-[#0b0f19]">
+        {/* Brand monogram — the 3D Cycles render — with a sweeping shine. */}
+        <div className="relative h-20 w-20 overflow-hidden rounded-2xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/rs-logo-3d.png" alt="" aria-hidden className="h-full w-full object-contain" />
           <span className="page-loader-sweep pointer-events-none absolute inset-0" />
-          <span className="bg-gradient-to-br from-[#38bdf8] to-[#fbbf24] bg-clip-text font-serif text-2xl font-bold tracking-tight text-transparent">
-            RS
-          </span>
         </div>
         <p className="page-loader-fade font-mono text-[10px] uppercase tracking-[0.35em] text-foreground/50">
           Rakshit Sinha

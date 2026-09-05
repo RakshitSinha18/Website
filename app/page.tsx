@@ -136,13 +136,14 @@ export default function Home() {
         }`}
       >
         <button onClick={() => scrollToSection(SECTION.home)} className="flex items-center gap-2.5 transition-transform hover:scale-105">
-          {/* Brand monogram tile — the real logo, not a lookalike text box. */}
+          {/* Brand monogram tile — 3D render (Cycles), 400px source downscaled
+              for crispness. Falls back to nothing broken since it's decorative. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`${basePath}/rs-logo.svg`}
+            src={`${basePath}/rs-logo-3d.png`}
             alt=""
             aria-hidden
-            className="h-9 w-9 rounded-lg shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-110 md:h-10 md:w-10"
+            className="h-9 w-9 rounded-lg shadow-lg shadow-black/40 transition-transform duration-300 hover:scale-110 md:h-10 md:w-10"
           />
           <span className="font-sans text-base font-semibold tracking-tight text-foreground md:text-xl">Rakshit Sinha</span>
         </button>
